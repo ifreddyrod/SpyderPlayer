@@ -1,0 +1,9 @@
+*.code-workspace
+.vscode
+.DS_Store
+
+SpyderPlayer.pro
+SpyderPlayer.pro.user
+
+build
+dist
