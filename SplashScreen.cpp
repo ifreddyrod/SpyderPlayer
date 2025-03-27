@@ -48,3 +48,8 @@ void SplashScreen::StartTimer()
 {
     splashTimer.start();
 }
+
+void SplashScreen::SetAppVersion(QString version) 
+{
+    ui.Version_label->setText("Version " + version);
+}

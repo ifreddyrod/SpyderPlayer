@@ -4,7 +4,6 @@
 #include <QDebug>
 
 
-
 // Constructor
 SpyderPlayerApp::SpyderPlayerApp(QWidget *parent)
     : QWidget(parent)
@@ -38,10 +37,29 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent)
     //-----------------------------
     // Setup Control Panels
     //-----------------------------
+    controlPanelFS.setWindowOpacity(0.8);
+    controlPanelFS.hide();
+    controlPanelFS.installEventFilter(this);
+    //ui.Bottom_Widget->layout = controlPanelFS;
 
     //-----------------------------
     // Setup Layout
     //-----------------------------
+    ui.botomverticalLayout->addWidget(&controlPanel);
+    controlPanel.show();
+    ui.Horizontal_splitter->setSizes({400, 1000});
+    ui.Vertical_splitter->setSizes({800, 1});
+    ui.Horizontal_splitter->installEventFilter(this);
+    ui.Vertical_splitter->installEventFilter(this);
+    
+    ui.ShowControlPanel_top_label->installEventFilter(this);
+    ui.ShowControlPanel_top_label->setMouseTracking(true);
+    ui.ShowControlPanel_bottom_label->installEventFilter(this);
+    ui.ShowControlPanel_bottom_label->setMouseTracking(true);
+    ui.ShowControlPanel_right_label->installEventFilter(this);
+    ui.ShowControlPanel_right_label->setMouseTracking(true);
+    ui.ShowControlPanel_left_label->installEventFilter(this);
+    ui.ShowControlPanel_left_label->setMouseTracking(true);
 
     //-----------------------------
     // Init Video Player
@@ -78,6 +96,7 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent)
     // Load Splash Screen
     //-----------------------------
     //splashScreen = new SplashScreen();
+    splashScreen.SetAppVersion(version);
 
     InitializePlayLists();
 

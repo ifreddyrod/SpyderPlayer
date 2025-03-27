@@ -5,6 +5,7 @@
 
 #include "ui_PlayerMainWindow.h"
 #include "SplashScreen.h"
+#include "VideoControlPanel.h"
 
 using namespace std;
 
@@ -27,6 +28,9 @@ private:
     // Gui Forms
     Ui::PlayerMainWindow ui;
     SplashScreen splashScreen;
+    VideoControlPanel controlPanel;
+    VideoControlPanel controlPanelFS;
+
     
 
 };
