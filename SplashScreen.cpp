@@ -4,19 +4,19 @@
 #include <QThread> 
 #include <QDebug>
 
-SplashScreen::SplashScreen(QWidget *parent) : QWidget(parent), splashTimerCompleted(false) 
+SplashScreen::SplashScreen(QWidget *parent) : QWidget(parent), splash_timer_completed_(false) 
 {
-    ui.setupUi(this);
+    ui_.setupUi(this);
     //ui.Background_image->setPixmap(QPixmap(":/icons/icons/spider-black.png"));
 
-    qDebug() <<  "Picture: " << ui.Background_image->pixmap();
+    //qDebug() <<  "Picture: " << ui_.Background_image->pixmap();
 
     setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
 
     CenterSplashScreen();
 
-    splashTimer.setInterval(5000);
-    connect(&splashTimer, &QTimer::timeout, this, &SplashScreen::SetTimeout);
+    splashtimer_.setInterval(5000);
+    connect(&splashtimer_, &QTimer::timeout, this, &SplashScreen::SetTimeout);
 
 }
 
@@ -32,24 +32,24 @@ void SplashScreen::CenterSplashScreen()
     move(x, y);
 }
 
+void SplashScreen::SetAppVersion(QString version) 
+{
+    ui_.Version_label->setText("Version " + version);
+}
+
 void SplashScreen::UpdateStatus(const QString &status, int delay) 
 {
-    ui.Status_label->setText(status);
+    ui_.Status_label->setText(status);
     QApplication::processEvents();
     QThread::msleep(delay);  // Sleep for the specified delay in milliseconds
 }
 
 void SplashScreen::SetTimeout() 
 {
-    splashTimerCompleted = true;
+    splash_timer_completed_ = true;
 }
 
 void SplashScreen::StartTimer() 
 {
-    splashTimer.start();
-}
-
-void SplashScreen::SetAppVersion(QString version) 
-{
-    ui.Version_label->setText("Version " + version);
+    splashtimer_.start();
 }

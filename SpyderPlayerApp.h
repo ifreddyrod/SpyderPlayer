@@ -4,6 +4,7 @@
 #include <QWidget>
 
 #include "ui_PlayerMainWindow.h"
+#include "AppData.h"
 #include "SplashScreen.h"
 #include "VideoControlPanel.h"
 
@@ -20,16 +21,17 @@ public:
     void InitializePlayLists();
 
 private:
-    QString version = "1.0.0 Beta";
-    bool isFullScreen = false;
-    bool mouseMoveActive = false;
-    QPoint *mousePressPos = NULL;
+    QString version_ = "1.0.0 Beta";
+    string platform_ = "";
+    bool is_full_screen_ = false; 
+    bool mouse_move_active_ = false;
+    QPoint *mouse_press_pos_ = NULL;
 
     // Gui Forms
-    Ui::PlayerMainWindow ui;
-    SplashScreen splashScreen;
-    VideoControlPanel controlPanel;
-    VideoControlPanel controlPanelFS;
+    Ui::PlayerMainWindow ui_;
+    SplashScreen splashscreen_;
+    VideoControlPanel controlpanel_;
+    VideoControlPanel controlpanelFS_;
 
     
 

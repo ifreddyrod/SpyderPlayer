@@ -20,9 +20,9 @@ public:
     void SetAppVersion(QString version);
 
 private:
-    Ui::SplashScreen ui;  // UI object
-    QTimer splashTimer;
-    bool splashTimerCompleted;
+    Ui::SplashScreen ui_;  // UI object
+    QTimer splashtimer_;
+    bool splash_timer_completed_;
 };
 
 #endif // SPLASHSCREEN_H

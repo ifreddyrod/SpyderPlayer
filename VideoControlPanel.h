@@ -13,7 +13,7 @@ class VideoControlPanel: public QWidget
 public:
     VideoControlPanel(QWidget *parent = nullptr);
 
-    Ui::VideoControlPanel ui;
+    Ui::VideoControlPanel ui_;
 };
 
 #endif // VIDEOCONTROLPANEL_H

@@ -2,7 +2,7 @@
 
 VideoControlPanel::VideoControlPanel(QWidget *parent) : QWidget(parent)
 {
-    ui.setupUi(this);
+    ui_.setupUi(this);
 
     setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
     setAttribute(Qt::WidgetAttribute::WA_TranslucentBackground, true);
