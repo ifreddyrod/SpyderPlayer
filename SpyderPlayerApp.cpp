@@ -25,7 +25,7 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent)
     //---------------------------------
     ui_.setupUi(this);
 
-    this->setWindowOpacity(0);
+    setWindowOpacity(0);
 
     //-----------------------------
     // Load AppData from file
@@ -33,9 +33,12 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent)
     string data_path = GetUserAppDataDirectory(platform_, "SpyderPlayer");
     qDebug() << "Data Path: " << data_path;
 
+    appData_ = NULL;  //new AppData(data_path);
+
     //-----------------------------
     // Setup Playlist Manager
     //-----------------------------
+    playlistManager_ = new PlaylistManager(ui_.PlayList_tree, appData_, this);
 
     //-----------------------------
     // Setup Control Panels

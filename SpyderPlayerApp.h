@@ -2,11 +2,13 @@
 #define SPYDERPLAYERAPP_H
 
 #include <QWidget>
+#include <memory> 
 
 #include "ui_PlayerMainWindow.h"
 #include "AppData.h"
 #include "SplashScreen.h"
 #include "VideoControlPanel.h"
+#include "PlaylistManager.h"
 
 using namespace std;
 
@@ -26,12 +28,14 @@ private:
     bool is_full_screen_ = false; 
     bool mouse_move_active_ = false;
     QPoint *mouse_press_pos_ = NULL;
+    AppData *appData_;
 
     // Gui Forms
     Ui::PlayerMainWindow ui_;
     SplashScreen splashscreen_;
     VideoControlPanel controlpanel_;
     VideoControlPanel controlpanelFS_;
+    PlaylistManager* playlistManager_;
 
     
 
