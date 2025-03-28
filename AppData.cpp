@@ -75,7 +75,19 @@ void AppData::load(const string& filePath)
     {
         PlayerType = static_cast<ENUM_PLAYER_TYPE>(jsonData["PlayerType"].asInt());
         PlayListPath = jsonData["PlayListPath"].asString();
-        // Initialize HotKeys and other fields as needed
+
+        // Check if "HotKeys" is an object and process it
+        if (jsonData.isMember("HotKeys") && jsonData["HotKeys"].isObject()) 
+        {
+            // Pass the JSON object directly to the validate_and_create function
+            map<string, int> hotKeysData;
+            for (const auto& key : jsonData["HotKeys"].getMemberNames()) 
+            {
+                hotKeysData[key] = jsonData["HotKeys"][key].asInt();
+            }
+            HotKeys = AppHotKeys::validate_and_create(hotKeysData);
+        }
+
     } 
     catch (const exception& e) 
     {
