@@ -10,9 +10,9 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent)
 {
     version_ = "1.0.0 Beta";
 
-    mouse_press_pos_ =  NULL;
-    mouse_move_active_ = false;
-    is_full_screen_ = false;
+    mousePressPos_ =  NULL;
+    mouseMoveActive_ = false;
+    isFullScreen_ = false;
     platform_ = GetPlatform();
     
     //-----------------------------

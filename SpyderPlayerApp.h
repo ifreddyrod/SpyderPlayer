@@ -25,9 +25,9 @@ public:
 private:
     QString version_ = "1.0.0 Beta";
     string platform_ = "";
-    bool is_full_screen_ = false; 
-    bool mouse_move_active_ = false;
-    QPoint *mouse_press_pos_ = NULL;
+    bool isFullScreen_ = false; 
+    bool mouseMoveActive_ = false;
+    QPoint *mousePressPos_ = NULL;
     AppData *appData_;
 
     // Gui Forms
