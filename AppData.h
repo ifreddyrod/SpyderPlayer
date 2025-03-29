@@ -5,19 +5,18 @@
 #include <string>
 #include <vector>
 #include <map>
+#include "Global.h"
+
 //#include "VideoPlayer.h" // Assuming ENUM_PLAYER_TYPE is defined here
 
 using namespace std;
-
-enum class SourceType { FILE, URL };
-enum ENUM_PLAYER_TYPE { VLC, QTMEDIA };
 
 class PlayListEntry 
 {
 public:
     string name;
     string parentName;
-    SourceType sourceType;
+    ENUM_SOURCE_TYPE sourceType;
     string source;
 
     static PlayListEntry* validate_and_create(const map<string, string>& data);

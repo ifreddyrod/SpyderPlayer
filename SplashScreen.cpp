@@ -53,3 +53,8 @@ void SplashScreen::StartTimer()
 {
     splashtimer_.start();
 }
+
+void SplashScreen::SetText(QString text) 
+{
+    ui_.Status_label->setText(text);
+}

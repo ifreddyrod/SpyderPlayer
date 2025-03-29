@@ -1,20 +1,26 @@
 #include "SpyderPlayerApp.h"
+#include "Global.h"
 
 #include <QFont>
-#include <QDebug>
-
 
 // Constructor
 SpyderPlayerApp::SpyderPlayerApp(QWidget *parent)
     : QWidget(parent)
 {
-    version_ = "1.0.0 Beta";
+    version_ =  APP_VERSION;
+    const string appdataFilename = "appdata.json";
 
     mousePressPos_ =  NULL;
     mouseMoveActive_ = false;
     isFullScreen_ = false;
     platform_ = GetPlatform();
     
+    //-----------------------------
+    // Load Splash Screen
+    //-----------------------------
+    splashscreen_.SetAppVersion(version_);    
+    splashscreen_.SetText("Initializing ..."); 
+
     //-----------------------------
     // Load Screensaver Inhibitor
     //-----------------------------
@@ -30,10 +36,11 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent)
     //-----------------------------
     // Load AppData from file
     //-----------------------------
-    string data_path = GetUserAppDataDirectory(platform_, "SpyderPlayer");
-    qDebug() << "Data Path: " << data_path;
+    string data_path = GetUserAppDataDirectory(platform_, "SpyderPlayerTest") + "/" + appdataFilename; 
 
-    appData_ = NULL;  //new AppData(data_path);
+    PRINT << "AppData Path: " << data_path;
+
+    appData_ = new AppData(data_path);
 
     //-----------------------------
     // Setup Playlist Manager
@@ -90,19 +97,13 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent)
     // Get the font family and size
     QString fontFamily = font.family();
     int fontSize = font.pointSize();
-    qDebug() << "Window Font: " << fontFamily << " " << fontSize;
+    PRINT << "Window Font: " << fontFamily << " " << fontSize;
 
     // Check if the point size is smaller than 11 and increase it if necessary
     if (fontSize < 11) 
     {
         this->setStyleSheet("color: white; font: 11pt;");
     }
-
-    //-----------------------------
-    // Load Splash Screen
-    //-----------------------------
-    //splashScreen = new SplashScreen();
-    splashscreen_.SetAppVersion(version_);
 
     InitializePlayLists();
 
@@ -115,6 +116,8 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent)
 // Destructor
 SpyderPlayerApp::~SpyderPlayerApp()
 {
+    delete appData_;
+    delete playlistManager_;
 }
 
 
@@ -124,12 +127,24 @@ void SpyderPlayerApp::InitializePlayLists()
     splashscreen_.StartTimer();
     splashscreen_.UpdateStatus("Loading Playlists:", 1000);
     
+    playlistManager_->ResetAllLists();
+
+    for(const auto& playlist: appData_->PlayLists)
+    {
+        PRINT << "Loading playlist: " << playlist->name;
+
+        splashscreen_.UpdateStatus("Loading " + QSTR(playlist->name) + " ....");
+        splashscreen_.UpdateStatus("Loading " + QSTR(playlist->name)  + " ....");
+        playlistManager_->LoadPlayList(*playlist);
+    }
     // Load Library Playlist
     splashscreen_.UpdateStatus("Loading Library ....", 1000);
-    
+    //playlistManager_->LoadLibrary();
+
     // Load Favorites last to verify that items in other playlists have been loaded
     splashscreen_.UpdateStatus("Loading Favorites ....", 1000);
-
+    //playlistManager_->LoadFavorites();
+    
     splashscreen_.UpdateStatus("Initialization Complete", 1000);
 
     // Show Main Window

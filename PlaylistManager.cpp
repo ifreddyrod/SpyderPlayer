@@ -1,8 +1,9 @@
 #include "PlaylistManager.h"
 #include "M3UParser.h"
+#include "Global.h"
 
 //***********************************************************
-// Global Definitions
+// Color Definitions
 //***********************************************************
 #define PLAYLIST_COLOR  QColor(20, 6, 36)
 #define LIBRARY_COLOR  QColor(20, 6, 36)
@@ -10,7 +11,6 @@
 #define SEARCH_COLOR   QColor(20, 6, 36) 
 #define SESSION_COLOR   QColor(39, 0, 42) 
 
-#define pad(str) (QString("  ") + (str))
 
 //************************************************************************************************
 // TreeItem Class
@@ -115,17 +115,17 @@ void PlaylistManager::ResetAllLists()
     playlistTree_->clear();
 
     // Add Search List
-    TreeItem* searchList = new TreeItem(pad("Search Results"), SEARCH_COLOR, true);
+    TreeItem* searchList = new TreeItem(PAD("Search Results"), SEARCH_COLOR, true);
     searchList->setIcon(0, QIcon(":/icons/icons/search-list.png"));
     playlistTree_->addTopLevelItem(searchList);
     
     // Add Favorites List
-    TreeItem* favoritesList = new TreeItem(pad("Favorites"), FAVORITES_COLOR, true);
+    TreeItem* favoritesList = new TreeItem(PAD("Favorites"), FAVORITES_COLOR, true);
     favoritesList->setIcon(0, QIcon(":/icons/icons/star-white.png"));
     playlistTree_->addTopLevelItem(favoritesList);
     
     // Add Library List
-    TreeItem* libraryList = new TreeItem(pad("Library"), LIBRARY_COLOR, true);
+    TreeItem* libraryList = new TreeItem(PAD("Library"), LIBRARY_COLOR, true);
     libraryList->setIcon(0, QIcon(":/icons/icons/library.png"));
     playlistTree_->addTopLevelItem(libraryList);
 
@@ -301,13 +301,14 @@ void PlaylistManager::AppendChannel(TreeItem* playList, TreeItem* newChannel)
 
 void PlaylistManager::UpdatePlayListChannelCount(TreeItem* item, int count) 
 {
-    if (count == -1) {
+    if (count == -1) 
+    {
         count = item->childCount();
     }
 
     if (item->IsPlayList()) 
     {
-        item->setText(0, pad(item->GetItemName()) + QString("  (%1)").arg(count));
+        item->setText(0, PAD(item->GetItemName()) + QString("  (%1)").arg(count));
     }
 }
 
@@ -326,12 +327,15 @@ void PlaylistManager::LoadPlayList(PlayListEntry playlist, bool isPersistent)
     string playlistPath = playlist.source;
     string playlistName = playlist.name;
     
+    PRINT << "Loading playlist: " << playlistName;
+    PRINT << "Playlist source: " << playlistPath;
+
     M3UParser m3uParser;
 
     // Check if the file exists
     if (!filesystem::exists(playlistPath)) 
     {
-        qDebug() << "File does not exist: " << playlistPath;
+        PRINT << "File does not exist: " << playlistPath;
         return;
     }
 
@@ -341,7 +345,7 @@ void PlaylistManager::LoadPlayList(PlayListEntry playlist, bool isPersistent)
     // Check if channelList is empty
     if (channelList.empty()) 
     {
-        qDebug() << "Channel list is empty for playlist: " << playlistName;
+        PRINT << "Channel list is empty for playlist: " << playlistName;
         return;
     }
 
@@ -353,7 +357,7 @@ void PlaylistManager::LoadPlayList(PlayListEntry playlist, bool isPersistent)
 
     if (isPersistent) 
     {
-        playlistTreeItem = new TreeItem(pad(playlistName.c_str()), PLAYLIST_COLOR, true);
+        playlistTreeItem = new TreeItem(PAD(QSTR(playlistName)), PLAYLIST_COLOR, true);
         playlistTree_->addTopLevelItem(playlistTreeItem);
     }
     else
@@ -369,8 +373,8 @@ void PlaylistManager::LoadPlayList(PlayListEntry playlist, bool isPersistent)
 
         if(!channelName.isEmpty() && !source.isEmpty())
         {
-            TreeItem* channelItem = new TreeItem(pad(channelName), QColor(), false, isPersistent);
-            channelItem->SetPlayListName(playlistName.c_str());
+            TreeItem* channelItem = new TreeItem(PAD(channelName), QColor(), false, isPersistent);
+            channelItem->SetPlayListName(QSTR(playlistName));
             channelItem->SetSource(source);
 
             if (isPersistent) 

@@ -18,6 +18,7 @@ public:
     void SetTimeout();
     void StartTimer();
     void SetAppVersion(QString version);
+    void SetText(QString text);
 
 private:
     Ui::SplashScreen ui_;  // UI object
