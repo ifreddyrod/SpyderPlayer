@@ -4,8 +4,7 @@
 #include <QFont>
 
 // Constructor
-SpyderPlayerApp::SpyderPlayerApp(QWidget *parent)
-    : QWidget(parent)
+SpyderPlayerApp::SpyderPlayerApp(QWidget *parent): QWidget(parent)
 {
     version_ =  APP_VERSION;
     const string appdataFilename = "appdata.json";
@@ -107,7 +106,7 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent)
 
     InitializePlayLists();
 
-    ui_.Status_label->setText(version_);
+    ui_.Status_label->setText("Player: " + QSTR(PlayerTypeToString(appData_->PlayerType)));
     /*splashScreen->show();
 
     ui->Status_label->setText(version);*/
@@ -139,7 +138,7 @@ void SpyderPlayerApp::InitializePlayLists()
     }
     // Load Library Playlist
     splashscreen_.UpdateStatus("Loading Library ....", 1000);
-    //playlistManager_->LoadLibrary();
+    playlistManager_->LoadLibrary();
 
     // Load Favorites last to verify that items in other playlists have been loaded
     splashscreen_.UpdateStatus("Loading Favorites ....", 1000);

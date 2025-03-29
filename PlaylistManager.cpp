@@ -94,6 +94,9 @@ PlaylistManager::PlaylistManager(QTreeWidget* playlistTreefromUI, AppData* appDa
     playlistTree_ = playlistTreefromUI;
     appData_ = appData;
 
+    //--------------------------------
+    // Setup the Tree
+    //--------------------------------
     playlistTree_->setColumnCount(1);
     playlistTree_->setStyleSheet(LoadStyleSheet());
     setMouseTracking(true);
@@ -101,12 +104,14 @@ PlaylistManager::PlaylistManager(QTreeWidget* playlistTreefromUI, AppData* appDa
 
     ResetAllLists();
 
+    //--------------------------------
+    // Connect Event Handlers
+    //--------------------------------
     playlistTree_->installEventFilter(this);
-    /*
-    self.playlistTree.itemDoubleClicked.connect(self.ItemDoubleClicked)
-    self.playlistTree.itemClicked.connect(self.ItemClicked)
-    self.playlistTree.itemChanged.connect(self.ChannelCheckBoxChanged)
-    */
+    connect(playlistTree_, &QTreeWidget::itemClicked, this, &PlaylistManager::ItemClicked);
+    connect(playlistTree_, &QTreeWidget::itemDoubleClicked, this, &PlaylistManager::ItemDoubleClicked);
+    connect(playlistTree_, &QTreeWidget::itemChanged, this, &PlaylistManager::AddRemoveFavorites);
+
 }
 
 void PlaylistManager::ResetAllLists()
@@ -118,44 +123,26 @@ void PlaylistManager::ResetAllLists()
     TreeItem* searchList = new TreeItem(PAD("Search Results"), SEARCH_COLOR, true);
     searchList->setIcon(0, QIcon(":/icons/icons/search-list.png"));
     playlistTree_->addTopLevelItem(searchList);
-    
+    searchList_ = searchList;
+
     // Add Favorites List
     TreeItem* favoritesList = new TreeItem(PAD("Favorites"), FAVORITES_COLOR, true);
     favoritesList->setIcon(0, QIcon(":/icons/icons/star-white.png"));
     playlistTree_->addTopLevelItem(favoritesList);
+    favoritesList_ = favoritesList;
     
     // Add Library List
     TreeItem* libraryList = new TreeItem(PAD("Library"), LIBRARY_COLOR, true);
     libraryList->setIcon(0, QIcon(":/icons/icons/library.png"));
     playlistTree_->addTopLevelItem(libraryList);
+    libraryList_ = libraryList;
 
     searchResultsCount_ = 0; 
     currentItem_ = 0;
-    lastSelectedItem_.clear();
-    currentSelectedItem_.clear();
+    lastSelectedItem_ = nullptr;
+    currentSelectedItem_ = nullptr;
     openedSessionPlayLists_.clear();
     openedSessionFiles_.clear();
-
-    /*
-            # Add core Playlists
-        self.searchList = TreeItem(pad("Search Results"), SEARCH_COLOR, True)
-        self.searchList.setIcon(0, QIcon(":icons/icons/search-list.png"))
-        
-        self.favoritesList = TreeItem(pad("Favorites"), FAVORITES_COLOR, True)
-        self.favoritesList.setIcon(0, QIcon(":icons/icons/star-white.png"))
-        
-        self.libraryList = TreeItem(pad("Library"), LIBRARY_COLOR, True)
-        self.libraryList.setIcon(0, QIcon(":icons/icons/library.png"))
-        
-        self.AppendPlayList(self.searchList)
-        self.AppendPlayList(self.favoritesList)
-        self.AppendPlayList(self.libraryList)
-
-        self.openedFilesList = None
-        self.currentSelectedItem = None
-        self.lastSelectedItem = None
-        */
-
 }
 
 QString PlaylistManager::LoadStyleSheet() 
@@ -299,6 +286,22 @@ void PlaylistManager::AppendChannel(TreeItem* playList, TreeItem* newChannel)
     }
 }
 
+void PlaylistManager::ClearPlayListItems(TreeItem* playList) 
+{
+    if (playList == nullptr) return;
+
+    if (playList->IsPlayList())
+    {
+        QTreeWidgetItem* playlistItem = dynamic_cast<QTreeWidgetItem*>(playList);
+
+        while (playlistItem->childCount() > 0)
+        {
+            QTreeWidgetItem* child = playlistItem->child(0);
+            playlistItem->removeChild(child);
+        }
+    }
+}
+
 void PlaylistManager::UpdatePlayListChannelCount(TreeItem* item, int count) 
 {
     if (count == -1) 
@@ -320,6 +323,38 @@ void PlaylistManager::CollapseAllPlaylists()
 void PlaylistManager::ExpandAllPlaylists() 
 {
     playlistTree_->expandAll();
+}
+
+void PlaylistManager::ItemClicked(QTreeWidgetItem* item)
+{
+    TreeItem* treeItem = dynamic_cast<TreeItem*>(item);
+
+    if (treeItem == nullptr) return;
+
+    if (treeItem->IsPlayList()) 
+    {
+        playlistTree_->setFocus();
+        treeItem->setExpanded(not treeItem->isExpanded());
+    }
+}
+
+void PlaylistManager::ItemDoubleClicked(QTreeWidgetItem* item) 
+{
+    TreeItem* treeItem = dynamic_cast<TreeItem*>(item);
+
+    if (treeItem == nullptr) return;
+
+    // TO DO
+
+}
+
+void PlaylistManager::AddRemoveFavorites(QTreeWidgetItem* item) 
+{
+    TreeItem* treeItem = dynamic_cast<TreeItem*>(item);
+
+    if (treeItem == nullptr) return;
+
+    // TO DO
 }
 
 void PlaylistManager::LoadPlayList(PlayListEntry playlist, bool isPersistent)
@@ -391,3 +426,29 @@ void PlaylistManager::LoadPlayList(PlayListEntry playlist, bool isPersistent)
     playlistTree_->blockSignals(false);
 
 }
+
+void PlaylistManager::LoadLibrary() 
+{
+    ClearPlayListItems(libraryList_);
+
+    for(const auto& item : appData_->Library)
+    {
+        TreeItem* newEntry = new TreeItem(PAD(QSTR(item->name)), QColor(), false);
+        newEntry->SetPlayListName("Library");
+        newEntry->SetSource(QSTR(item->source));
+
+        newEntry->setFlags(newEntry->flags() | Qt::ItemFlag::ItemIsUserCheckable); 
+        newEntry->SetItemChecked(false);
+
+        // Add the item to the library list
+        AppendChannel(libraryList_, newEntry);
+    }
+
+    UpdatePlayListChannelCount(libraryList_);
+}
+
+void PlaylistManager::LoadFavorites() 
+{
+    // TO DO
+}   
+

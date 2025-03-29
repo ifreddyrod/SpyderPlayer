@@ -13,6 +13,7 @@
 
 class TreeItem : public QTreeWidgetItem
 {
+    //Q_OBJECT
 public:
     TreeItem(QString nameText, QColor bgColor = QColor(), bool isPlayList = false, bool isPersistent = true);
     void SetPlayListName(QString name);
@@ -44,6 +45,8 @@ public:
     
     void ResetAllLists();
     void LoadPlayList(PlayListEntry playlist, bool isPersistent = true);
+    void LoadLibrary();
+    void LoadFavorites();
 
 private:
     QString LoadStyleSheet();
@@ -51,21 +54,28 @@ private:
     void EmitTreeLayoutChanged();
     void AppendPlayList(TreeItem* newPlayList, TreeItem* targetItem = nullptr);
     void AppendChannel(TreeItem* playList, TreeItem* newChannel);
+    void ClearPlayListItems(TreeItem* playList);
     void UpdatePlayListChannelCount(TreeItem* item, int count = -1);
     void CollapseAllPlaylists();
     void ExpandAllPlaylists();
+    void ItemClicked(QTreeWidgetItem* item);
+    void ItemDoubleClicked(QTreeWidgetItem* item); 
+    void AddRemoveFavorites(QTreeWidgetItem* item);
 
     QSignalMapper *treeItemSelectedSignal;
-    QPointer<TreeItem> currentSelectedItem_;
-    QPointer<TreeItem> lastSelectedItem_;
+    TreeItem* currentSelectedItem_;
+    TreeItem* lastSelectedItem_;
     int searchResultsCount_ = 0; 
     int currentItem_ = 0;
-    QPointer<TreeItem> openedFilesList_;
+    TreeItem* openedFilesList_;
     QList<PlayListEntry> openedSessionPlayLists_;
     QList<PlayListEntry> openedSessionFiles_;
 
     AppData* appData_; 
     QTreeWidget* playlistTree_;
+    TreeItem* searchList_;
+    TreeItem* favoritesList_;
+    TreeItem* libraryList_;
 };
 
 #endif // PLAYLISTMANAGER_H
