@@ -53,17 +53,17 @@ public:
 class AppData 
 {
 public:
-    ENUM_PLAYER_TYPE PlayerType;
-    string PlayListPath;
-    AppHotKeys HotKeys;
-    vector<PlayListEntry*> Library;
-    vector<PlayListEntry*> Favorites;
-    vector<PlayListEntry*> PlayLists;
-    string dataFile;
+    ENUM_PLAYER_TYPE PlayerType_;
+    string PlayListsPath_;
+    AppHotKeys HotKeys_;
+    vector<PlayListEntry*> Library_;
+    vector<PlayListEntry*> Favorites_;
+    vector<PlayListEntry*> PlayLists_;
+    string dataFilePath_;
 
-    AppData(const string& dataFilePath);
-    void load(const string& filePath);
-    void save();
+    AppData(const string& filePath);
+    void Load(const string& filePath);
+    void Save();
 };
 
 extern string GetPlatform();

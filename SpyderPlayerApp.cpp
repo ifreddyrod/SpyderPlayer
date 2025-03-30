@@ -106,7 +106,7 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent): QWidget(parent)
 
     InitializePlayLists();
 
-    ui_.Status_label->setText("Player: " + QSTR(PlayerTypeToString(appData_->PlayerType)));
+    ui_.Status_label->setText("Player: " + QSTR(PlayerTypeToString(appData_->PlayerType_)));
     /*splashScreen->show();
 
     ui->Status_label->setText(version);*/
@@ -128,7 +128,7 @@ void SpyderPlayerApp::InitializePlayLists()
     
     playlistManager_->ResetAllLists();
 
-    for(const auto& playlist: appData_->PlayLists)
+    for(const auto& playlist: appData_->PlayLists_)
     {
         PRINT << "Loading playlist: " << playlist->name;
 
@@ -142,7 +142,7 @@ void SpyderPlayerApp::InitializePlayLists()
 
     // Load Favorites last to verify that items in other playlists have been loaded
     splashscreen_.UpdateStatus("Loading Favorites ....", 1000);
-    //playlistManager_->LoadFavorites();
+    playlistManager_->LoadFavorites();
     
     splashscreen_.UpdateStatus("Initialization Complete", 1000);
 

@@ -26,6 +26,8 @@ public:
     bool IsItemPersistent();
     QString GetParentName();
     bool IsPlayList(); 
+    TreeItem* Child(int index);
+    TreeItem* Parent();
 
 private:
     QString playListName_;
@@ -47,6 +49,7 @@ public:
     void LoadPlayList(PlayListEntry playlist, bool isPersistent = true);
     void LoadLibrary();
     void LoadFavorites();
+    void SaveFavorites();
 
 private:
     QString LoadStyleSheet();
@@ -58,9 +61,20 @@ private:
     void UpdatePlayListChannelCount(TreeItem* item, int count = -1);
     void CollapseAllPlaylists();
     void ExpandAllPlaylists();
+    void SortPlaylistDescending();
+    void SortPlaylistAscending();
+    void GotoTopOfList();
+    void GotoBottomOfList();
     void ItemClicked(QTreeWidgetItem* item);
     void ItemDoubleClicked(QTreeWidgetItem* item); 
+    TreeItem* GetChannelFromTree(QString playListName, QString channelName, QString source);
+    TreeItem* GetPlayListFromTree(QString playListName);
+    TreeItem* GetPlayListFromSearch(QString playListName);
+    void ToggleItemCheckedinList(TreeItem* playList, TreeItem* item, bool checked = true);
     void AddRemoveFavorites(QTreeWidgetItem* item);
+
+    void SearchChannels(QString searchText);
+
 
     QSignalMapper *treeItemSelectedSignal;
     TreeItem* currentSelectedItem_;
@@ -70,6 +84,7 @@ private:
     TreeItem* openedFilesList_;
     QList<PlayListEntry> openedSessionPlayLists_;
     QList<PlayListEntry> openedSessionFiles_;
+    QString lastSearchQuery_;
 
     AppData* appData_; 
     QTreeWidget* playlistTree_;

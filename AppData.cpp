@@ -55,22 +55,22 @@ AppHotKeys AppHotKeys::validate_and_create(const map<string, int>& data)
     return hotkeys;
 }
 
-AppData::AppData(const string& dataFilePath) 
+AppData::AppData(const string& filePath) 
 {
-    dataFile = dataFilePath;
-    load(dataFilePath);
+    dataFilePath_ = filePath;
+    Load(dataFilePath_);
 }
 
-void AppData::load(const string& filePath) 
+void AppData::Load(const string& filePath) 
 {
     // Clear existing data
-    for (auto& entry : Library) delete entry;
-    for (auto& entry : Favorites) delete entry;
-    for (auto& entry : PlayLists) delete entry;
+    for (auto& entry : Library_) delete entry;
+    for (auto& entry : Favorites_) delete entry;
+    for (auto& entry : PlayLists_) delete entry;
     
-    Library.clear();
-    Favorites.clear();
-    PlayLists.clear();
+    Library_.clear();
+    Favorites_.clear();
+    PlayLists_.clear();
     
     // Open the file
     std::ifstream file(filePath);
@@ -91,8 +91,8 @@ void AppData::load(const string& filePath)
     }
 
     // Parse basic settings
-    PlayerType = StringToPlayerTypeEnum(root["PlayerType"].asString());
-    PlayListPath = root["PlayListPath"].asString();
+    PlayerType_ = StringToPlayerTypeEnum(root["PlayerType"].asString());
+    PlayListsPath_ = root["PlayListPath"].asString();
 
     // Parse hotkeys
     map<string, int> hotkeysMap;
@@ -101,7 +101,7 @@ void AppData::load(const string& filePath)
     {
         hotkeysMap[memberName] = hotkeysJson[memberName].asInt();
     }
-    HotKeys = AppHotKeys::validate_and_create(hotkeysMap);
+    HotKeys_ = AppHotKeys::validate_and_create(hotkeysMap);
 
     // Parse Library (if exists)
     const Json::Value& libraryJson = root["Library"];
@@ -121,7 +121,7 @@ void AppData::load(const string& filePath)
         PlayListEntry* entry = PlayListEntry::validate_and_create(entryMap);
         if (entry) 
         {
-            Library.push_back(entry);
+            Library_.push_back(entry);
         }
     }
 
@@ -143,7 +143,7 @@ void AppData::load(const string& filePath)
         PlayListEntry* entry = PlayListEntry::validate_and_create(entryMap);
         if (entry) 
         {
-            Favorites.push_back(entry);
+            Favorites_.push_back(entry);
         }
     }
 
@@ -165,47 +165,47 @@ void AppData::load(const string& filePath)
         PlayListEntry* entry = PlayListEntry::validate_and_create(entryMap);
         if (entry) 
         {
-            PlayLists.push_back(entry);
+            PlayLists_.push_back(entry);
         }
     }
 }
 
-void AppData::save() 
+void AppData::Save() 
 {
     // Create JSON root
     Json::Value root;
     
     // Add basic settings
-    root["PlayerType"] = PlayerTypeToString(PlayerType);
-    root["PlayListPath"] = PlayListPath;
+    root["PlayerType"] = PlayerTypeToString(PlayerType_);
+    root["PlayListPath"] = PlayListsPath_;
     
     // Add hotkeys
     Json::Value hotkeysJson;
-    hotkeysJson["playpause"] = HotKeys.playpause;
-    hotkeysJson["playpauseAlt"] = HotKeys.playpauseAlt;
-    hotkeysJson["toggleFullscreen"] = HotKeys.toggleFullscreen;
-    hotkeysJson["escapeFullscreen"] = HotKeys.escapeFullscreen;
-    hotkeysJson["togglePlaylist"] = HotKeys.togglePlaylist;
-    hotkeysJson["volumeMute"] = HotKeys.volumeMute;
-    hotkeysJson["volumeUp"] = HotKeys.volumeUp;
-    hotkeysJson["volumeDown"] = HotKeys.volumeDown;
-    hotkeysJson["seekForward"] = HotKeys.seekForward;
-    hotkeysJson["seekBackward"] = HotKeys.seekBackward;
-    hotkeysJson["gotoTopofList"] = HotKeys.gotoTopofList;
-    hotkeysJson["gotoBottomofList"] = HotKeys.gotoBottomofList;
-    hotkeysJson["collapseAllLists"] = HotKeys.collapseAllLists;
-    hotkeysJson["sortListAscending"] = HotKeys.sortListAscending;
-    hotkeysJson["sortListDescending"] = HotKeys.sortListDescending;
-    hotkeysJson["gotoLast"] = HotKeys.gotoLast;
-    hotkeysJson["showOptions"] = HotKeys.showOptions;
-    hotkeysJson["playNext"] = HotKeys.playNext;
-    hotkeysJson["playPrevious"] = HotKeys.playPrevious;
-    hotkeysJson["stopVideo"] = HotKeys.stopVideo;
+    hotkeysJson["playpause"] = HotKeys_.playpause;
+    hotkeysJson["playpauseAlt"] = HotKeys_.playpauseAlt;
+    hotkeysJson["toggleFullscreen"] = HotKeys_.toggleFullscreen;
+    hotkeysJson["escapeFullscreen"] = HotKeys_.escapeFullscreen;
+    hotkeysJson["togglePlaylist"] = HotKeys_.togglePlaylist;
+    hotkeysJson["volumeMute"] = HotKeys_.volumeMute;
+    hotkeysJson["volumeUp"] = HotKeys_.volumeUp;
+    hotkeysJson["volumeDown"] = HotKeys_.volumeDown;
+    hotkeysJson["seekForward"] = HotKeys_.seekForward;
+    hotkeysJson["seekBackward"] = HotKeys_.seekBackward;
+    hotkeysJson["gotoTopofList"] = HotKeys_.gotoTopofList;
+    hotkeysJson["gotoBottomofList"] = HotKeys_.gotoBottomofList;
+    hotkeysJson["collapseAllLists"] = HotKeys_.collapseAllLists;
+    hotkeysJson["sortListAscending"] = HotKeys_.sortListAscending;
+    hotkeysJson["sortListDescending"] = HotKeys_.sortListDescending;
+    hotkeysJson["gotoLast"] = HotKeys_.gotoLast;
+    hotkeysJson["showOptions"] = HotKeys_.showOptions;
+    hotkeysJson["playNext"] = HotKeys_.playNext;
+    hotkeysJson["playPrevious"] = HotKeys_.playPrevious;
+    hotkeysJson["stopVideo"] = HotKeys_.stopVideo;
     root["HotKeys"] = hotkeysJson;
     
     // Add Library
     Json::Value libraryJson(Json::arrayValue);
-    for (const auto& entry : Library) 
+    for (const auto& entry : Library_) 
     {
         Json::Value entryJson;
         entryJson["name"] = entry->name;
@@ -218,7 +218,7 @@ void AppData::save()
     
     // Add Favorites
     Json::Value favoritesJson(Json::arrayValue);
-    for (const auto& entry : Favorites) 
+    for (const auto& entry : Favorites_) 
     {
         Json::Value entryJson;
         entryJson["name"] = entry->name;
@@ -231,7 +231,7 @@ void AppData::save()
     
     // Add PlayLists
     Json::Value playlistsJson(Json::arrayValue);
-    for (const auto& entry : PlayLists) 
+    for (const auto& entry : PlayLists_) 
     {
         Json::Value entryJson;
         entryJson["name"] = entry->name;
@@ -243,10 +243,10 @@ void AppData::save()
     root["PlayLists"] = playlistsJson;
     
     // Write to file
-    std::ofstream file(dataFile);
+    std::ofstream file(dataFilePath_);
     if (!file.is_open()) 
     {
-        std::cerr << "Error opening file for writing: " << dataFile << std::endl;
+        std::cerr << "Error opening file for writing: " << dataFilePath_ << std::endl;
         return;
     }
     
