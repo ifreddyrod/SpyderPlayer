@@ -50,6 +50,16 @@ public:
     void LoadLibrary();
     void LoadFavorites();
     void SaveFavorites();
+    void CollapseAllPlaylists();
+    void ExpandAllPlaylists();
+    void SortPlaylistDescending();
+    void SortPlaylistAscending();
+    void GotoTopOfList();
+    void GotoBottomOfList();
+    void SearchChannels(QString searchText);
+
+signals:
+    void SIGNAL_PlaySelectedChannel(string, string);
 
 private:
     QString LoadStyleSheet();
@@ -59,12 +69,7 @@ private:
     void AppendChannel(TreeItem* playList, TreeItem* newChannel);
     void ClearPlayListItems(TreeItem* playList);
     void UpdatePlayListChannelCount(TreeItem* item, int count = -1);
-    void CollapseAllPlaylists();
-    void ExpandAllPlaylists();
-    void SortPlaylistDescending();
-    void SortPlaylistAscending();
-    void GotoTopOfList();
-    void GotoBottomOfList();
+
     void ItemClicked(QTreeWidgetItem* item);
     void ItemDoubleClicked(QTreeWidgetItem* item); 
     TreeItem* GetChannelFromTree(QString playListName, QString channelName, QString source);
@@ -73,7 +78,7 @@ private:
     void ToggleItemCheckedinList(TreeItem* playList, TreeItem* item, bool checked = true);
     void AddRemoveFavorites(QTreeWidgetItem* item);
 
-    void SearchChannels(QString searchText);
+    
 
 
     QSignalMapper *treeItemSelectedSignal;

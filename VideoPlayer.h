@@ -1,0 +1,67 @@
+#ifndef VIDEOPLAYER_H
+#define VIDEOPLAYER_H
+
+#include <iostream>
+#include <string>
+#include <vector>
+#include <map>
+#include <QWidget>
+#include <QTimer>
+#include <QSignalMapper>
+#include <QList>
+//#include <vlc/vlc.h>
+#include "Global.h"
+
+
+// VideoPlayer class
+class VideoPlayer : public QWidget 
+{
+    Q_OBJECT
+
+public:
+    VideoPlayer(QWidget* parent = nullptr);
+    virtual ~VideoPlayer();
+
+    // Methods
+    void UpdatePosition(int position);
+    void UpdateDuration(int duration);
+    void UpdatePlayerState(ENUM_PLAYER_STATE state);
+    void ErrorOccured(const std::string& error);
+    void EnableSubtitles(bool enable);
+    virtual void InitPlayer() = 0;
+    virtual void Play() = 0;
+    virtual void Pause() = 0;
+    virtual void Stop() = 0;
+    virtual void SetPosition(int position) = 0;
+    virtual int GetPosition() = 0;
+    virtual void SetVolume(int volume) = 0;
+    virtual int GetVolume() = 0;
+    virtual void Mute(bool mute) = 0;
+    virtual bool IsMuted() = 0;
+    virtual void SetVideoSource(const std::string& videoSource) = 0;
+    virtual void RefreshVideoSource() = 0;
+    virtual int GetVideoDuration() = 0;
+    virtual void OnChangingPosition(bool isPlaying) = 0;
+    virtual void OnChangedPosition(bool isPlaying) = 0;
+    virtual void ChangeUpdateTimerInterval(bool isFullScreen) = 0;
+    virtual QString GetVideoResolution() = 0;
+    virtual QList<QPair<int, QString>> GetSubtitleTracks() = 0;
+    virtual void SetSubtitleTrack(int index) = 0;
+
+    // Signals
+    Q_SIGNAL void SIGNAL_UpdatePosition(int position);
+    Q_SIGNAL void SIGNAL_UpdateDuration(int duration);
+    Q_SIGNAL void SIGNAL_PlayerStateChanged(ENUM_PLAYER_STATE state);
+    Q_SIGNAL void SIGNAL_ErrorOccured(const std::string& error);
+    Q_SIGNAL void SIGNAL_EnableSubtitles(bool enable);
+
+protected:
+    ENUM_PLAYER_STATE currentState_;
+    QWidget* mainWindow_;
+    QWidget* videoPanel_;
+    std::string source_;
+    int duration_;
+    int position_;
+};
+
+#endif

@@ -26,7 +26,7 @@ using namespace std;
 
 
 /******************************************************************************************* 
-    ENUMERATIONS
+    Player Type ENUMERATION
  *******************************************************************************************/
 enum ENUM_PLAYER_TYPE 
 {   VLC, 
@@ -38,6 +38,9 @@ extern ENUM_PLAYER_TYPE StringToPlayerTypeEnum(const string& playerTypeStr);
 extern string PlayerTypeToString(ENUM_PLAYER_TYPE playerType);
 
 
+/******************************************************************************************* 
+    Source Type ENUMERATION
+ *******************************************************************************************/
 enum ENUM_SOURCE_TYPE 
 {   LOCAL_FILE, 
     URL 
@@ -45,5 +48,23 @@ enum ENUM_SOURCE_TYPE
 
 extern ENUM_SOURCE_TYPE StringToSourceTypeEnum(const string& sourceTypeStr);
 extern string SourceTypeToString(ENUM_SOURCE_TYPE sourceType);
+
+
+/******************************************************************************************* 
+    Player State ENUMERATION
+ *******************************************************************************************/
+enum class ENUM_PLAYER_STATE 
+{
+    IDLE,
+    LOADING,
+    PLAYING,
+    PAUSED,
+    STOPPED,
+    STALLED,
+    ENDED,
+    ERROR
+};
+
+extern string PlayerStateToString(ENUM_PLAYER_STATE state);
 
 #endif // GLOBAL_H

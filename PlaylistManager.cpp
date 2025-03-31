@@ -400,9 +400,9 @@ void PlaylistManager::GotoBottomOfList()
 
 void PlaylistManager::ItemClicked(QTreeWidgetItem* item)
 {
+    if (item == nullptr) return;
+    
     TreeItem* treeItem = dynamic_cast<TreeItem*>(item);
-
-    if (treeItem == nullptr) return;
 
     if (treeItem->IsPlayList()) 
     {
@@ -413,11 +413,25 @@ void PlaylistManager::ItemClicked(QTreeWidgetItem* item)
 
 void PlaylistManager::ItemDoubleClicked(QTreeWidgetItem* item) 
 {
+    if (item == nullptr) return;
+
     TreeItem* treeItem = dynamic_cast<TreeItem*>(item);
 
-    if (treeItem == nullptr) return;
+    if (treeItem->IsPlayList()) return;
 
-    // TO DO
+    //TreeItem* temp = currentSelectedItem_;
+
+    QString channelName = treeItem->GetItemName();
+    QString channelSource = treeItem->GetSource();
+
+    // Check if item is in searchlist
+
+    lastSelectedItem_ = currentSelectedItem_;
+    currentSelectedItem_ = treeItem;
+
+    playlistTree_->setFocus();
+
+    emit SIGNAL_PlaySelectedChannel(channelName.toStdString(), channelSource.toStdString());
 
 }
 TreeItem* PlaylistManager::GetChannelFromTree(QString playListName, QString channelName, QString source)
@@ -486,6 +500,8 @@ void PlaylistManager::ToggleItemCheckedinList(TreeItem* playList, TreeItem* item
     QString channelName = item->GetItemName();
     QString channelSource = item->GetSource();
     
+    // << "Toggling channel: " << channelName << " in playlist: " << playList->GetItemName();
+
     // Search Playlist for corresponding channel
     for (int i = 0; i < playList->childCount(); i++) 
     {
@@ -501,11 +517,114 @@ void PlaylistManager::ToggleItemCheckedinList(TreeItem* playList, TreeItem* item
 
 void PlaylistManager::AddRemoveFavorites(QTreeWidgetItem* item) // Triggered when toggling checkbox in the tree
 {
+    if (item == nullptr) return;
+
     TreeItem* treeItem = dynamic_cast<TreeItem*>(item);
 
-    if (treeItem == nullptr) return;
+    QString channelName = treeItem->GetItemName();
+    QString channelSource = treeItem->GetSource();
+    QString channelPlaylist = treeItem->GetPlayListName();
 
-    // TO DO
+    //---------------------------------------------------
+    // Tree Item was Selected to be added to favorites
+    //---------------------------------------------------
+    if (treeItem->IsItemChecked())  
+    {
+        //PRINT << "ADDING ChannelName: " << channelName << " Source: " << channelSource << " Playlist: " << channelPlaylist;
+
+        // Check if item is already in favorites list
+        for (int i = 0; i < favoritesList_->childCount(); i++) 
+        {
+            TreeItem* favItem = favoritesList_->Child(i);
+            if (favItem->GetItemName() == channelName && favItem->GetSource() == channelSource) 
+            {
+                PRINT << "Item already in favorites list";
+                return;
+            }
+        }
+
+        // item is not in favorites list, then proceed to add it
+        playlistTree_->blockSignals(true);  
+        TreeItem* newFav = new TreeItem(channelName);
+        newFav->SetPlayListName(channelPlaylist);
+        newFav->SetSource(channelSource);
+        newFav->setFlags(newFav->flags() | Qt::ItemFlag::ItemIsUserCheckable);
+        newFav->SetItemChecked(true);
+
+        AppendChannel(favoritesList_, newFav);
+        UpdatePlayListChannelCount(favoritesList_);
+
+        // Update Search List and Play List
+        TreeItem* treeplayList = GetPlayListFromTree(channelPlaylist);
+        TreeItem* searchList = GetPlayListFromSearch(channelPlaylist);
+        ToggleItemCheckedinList(treeplayList, newFav, true);
+        ToggleItemCheckedinList(searchList, newFav, true);
+
+        // Add new channel to appdata
+        PlayListEntry* entry = new PlayListEntry();
+        entry->name = STR(channelName);
+        entry->parentName = STR(channelPlaylist);
+        entry->sourceType = channelSource.indexOf("http") == 0 ? ENUM_SOURCE_TYPE::URL : ENUM_SOURCE_TYPE::LOCAL_FILE;
+        entry->source = STR(channelSource);
+
+        appData_->Favorites_.push_back(entry);
+        SaveFavorites();
+
+        playlistTree_->blockSignals(false);
+        EmitTreeLayoutChanged();
+    }
+    //-------------------------------------------------------
+    // Tree Item was Selected to be removed from favorites
+    //-------------------------------------------------------
+    else
+    {
+        //PRINT << "REMOVE ChannelName: " << channelName << " Source: " << channelSource << " Playlist: " << channelPlaylist;
+
+        // Check if Favorites list is empty
+        if (favoritesList_->childCount() == 0) 
+        {
+            PRINT << "Favorites list is empty";
+            return;
+        }
+
+        // item is in favorites list, then proceed to remove it
+        playlistTree_->blockSignals(true);  
+
+        // Find Favorite Item in AppData and remove it
+        for (int i = appData_->Favorites_.size() - 1; i >= 0; i--)
+        {
+            PlayListEntry* favItem = appData_->Favorites_[i];
+            if (favItem->name == STR(channelName) && favItem->parentName == STR(channelPlaylist) && favItem->source == STR(channelSource)) 
+            {
+                appData_->Favorites_.erase(appData_->Favorites_.begin() + i);
+                SaveFavorites();
+                LoadFavorites();
+
+                // Get Index of item
+                if (channelPlaylist == "Favorites")
+                {
+                    //int index = favoritesList_->indexOfChild(treeItem);
+                    favoritesList_->removeChild(item);
+                }
+
+                // Deselect item from corresponding playlist
+                TreeItem* treeplayList = GetPlayListFromTree(channelPlaylist);
+                TreeItem* searchList = GetPlayListFromSearch(channelPlaylist);
+                ToggleItemCheckedinList(treeplayList, treeItem, false);
+                ToggleItemCheckedinList(searchList, treeItem, false);
+
+                if (searchResultsCount_ > 0)
+                {
+                    SearchChannels(lastSearchQuery_);
+                }
+                break;
+            }
+        }
+
+        playlistTree_->blockSignals(false);
+        EmitTreeLayoutChanged();
+
+    }
 }
 
 void PlaylistManager::LoadPlayList(PlayListEntry playlist, bool isPersistent)
@@ -555,7 +674,7 @@ void PlaylistManager::LoadPlayList(PlayListEntry playlist, bool isPersistent)
     for (const Channel& channel : channelList) 
     {
         QString channelName = QString::fromStdString(channel.name);
-        QString source = QString::fromStdString(channel.url);
+        QString source = QString::fromStdString(channel.url).trimmed();
 
         if(!channelName.isEmpty() && !source.isEmpty())
         {
@@ -580,6 +699,7 @@ void PlaylistManager::LoadPlayList(PlayListEntry playlist, bool isPersistent)
 
 void PlaylistManager::LoadLibrary() 
 {
+    playlistTree_->blockSignals(true);
     ClearPlayListItems(libraryList_);
 
     for(const auto& item : appData_->Library_)
@@ -596,6 +716,7 @@ void PlaylistManager::LoadLibrary()
     }
 
     UpdatePlayListChannelCount(libraryList_);
+    playlistTree_->blockSignals(false);
 }
 
 void PlaylistManager::SaveFavorites() 
@@ -647,17 +768,22 @@ void PlaylistManager::LoadFavorites()
 
 void PlaylistManager::SearchChannels(QString searchText)
 {
+    //PRINT << "SearchChannels: " << searchText;
+
     // Return if search text is empty
     if (searchText.isEmpty()) return;
 
     // Set the last search query
     lastSearchQuery_ = searchText;
 
-    // Convert search text to lowercase
+    // Convert search text to lowercase and remove spaces
     searchText = searchText.toLower();
-
+    searchText = searchText.replace(" ", "");
+    
     // Convert search text to array
     QStringList searchItems = searchText.split('+');
+
+    //PRINT << "Search Items: " << searchItems;
 
     // Block signals since we are modifying the tree
     playlistTree_->blockSignals(true);
@@ -687,7 +813,7 @@ void PlaylistManager::SearchChannels(QString searchText)
             int searchIndex = -1;
             for (const QString& searchItem : searchItems) 
             {
-                searchIndex = channelName.indexOf(searchItem.trimmed());
+                searchIndex = channelName.indexOf(searchItem);
                 if (searchIndex < 0) 
                 {
                     break;
@@ -715,11 +841,11 @@ void PlaylistManager::SearchChannels(QString searchText)
         UpdatePlayListChannelCount(playlistResults);
         if (playlistResults->childCount() > 0)
         {
-            AppendChannel(searchList_, playlistResults);
+            AppendPlayList(playlistResults, searchList_);
         }
     }
 
-    UpdatePlayListChannelCount(searchList_);
+    UpdatePlayListChannelCount(searchList_, searchResultsCount);
     playlistTree_->blockSignals(false);
     playlistTree_->setCurrentItem(searchList_);
     searchList_->setExpanded(true);
@@ -731,64 +857,4 @@ void PlaylistManager::SearchChannels(QString searchText)
     EmitTreeLayoutChanged();
 }
 
-    /*
-            # Return if search text is empty
-        if not searchText:
-            return
-        self.lastSearchQuery = searchText
-        searchText = searchText.lower()
-        searchText = searchText.split('+')
-        
-        self.playlistTree.blockSignals(True)
-        
-        # Clear the search list 
-        self.ClearPlayListItems(self.searchList)
-        
-        searchResultsCount = 0
-        
-        # Traverse (playlists) but ignore the Search Playlist
-        for row in range(1,self.playlistTree.topLevelItemCount()):
-            # Get the playlist item from tree
-            playlistToSearch = self.playlistTree.topLevelItem(row)
-            
-            # Create new playlist to show results
-            playlistResults = TreeItem(playlistToSearch.GetItemName(), None, True)
-            
-            # Treaverse the Playlist and search for channels
-            for i in range(playlistToSearch.childCount()):
-                channel = playlistToSearch.child(i)
-                
-                channelName = channel.GetItemName().lower()
-                
-                # Search the channel name for seach query
-                for searchItem in searchText:
-                    searchIndex = channelName.find(searchItem.strip())
-                    if searchIndex < 0:
-                        break;
-                
-                # If query is found
-                if searchIndex >= 0:
-                    # Create a new Item to add to results
-                    foundChannel = TreeItem(channel.GetItemName())
-                    foundChannel.SetSource(channel.GetSource())
-                    foundChannel.SetPlayListName(channel.GetPlayListName())
-                    
-                    if channel.IsItemPersistent():
-                        foundChannel.setFlags(foundChannel.flags() | Qt.ItemFlag.ItemIsUserCheckable)
-                        foundChannel.SetItemChecked(channel.IsItemChecked())
-                    
-                    self.AppendChannel(playlistResults, foundChannel)
-                    searchResultsCount += 1
-                    
-            self.UpdatePlayListChannelCount(playlistResults)
-            if playlistResults.childCount() > 0:
-                self.AppendPlayList(playlistResults, self.searchList)
-            
-        self.UpdatePlayListChannelCount(self.searchList, searchResultsCount)
-        self.playlistTree.blockSignals(False)
-        self.playlistTree.setCurrentItem(self.searchList)
-        self.searchList.setExpanded(True)
-        self.EmitTreeLayoutChanged()
-
-    */
 

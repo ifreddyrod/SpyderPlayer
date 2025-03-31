@@ -2,6 +2,8 @@
 #include "Global.h"
 
 #include <QFont>
+#include <QEvent>
+#include <QKeyEvent>
 
 // Constructor
 SpyderPlayerApp::SpyderPlayerApp(QWidget *parent): QWidget(parent)
@@ -63,7 +65,8 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent): QWidget(parent)
     ui_.Vertical_splitter->setSizes({800, 1});
     ui_.Horizontal_splitter->installEventFilter(this);
     ui_.Vertical_splitter->installEventFilter(this);
-    
+    isPlaylistVisible_ = true;
+
     ui_.ShowControlPanel_top_label->installEventFilter(this);
     ui_.ShowControlPanel_top_label->setMouseTracking(true);
     ui_.ShowControlPanel_bottom_label->installEventFilter(this);
@@ -76,6 +79,7 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent): QWidget(parent)
     //-----------------------------
     // Init Video Player
     //-----------------------------
+    InitPlayer();
 
     //-----------------------------
     // Setup Video Overlay
@@ -84,7 +88,8 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent): QWidget(parent)
     //-----------------------------
     // Connect signals
     //-----------------------------
-
+    // Double Click Channel
+    connect(playlistManager_, &PlaylistManager::SIGNAL_PlaySelectedChannel, this, &SpyderPlayerApp::PlaySelectedChannel);
 
 
     //-----------------------------
@@ -117,6 +122,7 @@ SpyderPlayerApp::~SpyderPlayerApp()
 {
     delete appData_;
     delete playlistManager_;
+    delete player_;
 }
 
 
@@ -149,4 +155,129 @@ void SpyderPlayerApp::InitializePlayLists()
     // Show Main Window
     splashscreen_.hide();
     this->setWindowOpacity(1.0);
+}
+
+void SpyderPlayerApp::InitPlayer()
+{
+    if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::QTMEDIA)
+    {
+        player_ = new QtPlayer(&ui_, this);
+    }
+    /*else if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::VLC)
+    {
+        player_ = new VLCPlayer(this);
+    }*/
+}
+// Event Handlers
+bool SpyderPlayerApp::eventFilter(QObject *object, QEvent *event)
+{
+    if (event->type() == QEvent::KeyRelease)
+    {
+        QKeyEvent *keyEvent = dynamic_cast<QKeyEvent*>(event);
+
+        // User Activity Detected
+
+        if (!ui_.Query_input->hasFocus()) // Handle Events when Query Input is not focused
+        {
+            if (keyEvent->key() == appData_->HotKeys_.collapseAllLists)
+            {
+                if (isPlaylistVisible_)
+                    playlistManager_->CollapseAllPlaylists();
+            }
+            else if (keyEvent->key() == appData_->HotKeys_.gotoTopofList)
+            {
+                if (isPlaylistVisible_)
+                    playlistManager_->GotoTopOfList();
+            }
+            else if (keyEvent->key() == appData_->HotKeys_.gotoBottomofList)
+            {
+                if (isPlaylistVisible_)
+                    playlistManager_->GotoBottomOfList();
+            }
+            else if (keyEvent->key() == appData_->HotKeys_.sortListAscending)
+            {
+                if (isPlaylistVisible_)
+                    playlistManager_->SortPlaylistAscending();
+            }
+            else if (keyEvent->key() == appData_->HotKeys_.sortListDescending)
+            {
+                if (isPlaylistVisible_)
+                    playlistManager_->SortPlaylistDescending();
+            }
+            else if (keyEvent->key() == appData_->HotKeys_.togglePlaylist)
+            {
+                TogglePlaylistView();
+            }
+            else if(keyEvent->key() == appData_->HotKeys_.stopVideo)
+            {
+                player_->Stop();
+            }
+            return true;
+        }
+        else // Handle Events when Query Input is focused
+        {
+            if (keyEvent->key() == Qt::Key::Key_Return) 
+            {
+                // Search the Channels for Query
+                QString query = ui_.Query_input->text();
+                playlistManager_->SearchChannels(query);
+            }
+            else if(keyEvent->key() == Qt::Key::Key_Escape)
+            {
+                ui_.Query_input->clear();
+            }
+            return true;
+        }
+    }
+    else
+    {
+        return QObject::eventFilter(object, event);
+    }
+}
+
+void SpyderPlayerApp::TogglePlaylistView()
+{
+    if (isPlaylistVisible_)
+    {
+        ui_.Horizontal_splitter->setSizes({0, 1000});  // Hide left side
+        ui_.Horizontal_splitter->setHandleWidth(1);
+        isPlaylistVisible_ = false;
+        //overlay_.setFocus();
+        //overlay_.Resize(true);
+    }
+    else
+    {
+        ui_.Horizontal_splitter->setSizes({400, 1000});  // Show left side
+        ui_.Horizontal_splitter->setHandleWidth(4);
+        isPlaylistVisible_ = true;
+        //overlay_.setFocus();
+        //overlay_.Resize(false);
+    }
+
+    if (isFullScreen_)
+    {
+        ; //ShowControlPanel();
+        //overlay_.Resize();
+    }
+}
+void SpyderPlayerApp::PlaySelectedChannel(string channelName, string source)
+{
+    PRINT << "PlaySelectedChannel: " << channelName;
+    PRINT << "Source: " << source;
+
+    player_->Stop();
+    player_->SetVideoSource(source);
+    setWindowTitle("SPYDER Player - " + QSTR(channelName));
+    player_->Play();
+
+/*
+        self.retryPlaying = True
+        self.player.Stop()
+        self.setWindowTitle("SPYDER Player - " + channel_name)
+        self.currentSource = source
+        self.player.SetVideoSource(source)
+        self.player.Play()
+        self.ChangePlayingUIStates(True)
+        
+*/
 }
