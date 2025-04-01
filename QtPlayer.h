@@ -30,9 +30,9 @@ public:
     void Play();
     void Pause();
     void Stop();
-    void SetPosition(int position);
-    int GetPosition();
-    int GetVideoDuration();
+    void SetPosition(qint64 position);
+    qint64 GetPosition();
+    qint64 GetVideoDuration();
     void SetVolume(int volume);
     int GetVolume();
     bool IsMuted();

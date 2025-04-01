@@ -56,6 +56,8 @@ public:
     void SortPlaylistAscending();
     void GotoTopOfList();
     void GotoBottomOfList();
+    QPair<string, string> GetAdjacentChannel(bool forward);
+    QPair<string, string> GotoLastSelectedChannel();
     void SearchChannels(QString searchText);
 
 signals:

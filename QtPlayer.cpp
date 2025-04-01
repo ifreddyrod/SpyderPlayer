@@ -96,19 +96,19 @@ void QtPlayer::Stop()
     } 
 }
 
-void QtPlayer::SetPosition(int position) 
+void QtPlayer::SetPosition(qint64 position) 
 {
     player_->setPosition(position);
     position_ = position;
 }
 
-int QtPlayer::GetPosition() 
+qint64 QtPlayer::GetPosition() 
 {
     position_ = player_->position();
     return position_;
 }
 
-int QtPlayer::GetVideoDuration() 
+qint64 QtPlayer::GetVideoDuration() 
 {
     return duration_;
 }

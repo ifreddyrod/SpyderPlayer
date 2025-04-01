@@ -2,6 +2,8 @@
 #define GLOBAL_H
 
 #include <string>
+#include <sstream>
+#include <iomanip>
 #include <QString>
 #include <QDebug>
 #include <map>
@@ -24,6 +26,10 @@ using namespace std;
 // Shorter Debug Log Macro
 #define PRINT qDebug()
 
+/*******************************************************************************************
+ * Utility Functions
+ *******************************************************************************************/
+extern QString Format_ms_to_Time(qint64 ms);
 
 /******************************************************************************************* 
     Player Type ENUMERATION

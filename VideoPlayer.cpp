@@ -16,13 +16,13 @@ VideoPlayer::VideoPlayer(QWidget* parent) : QWidget(parent)
 VideoPlayer::~VideoPlayer() {}
 
 // UpdatePosition method
-void VideoPlayer::UpdatePosition(int position) 
+void VideoPlayer::UpdatePosition(qint64 position) 
 {
     emit SIGNAL_UpdatePosition(position);
 }
 
 // UpdateDuration method
-void VideoPlayer::UpdateDuration(int duration) 
+void VideoPlayer::UpdateDuration(qint64 duration) 
 {
     emit SIGNAL_UpdateDuration(duration);
 }

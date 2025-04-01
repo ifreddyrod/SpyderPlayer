@@ -398,6 +398,66 @@ void PlaylistManager::GotoBottomOfList()
     }
 }
 
+QPair<string, string> PlaylistManager::GetAdjacentChannel(bool forward)
+{
+    if (currentSelectedItem_ == nullptr || currentSelectedItem_->IsPlayList())
+    {
+        return { "", "" };
+    }
+
+    TreeItem* currentList;
+
+    // Check if selection is from Search List, if so goto next item in that list 
+    if (currentSelectedItem_->parent()->parent() == searchList_)
+    {
+        currentList = GetPlayListFromSearch(currentSelectedItem_->GetPlayListName());
+    }
+    else
+    {
+        currentList = static_cast<TreeItem*>(currentSelectedItem_->parent());
+    }
+
+    int currentListCount = currentList->childCount();
+
+    int currentIndex = currentList->indexOfChild(currentSelectedItem_);
+
+    int nextItemIndex = (currentIndex + (forward ? 1 : -1)) % currentListCount;
+
+    currentSelectedItem_ = currentList->Child(nextItemIndex);
+
+    // Retrieve the channel name (displayed)
+    string channel_name = currentSelectedItem_->GetItemName().toStdString();
+    string source = currentSelectedItem_->GetSource().toStdString();
+
+    // Set Tree to Selected Item
+    playlistTree_->setCurrentItem(currentSelectedItem_);
+
+    return { channel_name, source };
+
+}
+QPair<string, string> PlaylistManager::GotoLastSelectedChannel()
+{
+    if (lastSelectedItem_ == nullptr)
+    {
+        return { "", "" };
+    }
+
+    TreeItem* temp = currentSelectedItem_;
+    currentSelectedItem_ = lastSelectedItem_;
+    lastSelectedItem_ = temp;
+
+    // Retrieve the channel name (displayed)
+    string channel_name = currentSelectedItem_->GetItemName().toStdString();
+
+    // Retrieve the hidden URL (stored in UserRole)
+    string source = currentSelectedItem_->GetSource().toStdString();
+
+    // Set Tree to Selected Item
+    playlistTree_->setCurrentItem(currentSelectedItem_);
+
+    return { channel_name, source };    
+}
+
 void PlaylistManager::ItemClicked(QTreeWidgetItem* item)
 {
     if (item == nullptr) return;

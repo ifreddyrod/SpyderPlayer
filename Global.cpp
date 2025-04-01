@@ -1,5 +1,24 @@
 #include "Global.h"
 
+QString Format_ms_to_Time(qint64 ms)
+{   
+    // Convert milliseconds to seconds
+    int seconds = ms / 1000;
+
+    // Calculate hours, minutes, and remaining seconds
+    int hours = seconds / 3600;
+    int minutes = (seconds % 3600) / 60;
+    seconds = seconds % 60;
+
+    // Format as HH:MM:SS
+    std::stringstream ss;
+    ss << std::setw(2) << std::setfill('0') << hours << ":"
+        << std::setw(2) << std::setfill('0') << minutes << ":"
+        << std::setw(2) << std::setfill('0') << seconds;
+        
+    return QSTR(ss.str());
+}
+
 ENUM_PLAYER_TYPE StringToPlayerTypeEnum(const string& playerTypeStr) 
 {
     static const std::unordered_map<std::string, ENUM_PLAYER_TYPE> playerTypeMap = 
