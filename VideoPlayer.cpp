@@ -6,7 +6,7 @@ VideoPlayer::VideoPlayer(QWidget* parent) : QWidget(parent)
 {
     currentState_ = ENUM_PLAYER_STATE::IDLE;
     mainWindow_ = nullptr;
-    videoPanel_ = nullptr;
+    videoWidget_ = nullptr;
     source_ = "";
     duration_ = 0;
     position_ = 0;

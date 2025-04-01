@@ -48,7 +48,8 @@ public:
     virtual QList<QPair<int, QString>> GetSubtitleTracks() = 0;
     virtual void SetSubtitleTrack(int index) = 0;
     virtual ENUM_PLAYER_STATE GetPlayerState() = 0;
-    
+    QWidget* GetVideoPanel() { return videoWidget_; }
+
     // Signals
     Q_SIGNAL void SIGNAL_UpdatePosition(qint64 position);
     Q_SIGNAL void SIGNAL_UpdateDuration(qint64 duration);
@@ -59,7 +60,7 @@ public:
 protected:
     ENUM_PLAYER_STATE currentState_;
     QWidget* mainWindow_;
-    QWidget* videoPanel_;
+    QWidget* videoWidget_;
     std::string source_;
     qint64 duration_;
     qint64 position_;

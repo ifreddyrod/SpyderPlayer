@@ -12,6 +12,7 @@ int main(int argc, char *argv[])
     // Create Player Instance
     SpyderPlayerApp spyderPlayer;
     spyderPlayer.show();
+    spyderPlayer.OnHSplitterResized(0, 0);
 
     return app.exec();
 }

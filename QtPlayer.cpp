@@ -38,6 +38,8 @@ void QtPlayer::InitPlayer()
     audioOutput_ = new QAudioOutput;
     player_->setAudioOutput(audioOutput_);
     player_->setVideoOutput(videoPanel_);
+
+    videoWidget_ = static_cast<QWidget*>(videoPanel_);
 }
 
 void QtPlayer::SetVideoSource(const std::string& videoSource) 
