@@ -5,6 +5,7 @@
 #include <memory> 
 #include <QTimer>
 #include <QMenu>
+#include <QThread> 
 
 #include "ui_PlayerMainWindow.h"
 #include "AppData.h"
@@ -44,11 +45,14 @@ private:
     QTimer *stalledVideoTimer_;
     QTimer *playbackStatusTimer_;
     QMenu  *subtitlesMenu_;
+    bool subtitlesEnabled_ = false;
     qint64 videoPosition_ = 0;
     qint64 videoDuration_ = 0;
     bool videoChangesPosition_ = false;
     bool isVideoPlaying_ = false;
     QPoint controlpanelPosition_ = QPoint(0, 0);
+    int volume_ = 100;
+    bool retryPlaying_ = true;
 
     // Gui Forms
     Ui::PlayerMainWindow ui_;
@@ -64,18 +68,22 @@ private:
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
     void moveEvent(QMoveEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
 
     // GUI Functions
     void PlayerNormalScreen();
     void PlayerFullScreen();
+    void PlayerMinimized();
     void ShowControlPanel();
     void TogglePlaylistView();
     void ChangePlayingUIStates(bool isPlaying);
+    void PlaybackStateChanged(ENUM_PLAYER_STATE state);
     void PlayerDurationChanged(qint64 duration);
     void VideoTimePositionChanged(qint64 position);
+    void PlayerErrorOccured(const std::string& error);
     void ShowVideoResolution();
     void UserActivityDetected();
-    
+    void StalledVideoDetected();
 
     // Player Functions
     void InitPlayer();
@@ -83,8 +91,8 @@ private:
     void PlayPausePlayer();
     void StopPlayer();
     void MutePlayer();
-    void SkipForward();
-    void SkipBackward();
+    void SeekForward();
+    void SeekBackward();
     void PlayNextChannel();
     void PlayPreviousChannel();
     void PlayLastChannel();
@@ -96,10 +104,17 @@ private:
     void OnPositionSliderPressed();
     void OnPositionSliderMoved();
     void OnPositionSliderReleased();
+    void ShowSubtitleTracks();
 
     // Utility Functions
+    void SearchChannels();
     void InactivityDetected();
     void UpdatePlaybackStatus();
+    QString GetWindowStateString();
+    void ShowCursorNormal();
+    void ShowCursorBusy();
+    void ShowCursorBlank();
+    
 
     
 };

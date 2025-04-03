@@ -27,7 +27,10 @@ ENUM_PLAYER_TYPE StringToPlayerTypeEnum(const string& playerTypeStr)
         {"QTMEDIA", QTMEDIA}
     };
 
-    auto it = playerTypeMap.find(playerTypeStr);
+    std::string upperCaseStr = playerTypeStr;
+    std::transform(upperCaseStr.begin(), upperCaseStr.end(), upperCaseStr.begin(), ::toupper);
+
+    auto it = playerTypeMap.find(upperCaseStr);
     if (it != playerTypeMap.end()) 
     {
         return it->second;

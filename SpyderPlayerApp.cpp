@@ -84,19 +84,66 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent): QWidget(parent)
     //-----------------------------
     // Setup Video Overlay
     //-----------------------------
-    overlay_ = new VideoOverlay();
+    overlay_ = new VideoOverlay(this);
     overlay_->SetAppObject(this);
-    overlay_->installEventFilter(this);
 
     //-----------------------------
     // Connect signals
     //-----------------------------
     // Double Click Channel
     connect(playlistManager_, &PlaylistManager::SIGNAL_PlaySelectedChannel, this, &SpyderPlayerApp::PlaySelectedChannel);
+    
+    connect(ui_.Search_button, &QPushButton::clicked, this, &SpyderPlayerApp::SearchChannels);
 
     connect(ui_.Horizontal_splitter, &QSplitter::splitterMoved, this, &SpyderPlayerApp::OnHSplitterResized);
 
-    //-----------------------------
+    // Connect Controller Buttons 
+    connect(controlpanel_.ui_.Play_button, &QPushButton::clicked, this, &SpyderPlayerApp::PlayPausePlayer);
+    connect(controlpanelFS_.ui_.Play_button, &QPushButton::clicked, this, &SpyderPlayerApp::PlayPausePlayer);
+
+    connect(controlpanel_.ui_.Stop_button, &QPushButton::clicked, this, &SpyderPlayerApp::StopPlayer);
+    connect(controlpanelFS_.ui_.Stop_button, &QPushButton::clicked, this, &SpyderPlayerApp::StopPlayer);
+
+    connect(controlpanel_.ui_.Next_button, &QPushButton::clicked, this, &SpyderPlayerApp::PlayNextChannel);
+    connect(controlpanelFS_.ui_.Next_button, &QPushButton::clicked, this, &SpyderPlayerApp::PlayNextChannel);
+
+    connect(controlpanel_.ui_.Previous_button, &QPushButton::clicked, this, &SpyderPlayerApp::PlayPreviousChannel);
+    connect(controlpanelFS_.ui_.Previous_button, &QPushButton::clicked, this, &SpyderPlayerApp::PlayPreviousChannel);
+
+    connect(controlpanel_.ui_.Forward_button, &QPushButton::clicked, this, &SpyderPlayerApp::SeekForward);
+    connect(controlpanelFS_.ui_.Forward_button, &QPushButton::clicked, this, &SpyderPlayerApp::SeekForward);
+
+    connect(controlpanel_.ui_.Backward_button, &QPushButton::clicked, this, &SpyderPlayerApp::SeekBackward);
+    connect(controlpanelFS_.ui_.Backward_button, &QPushButton::clicked, this, &SpyderPlayerApp::SeekBackward);
+
+    connect(controlpanel_.ui_.Last_button, &QPushButton::clicked, this, &SpyderPlayerApp::PlayLastChannel);
+    connect(controlpanelFS_.ui_.Last_button, &QPushButton::clicked, this, &SpyderPlayerApp::PlayLastChannel);
+
+    connect(controlpanel_.ui_.Mute_button, &QPushButton::clicked, this, &SpyderPlayerApp::MutePlayer);
+    connect(controlpanelFS_.ui_.Mute_button, &QPushButton::clicked, this, &SpyderPlayerApp::MutePlayer);
+
+    connect(controlpanel_.ui_.FullVolume_button, &QPushButton::clicked, this, &SpyderPlayerApp::FullVolumePlayer);
+    connect(controlpanelFS_.ui_.FullVolume_button, &QPushButton::clicked, this, &SpyderPlayerApp::FullVolumePlayer);
+
+    connect(controlpanel_.ui_.Volume_slider, &QSlider::valueChanged, this, &SpyderPlayerApp::ChangeVolume);
+    connect(controlpanelFS_.ui_.Volume_slider, &QSlider::valueChanged, this, &SpyderPlayerApp::ChangeVolume);
+
+    connect(controlpanel_.ui_.ToggleList_button, &QPushButton::clicked, this, &SpyderPlayerApp::TogglePlaylistView);
+    connect(controlpanelFS_.ui_.ToggleList_button, &QPushButton::clicked, this, &SpyderPlayerApp::TogglePlaylistView);
+
+    //connect(controlpanel_.ui_.CloseCaptions_button, &QPushButton::clicked, this, &SpyderPlayerApp::ToggleCaptions);
+    //connect(controlpanelFS_.ui_.CloseCaptions_button, &QPushButton::clicked, this, &SpyderPlayerApp::ToggleCaptions);
+
+    controlpanel_.ui_.Volume_slider->setValue(100);
+    controlpanelFS_.ui_.Volume_slider->setValue(100); 
+    player_->SetVolume(100);
+
+    // Connect Player Signals
+    connect(player_, &VideoPlayer::SIGNAL_UpdatePosition, this, &SpyderPlayerApp::VideoTimePositionChanged);
+    connect(player_, &VideoPlayer::SIGNAL_ErrorOccured, this, &SpyderPlayerApp::PlayerErrorOccured);
+    connect(player_, &VideoPlayer::SIGNAL_PlayerStateChanged, this, &SpyderPlayerApp::PlaybackStateChanged);
+
+    //-----------------------------,
     // Setup Timers
     //-----------------------------
     inactivityTimer_ = new QTimer(this);
@@ -132,6 +179,7 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent): QWidget(parent)
 
     ui_.Status_label->setText("Player: " + QSTR(PlayerTypeToString(appData_->PlayerType_)));
 
+    installEventFilter(this);
 
     /*splashScreen->show();
 
@@ -179,7 +227,8 @@ void SpyderPlayerApp::InitializePlayLists()
     overlay_->show();
     OnHSplitterResized(0, 0);
     overlay_->Resize();
-
+    overlay_->activateWindow();
+    //PRINT << "Initial Windowstate = " << windowState();
 }
 
 void SpyderPlayerApp::InitPlayer()
@@ -199,14 +248,58 @@ void SpyderPlayerApp::InitPlayer()
 //***********************************************************************************
 bool SpyderPlayerApp::eventFilter(QObject *object, QEvent *event)
 {
-    if (event->type() == QEvent::KeyRelease)
+    //PRINT << "Event Filter: " << event->type();
+
+    //-----------------------------
+    // Handle Window State Changes
+    //----------------------------- 
+    if(event->type() == QEvent::WindowStateChange)
+    {
+        ///Qt::WindowStates state = windowState();
+        //PRINT << "--------> Windowstate = " << GetWindowStateString(); 
+        //PRINT <<"Windowstate Attribute = " << this->window;
+        
+        //if (state & Qt::WindowMaximized || state & Qt::WindowFullScreen)
+        if(windowState() == Qt::WindowMaximized || windowState() == Qt::WindowFullScreen)
+        {
+            if(QApplication::focusObject() != nullptr/* && !settingsManager_->settingStack.isVisible()  */ )
+            {
+                if (!isFullScreen_)
+                {
+                    PlayerFullScreen();
+                    return true;
+                }
+            }
+        }
+        else if (windowState() == Qt::WindowMinimized)
+        {
+            PlayerMinimized();
+            return true;
+        }
+        else
+        {
+            if (QApplication::focusObject() != nullptr/* && !settingsManager_->settingStack.isVisible()  */ )
+            {
+                if (isFullScreen_)
+                    PlayerNormalScreen();
+                return true;
+            }
+        }
+    }
+    //-----------------------------
+    // Handle Key Presses
+    //-----------------------------
+    else if (event->type() == QEvent::KeyRelease)
     {
         QKeyEvent *keyEvent = dynamic_cast<QKeyEvent*>(event);
 
         // User Activity Detected
         UserActivityDetected();
 
-        if (!ui_.Query_input->hasFocus()) // Handle Events when Query Input is not focused
+        //-------------------------------------------------
+        // Handle Events when Query Input is not focused
+        //-------------------------------------------------
+        if (!ui_.Query_input->hasFocus()) 
         {
             if(keyEvent->key() == appData_->HotKeys_.toggleFullscreen)
             {
@@ -214,6 +307,14 @@ bool SpyderPlayerApp::eventFilter(QObject *object, QEvent *event)
                     PlayerNormalScreen();
                 else
                     PlayerFullScreen();
+            }
+            else if (keyEvent->key() == appData_->HotKeys_.escapeFullscreen && isFullScreen_)
+            {
+                PlayerNormalScreen();
+            }
+            else if (keyEvent->key() == appData_->HotKeys_.togglePlaylist)
+            {
+                TogglePlaylistView();
             }
             else if (keyEvent->key() == appData_->HotKeys_.collapseAllLists)
             {
@@ -240,23 +341,66 @@ bool SpyderPlayerApp::eventFilter(QObject *object, QEvent *event)
                 if (isPlaylistVisible_)
                     playlistManager_->SortPlaylistDescending();
             }
-            else if (keyEvent->key() == appData_->HotKeys_.togglePlaylist)
-            {
-                TogglePlaylistView();
-            }
             else if(keyEvent->key() == appData_->HotKeys_.stopVideo)
             {
                 player_->Stop();
             }
+            else if(keyEvent->key() == appData_->HotKeys_.volumeMute)
+            {
+                MutePlayer();
+            }
+            else if(keyEvent->key() == appData_->HotKeys_.gotoLast)
+            {
+                PlayLastChannel();
+            }
+            else if(keyEvent->key() == appData_->HotKeys_.playpause || keyEvent->key() == appData_->HotKeys_.playpauseAlt)
+            {
+                PlayPausePlayer();
+            }
+            else if(keyEvent->key() == appData_->HotKeys_.playNext)
+            {
+                PlayNextChannel();            
+            }
+            else if(keyEvent->key() == appData_->HotKeys_.playPrevious)
+            {
+                PlayPreviousChannel();
+            }
+            else if(keyEvent->key() ==  Qt::Key::Key_Return) 
+            {
+                playlistManager_->PlaySelectedTreeItem();
+            }
+
+            // Only process these if Playlist Tree is not focused
+            else if (!playlistManager_->PlaylistTreeHasFocus())
+            {
+                if(keyEvent->key() == appData_->HotKeys_.volumeUp)
+                {
+                    IncreaseVolume();
+                }
+                else if(keyEvent->key() == appData_->HotKeys_.volumeDown)
+                {
+                    DecreaseVolume();
+                }
+                else if(keyEvent->key() == appData_->HotKeys_.seekForward)
+                {
+                    SeekForward();
+                }
+                else if(keyEvent->key() == appData_->HotKeys_.seekBackward)
+                {
+                    SeekBackward();
+                }
+                else return false;
+            }
             return true;
         }
-        else // Handle Events when Query Input is focused
+        //-------------------------------------------------
+        // Handle Events when Query Input is focused
+        //-------------------------------------------------
+        else if(ui_.Query_input->hasFocus()) 
         {
             if (keyEvent->key() == Qt::Key::Key_Return) 
             {
-                // Search the Channels for Query
-                QString query = ui_.Query_input->text();
-                playlistManager_->SearchChannels(query);
+                SearchChannels();
             }
             else if(keyEvent->key() == Qt::Key::Key_Escape)
             {
@@ -265,10 +409,17 @@ bool SpyderPlayerApp::eventFilter(QObject *object, QEvent *event)
             return true;
         }
     }
-    else
+    else if (event->type() == QEvent::Type::MouseButtonPress || event->type() == QEvent::Type::MouseButtonRelease || event->type() == QEvent::Type::MouseMove ||
+             event->type() == QEvent::Type::Wheel || event->type() == QEvent::Type::MouseButtonDblClick)
     {
-        return QObject::eventFilter(object, event);
+        UserActivityDetected();
     }
+    // If mouse position is over the overlay_.overlayLabel_, then trigger UserActivityDetected
+    /*if (isFullScreen_ && overlay_->IsOutsideOverlay())
+        UserActivityDetected(); */
+
+    //else return QObject::eventFilter(object, event);
+    return QObject::eventFilter(object, event);
 }
 
 void SpyderPlayerApp::moveEvent(QMoveEvent *event)
@@ -278,6 +429,7 @@ void SpyderPlayerApp::moveEvent(QMoveEvent *event)
 
     UserActivityDetected();
     QWidget::moveEvent(event);
+    overlay_->activateWindow();
 }
 
 void SpyderPlayerApp::mousePressEvent(QMouseEvent *event)
@@ -290,7 +442,7 @@ void SpyderPlayerApp::mousePressEvent(QMouseEvent *event)
         if (!isFullScreen_)
         {
             mouseMoveActive_ = true;
-            overlay_->hide();
+            //overlay_->hide();
         }
     }
     QWidget::mousePressEvent(event);
@@ -324,11 +476,23 @@ void SpyderPlayerApp::mouseReleaseEvent(QMouseEvent *event)
         // Reset when the left mouse button is released
         mousePressPos_ = QPoint();
         mouseMoveActive_ = false;
-        overlay_->show();
+        //overlay_->show();
         overlay_->Resize();
+        //overlay_->activateWindow();
     }
+    /*if (isFullScreen_)
+        controlpanelFS_.raise();*/
 
     QWidget::mouseReleaseEvent(event);
+}
+
+void SpyderPlayerApp::resizeEvent(QResizeEvent *event)
+{
+    UserActivityDetected();
+    overlay_->Resize();
+    overlay_->activateWindow();
+
+    QWidget::resizeEvent(event);
 }
 
 //***************************************************************************************
@@ -342,13 +506,19 @@ void SpyderPlayerApp::PlayerNormalScreen()
     ui_.Vertical_splitter->setSizes({800, 1});
     ui_.Horizontal_splitter->setHandleWidth(4);
     player_->GetVideoPanel()->showNormal();  
+    player_->ChangeUpdateTimerInterval(false);
     isPlaylistVisible_ = true;
     inactivityTimer_->stop();
-    setFocus();
-    player_->GetVideoPanel()->activateWindow();
+    //setFocus();
     isFullScreen_ = false;
     ShowControlPanel();
+    overlay_->show();
     overlay_->Resize();
+    overlay_->setFocus();
+    //player_->GetVideoPanel()->activateWindow();
+    //playlistManager_->setFocus();
+    //overlay_->activateWindow();
+    //PRINT << "PlayerNormalScreen";
 }
 
 void SpyderPlayerApp::PlayerFullScreen()
@@ -360,20 +530,29 @@ void SpyderPlayerApp::PlayerFullScreen()
     isFullScreen_ = true;
     ShowControlPanel();
     player_->GetVideoPanel()->showFullScreen();
-    player_->GetVideoPanel()->setFocus();
-    
+    player_->ChangeUpdateTimerInterval(true);
     ui_.Horizontal_splitter->setHandleWidth(1);
     //ui_.Vertical_splitter->setFocus();
+    overlay_->show();
     overlay_->Resize();
     overlay_->setFocus();
+    //player_->GetVideoPanel()->setFocus();
 
     if (platform_ == "Linux")
         // Initial postion is off when going to fullscreen in linux, so just hide it initially
         controlpanelFS_.hide(); 
 
+    overlay_->activateWindow();
     inactivityTimer_->start();
+    //PRINT << "PlayerFullScreen";
 }
 
+void SpyderPlayerApp::PlayerMinimized()
+{
+    setWindowState(Qt::WindowState::WindowMinimized);
+    player_->ChangeUpdateTimerInterval(true);
+    overlay_->hide();
+}
 void SpyderPlayerApp::ShowControlPanel()
 {
     int panel_width = controlpanelFS_.width();
@@ -382,16 +561,16 @@ void SpyderPlayerApp::ShowControlPanel()
     QPoint global_pos;
 
     //if (windowState() == Qt::WindowState::WindowFullScreen)  
-    if (isFullScreen_)
+    if (isFullScreen_ and !isPlaylistVisible_)
     {
         int new_x = (width() - panel_width) / 2;
         int new_y = height() - panel_height - 20;
         global_pos = mapToGlobal(QPoint(new_x, new_y));
     }
-    else
+    else if (isFullScreen_ and isPlaylistVisible_)
     {
-        int new_x = (player_->GetVideoPanel()->width() - panel_width) / 2; 
-        int new_y = player_->GetVideoPanel()->height() - panel_height - 20;
+        int new_x = (GetVideoPanelWidth() - panel_width) / 2; 
+        int new_y = GetVideoPanelHeight() - panel_height - 20;
         global_pos = player_->GetVideoPanel()->mapToGlobal(QPoint(new_x, new_y));
     }
     
@@ -402,9 +581,13 @@ void SpyderPlayerApp::ShowControlPanel()
     }
     
     if (isFullScreen_)
+    {
         controlpanelFS_.show();
+    }
     else
+    {
         controlpanelFS_.hide();
+    }
       
 }
 
@@ -412,25 +595,27 @@ void SpyderPlayerApp::TogglePlaylistView()
 {
     if (isPlaylistVisible_)
     {
+        PRINT << "TogglePlaylistView - HIDE";
         ui_.Horizontal_splitter->setSizes({0, 1000});  // Hide left side
         ui_.Horizontal_splitter->setHandleWidth(1);
         isPlaylistVisible_ = false;
-        overlay_->setFocus();
         overlay_->Resize(true);
+        overlay_->setFocus();
     }
     else
     {
+        PRINT << "TogglePlaylistView - SHOW";
         ui_.Horizontal_splitter->setSizes({400, 1000});  // Show left side
         ui_.Horizontal_splitter->setHandleWidth(4);
         isPlaylistVisible_ = true;
+        overlay_->Resize();
         overlay_->setFocus();
-        overlay_->Resize(false);
     }
 
     if (isFullScreen_)
     {
-        ; //ShowControlPanel();
         overlay_->Resize();
+        ShowControlPanel();
     }
 }
 
@@ -505,22 +690,100 @@ void SpyderPlayerApp::ShowVideoResolution()
     playbackStatusTimer_->stop();
 }
 
+void SpyderPlayerApp::PlaybackStateChanged(ENUM_PLAYER_STATE state)
+{
+    PRINT << "Playback State Changed: " << PlayerStateToString(state);
+
+    if (state == ENUM_PLAYER_STATE::PLAYING)
+    {
+        ShowCursorNormal();
+        PlayerDurationChanged(player_->GetVideoDuration());
+        ChangePlayingUIStates(true);
+        //self.screensaverInhibitor.inhibit()
+        retryPlaying_ = true;
+        ui_.Status_label->setText("");
+
+        controlpanelFS_.ui_.CloseCaption_button->setEnabled(subtitlesEnabled_);
+        controlpanel_.ui_.CloseCaption_button->setEnabled(subtitlesEnabled_);
+
+        playbackStatusTimer_->start();
+    }
+    else if (state == ENUM_PLAYER_STATE::LOADING)
+    {
+        ShowCursorBusy();
+        ui_.Status_label->setText("Buffering .....");
+    }
+    else if (state == ENUM_PLAYER_STATE::STALLED && videoDuration_ == 0)
+    {
+        if (retryPlaying_)
+        {
+            ShowCursorBusy();
+            StalledVideoDetected();
+        }
+        else
+        {
+            ShowCursorNormal();
+            ui_.Status_label->setText("Invalid Media or Source");
+            //self.screensaverInhibitor.uninhibit()
+        }
+    }
+    else 
+    {
+        ShowCursorNormal();
+        ChangePlayingUIStates(false);
+        //stalledVideoTimer_->stop();
+        //self.screensaverInhibitor.uninhibit()
+        ui_.Status_label->setText("");
+    }
+
+}
+
+void SpyderPlayerApp::UpdatePlaybackStatus()
+{
+    if (player_->GetPlayerState() == ENUM_PLAYER_STATE::PLAYING)
+    {
+        ShowVideoResolution();
+    }
+    playbackStatusTimer_->stop();
+}
+
+void SpyderPlayerApp::PlayerErrorOccured(const std::string& error)
+{
+    PRINT << "Player Error: " << error;
+
+    ui_.Status_label->setText("Error: " + QString::fromStdString(error));
+}
+
+
 void SpyderPlayerApp::OnHSplitterResized(int pos, int index)
 {
     overlay_->Resize();
+    if (isFullScreen_)
+        ShowControlPanel();
 }
 
 void SpyderPlayerApp::UserActivityDetected()
 {
     // Add the implementation of this function here
-    /*if (isFullScreen_ )
+    if (isFullScreen_ )
     {
+        ShowCursorNormal();
         controlpanelFS_.show();
+        controlpanelFS_.activateWindow();
+        controlpanelFS_.raise();
         inactivityTimer_->start();
-    }*/
+    }
 }
 void SpyderPlayerApp::InactivityDetected()
 {
+    if (isFullScreen_ and !controlpanelFS_.hasFocus() )
+    {
+        controlpanelFS_.hide();
+        overlay_->activateWindow();
+
+        if (!isPlaylistVisible_ /*&& !settingsManager_.settingStack.isVisible()*/)
+            ShowCursorBlank();
+    }
     /*if (isFullScreen_ && !controlpanelFS_.hasFocus() && !subtitlesMenu_->isVisible())
     {
         controlpanelFS_.hide();
@@ -541,6 +804,22 @@ void SpyderPlayerApp::InactivityDetected()
                 
                 
                 */
+}
+
+void SpyderPlayerApp::StalledVideoDetected()
+{
+    if (retryPlaying_)
+    {
+        //stalledVideoTimer_->stop();
+        ui_.Status_label->setText("Stalled Video - Resetting");
+        player_->Stop();
+        QThread::msleep(3000);
+        player_->RefreshVideoSource();
+        player_->Play();
+        retryPlaying_ = false;
+    }
+    else
+        ChangePlayingUIStates(false);
 }
 
 //*****************************************************************************************
@@ -590,14 +869,14 @@ void SpyderPlayerApp::StopPlayer()
     ui_.Status_label->setText("");
 }
 
-void SpyderPlayerApp::SkipForward()
+void SpyderPlayerApp::SeekForward()
 {
     int duration = player_->GetVideoDuration();
     if (duration> 0)
         player_->SetPosition(duration + 10000);
 }
 
-void SpyderPlayerApp::SkipBackward()
+void SpyderPlayerApp::SeekBackward()
 {
     int duration = player_->GetVideoDuration();
     if (duration> 0)
@@ -630,19 +909,19 @@ void SpyderPlayerApp::PlayLastChannel()
 //*****************************************************************************************
 void SpyderPlayerApp::MutePlayer()
 {
-    int volume = player_->GetVolume();
-
     if (player_->IsMuted())
     {
-        UpdateVolumeSlider(volume);
         controlpanelFS_.ui_.Volume_slider->setEnabled(true);
         controlpanelFS_.ui_.FullVolume_button->setEnabled(true);
         controlpanel_.ui_.Volume_slider->setEnabled(true);
         controlpanel_.ui_.FullVolume_button->setEnabled(true);
         player_->Mute(false);
+        player_->SetVolume(volume_);
+        UpdateVolumeSlider(volume_);
     }
     else
     {
+        volume_ = player_->GetVolume();
         UpdateVolumeSlider(0);
         controlpanelFS_.ui_.Volume_slider->setEnabled(false);
         controlpanelFS_.ui_.FullVolume_button->setEnabled(false);
@@ -668,7 +947,7 @@ void SpyderPlayerApp::ChangeVolume()
 {
     QSlider *slider = dynamic_cast<QSlider *>(sender());
     int volume = slider->value();
-    PRINT << "Volume: " << volume;
+    //PRINT << "Volume: " << volume;
 
     player_->SetVolume(volume);
     UpdateVolumeSlider(volume);
@@ -732,7 +1011,7 @@ void SpyderPlayerApp::OnPositionSliderReleased()
 
     if (isFullScreen_)
     {
-        overlay_->activateWindow();
+        //overlay_->activateWindow();
         overlay_->setFocus();
         inactivityTimer_->start();
     }
@@ -741,15 +1020,26 @@ void SpyderPlayerApp::OnPositionSliderReleased()
 //***************************************************************************************** 
 // Utility Functions
 //*****************************************************************************************
-void SpyderPlayerApp::UpdatePlaybackStatus()
+void SpyderPlayerApp::SearchChannels()
 {
-    ENUM_PLAYER_STATE state = player_->GetPlayerState();
+    // Search the Channels for Query
+    QString query = ui_.Query_input->text();
+    playlistManager_->SearchChannels(query);
+}
 
-    if (state == ENUM_PLAYER_STATE::PLAYING)
-    {
-        ShowVideoResolution();
-        playbackStatusTimer_->stop();
-    }
+void SpyderPlayerApp::ShowCursorNormal()
+{
+    QApplication::setOverrideCursor(Qt::ArrowCursor);
+}
+
+void SpyderPlayerApp::ShowCursorBusy()
+{
+    QApplication::setOverrideCursor(Qt::BusyCursor);
+}
+
+void SpyderPlayerApp::ShowCursorBlank()
+{
+    QApplication::setOverrideCursor(Qt::BlankCursor);
 }
 
 int SpyderPlayerApp::GetVideoPanelWidth()
@@ -765,4 +1055,18 @@ int SpyderPlayerApp::GetVideoPanelHeight()
 QWidget* SpyderPlayerApp::GetVideoPanelWidget()
 {
     return player_->GetVideoPanel();
+}
+
+QString SpyderPlayerApp::GetWindowStateString() 
+{
+    Qt::WindowStates state = windowState();
+    
+    if (state & Qt::WindowMaximized)
+        return "Maximized";
+    else if (state & Qt::WindowMinimized)
+        return "Minimized";
+    else if (state & Qt::WindowFullScreen)
+        return "Fullscreen";
+    else
+        return "Normal";
 }

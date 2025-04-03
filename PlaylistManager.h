@@ -59,6 +59,8 @@ public:
     QPair<string, string> GetAdjacentChannel(bool forward);
     QPair<string, string> GotoLastSelectedChannel();
     void SearchChannels(QString searchText);
+    bool PlaylistTreeHasFocus();
+    void PlaySelectedTreeItem();
 
 signals:
     void SIGNAL_PlaySelectedChannel(string, string);
@@ -80,9 +82,11 @@ private:
     void ToggleItemCheckedinList(TreeItem* playList, TreeItem* item, bool checked = true);
     void AddRemoveFavorites(QTreeWidgetItem* item);
 
-    
+    // Event Overrides
+    //bool eventFilter(QObject *object, QEvent *event) override;
 
 
+    // Private Member Variables
     QSignalMapper *treeItemSelectedSignal;
     TreeItem* currentSelectedItem_;
     TreeItem* lastSelectedItem_;

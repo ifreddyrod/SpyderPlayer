@@ -53,9 +53,13 @@ void QtPlayer::SetVideoSource(const std::string& videoSource)
 
 void QtPlayer::RefreshVideoSource() 
 {
-    player_->setSource(QUrl(QSTR(source_)));
+    PRINT << "Refreshing Video Source";
+    PRINT << "Source: " << source_;
+
+    player_->setSource(QUrl(QSTR("")));
     QThread::msleep(1000);
-    player_->setSource(QUrl(QSTR(source_)));
+    SetVideoSource(source_);
+    
 }
 
 void QtPlayer::Play() 
@@ -215,26 +219,29 @@ void QtPlayer::MediaStatusChanged(QMediaPlayer::MediaStatus mediaState)
         // Iterate over available tracks
         for (int index = 0; index < video_tracks.size(); index++)
         {
-            QString resolution = video_tracks[index].value(QMediaMetaData::Resolution).toString();
-            if (!resolution.isEmpty())
+            QVariant resVar = video_tracks[index].value(QMediaMetaData::Resolution);
+
+            if (resVar.isValid() && resVar.canConvert<QSize>()) 
             {
-                int width = resolution.split("x")[0].toInt();
-                int height = resolution.split("x")[1].toInt();
+                QSize size = resVar.value<QSize>();
+                int width = size.width();
+                int height = size.height();
                 PRINT << "Video track " << index << " resolution: " << width << "x" << height;
-                if (width * height > highest_resolution.first * highest_resolution.second)
-                {
+                
+                if (width * height > highest_resolution.first * highest_resolution.second) {
                     highest_resolution = {width, height};
                     highest_resolution_index = index;
                 }
             }
         }
 
+        PRINT << "Highest resolution index: " << highest_resolution_index;
         // Select the highest resolution track
         if (highest_resolution_index != -1)
             player_->setActiveVideoTrack(highest_resolution_index);
 
-        if (currentState_ == ENUM_PLAYER_STATE::PLAYING)
-            currentState_ = ENUM_PLAYER_STATE::PLAYING;
+        /*if (currentState_ == ENUM_PLAYER_STATE::PLAYING)
+            currentState_ = ENUM_PLAYER_STATE::PLAYING;*/
     }
     else if (mediaState == QMediaPlayer::MediaStatus::InvalidMedia)
     {

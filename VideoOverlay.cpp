@@ -10,11 +10,16 @@ VideoOverlay::VideoOverlay(QWidget *parent) : QWidget(parent)
     setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
     setAttribute(Qt::WA_TranslucentBackground, true);
 
-    overlayLabel_->setStyleSheet("color: white; background-color: rgba(255, 255, 255, 100); font:30pt; border: none;"); //rgba(0, 0, 0, 2)
+    // Debug  - This will make the overlay much more visible
+    //overlayLabel_->setStyleSheet("color: white; background-color: rgba(255, 255, 255, 100); font:30pt; border: none;"); //rgba(0, 0, 0, 2)
+
+    // Normal
+    overlayLabel_->setStyleSheet("color: white; background-color: rgba(0, 0, 0, 2); font:30pt; border: none;"); //rgba(0, 0, 0, 2)
 
     QString overlayTxt = "";
     ui_.Overlay_label->setText(overlayTxt);
     overlayLabel_->setMouseTracking(true);
+    installEventFilter(this);
 }
 
 VideoOverlay::~VideoOverlay()
@@ -27,7 +32,10 @@ bool VideoOverlay::event(QEvent *event)
     if (app_ == nullptr)
         return false;
 
-    return QApplication::sendEvent(app_, event);
+    //PRINT << "VideoOverlay:: Event: " << event->type();
+
+    QApplication::sendEvent(app_, event);
+    return true;
 }
 
 void VideoOverlay::Resize(bool forceFullscreen)

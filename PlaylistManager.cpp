@@ -1,6 +1,9 @@
 #include "PlaylistManager.h"
 #include "M3UParser.h"
 #include "Global.h"
+#include <QEvent>
+#include <QKeyEvent>
+#include <QApplication>
 
 //***********************************************************
 // Color Definitions
@@ -269,6 +272,11 @@ void PlaylistManager::EmitTreeLayoutChanged()
 {
     emit playlistTree_->model()->layoutChanged();
 }
+
+bool PlaylistManager::PlaylistTreeHasFocus() 
+{ 
+    return playlistTree_->hasFocus(); 
+} 
 
 void PlaylistManager::AppendPlayList(TreeItem* newPlayList, TreeItem* targetItem) 
 {
@@ -917,4 +925,42 @@ void PlaylistManager::SearchChannels(QString searchText)
     EmitTreeLayoutChanged();
 }
 
+void PlaylistManager::PlaySelectedTreeItem()
+{
+    TreeItem* selectedItem = static_cast<TreeItem*>(playlistTree_->currentItem());
+
+    if (selectedItem == nullptr) return;
+
+    if (selectedItem->IsPlayList())
+    {
+        selectedItem->setExpanded(not selectedItem->isExpanded());
+    }
+    else
+    {
+        ItemDoubleClicked(selectedItem);
+    }
+}
+
+// Event Filter 
+/*bool PlaylistManager::eventFilter(QObject *object, QEvent *event) 
+{
+    if (this->hasFocus())
+    {
+        if (event->type() == QEvent::Type::KeyPress)
+        {
+            QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
+            if (keyEvent->key() == Qt::Key::Key_Escape)
+            {
+                return true;
+            }
+            //else if (keyEvent->key() == appData_
+        }
+    }
+    else
+    {
+        ; //return QApplication::sendEvent(object, event);
+    }
+
+    return false;
+}*/
 
