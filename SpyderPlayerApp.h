@@ -15,6 +15,7 @@
 #include "PlaylistManager.h"
 #include "VideoPlayer.h"
 #include "QtPlayer.h"
+#include "ScreensaverInhibitor.h"
 
 using namespace std;
 
@@ -33,7 +34,7 @@ public:
     QWidget* GetVideoPanelWidget();
 
 private:
-    QString version_ = "1.0.0 Beta";
+    QString version_ = "";
     string platform_ = "";
     bool isFullScreen_ = false; 
     bool isPlaylistVisible_ = true;
@@ -61,6 +62,7 @@ private:
     VideoControlPanel controlpanelFS_;
     VideoOverlay* overlay_;
     PlaylistManager* playlistManager_;
+    ScreensaverInhibitor* screensaverInhibitor_;
 
     // Event Overrides
     bool eventFilter(QObject *object, QEvent *event) override;
@@ -82,6 +84,9 @@ private:
     void VideoTimePositionChanged(qint64 position);
     void PlayerErrorOccured(const std::string& error);
     void ShowVideoResolution();
+    void EnableSubtitles(bool enable);
+    void ShowSubtitleTracks();
+    void SelectSubtitleTrack(QAction* menuItem);
     void UserActivityDetected();
     void StalledVideoDetected();
 
@@ -104,7 +109,7 @@ private:
     void OnPositionSliderPressed();
     void OnPositionSliderMoved();
     void OnPositionSliderReleased();
-    void ShowSubtitleTracks();
+
 
     // Utility Functions
     void SearchChannels();
@@ -114,8 +119,6 @@ private:
     void ShowCursorNormal();
     void ShowCursorBusy();
     void ShowCursorBlank();
-    
-
     
 };
 

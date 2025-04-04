@@ -186,6 +186,7 @@ void QtPlayer::MediaStatusChanged(QMediaPlayer::MediaStatus mediaState)
 
         // Get Subtitle info
         QList <QMediaMetaData> subtitle_tracks = player_->subtitleTracks();
+        PRINT << "Subtitle Count: " << subtitle_tracks.size();
         if (subtitleCount_ != subtitle_tracks.size())
         {
             subtitleCount_ = subtitle_tracks.size();
@@ -198,6 +199,7 @@ void QtPlayer::MediaStatusChanged(QMediaPlayer::MediaStatus mediaState)
                 for (int index = 0; index < subtitle_tracks.size(); index++)
                 {
                     QString language = subtitle_tracks[index].value(QMediaMetaData::Language).toString();
+                    PRINT << "Language: " << language;
                     if (language.isEmpty())  // Fallback if no language is specified
                         language = QString("Track %1").arg(index + 1);
                     subtitleList_.push_back({index, language});

@@ -25,8 +25,9 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent): QWidget(parent)
     //-----------------------------
     // Load Screensaver Inhibitor
     //-----------------------------
-    
-    
+    screensaverInhibitor_ = new ScreensaverInhibitor();
+    screensaverInhibitor_->uninhibit();
+
     //---------------------------------
     // Load and Setup the Main Window
     //---------------------------------
@@ -131,17 +132,30 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent): QWidget(parent)
     connect(controlpanel_.ui_.ToggleList_button, &QPushButton::clicked, this, &SpyderPlayerApp::TogglePlaylistView);
     connect(controlpanelFS_.ui_.ToggleList_button, &QPushButton::clicked, this, &SpyderPlayerApp::TogglePlaylistView);
 
-    //connect(controlpanel_.ui_.CloseCaptions_button, &QPushButton::clicked, this, &SpyderPlayerApp::ToggleCaptions);
-    //connect(controlpanelFS_.ui_.CloseCaptions_button, &QPushButton::clicked, this, &SpyderPlayerApp::ToggleCaptions);
+    connect(controlpanel_.ui_.CloseCaption_button, &QPushButton::clicked, this, &SpyderPlayerApp::ShowSubtitleTracks);
+    connect(controlpanelFS_.ui_.CloseCaption_button, &QPushButton::clicked, this, &SpyderPlayerApp::ShowSubtitleTracks);
 
     controlpanel_.ui_.Volume_slider->setValue(100);
     controlpanelFS_.ui_.Volume_slider->setValue(100); 
     player_->SetVolume(100);
 
+    connect(controlpanel_.ui_.VideoPosition_slider, &QSlider::sliderPressed, this, &SpyderPlayerApp::OnPositionSliderPressed);
+    connect(controlpanelFS_.ui_.VideoPosition_slider, &QSlider::sliderPressed, this, &SpyderPlayerApp::OnPositionSliderPressed);
+    connect(controlpanel_.ui_.VideoPosition_slider, &QSlider::sliderMoved, this, &SpyderPlayerApp::OnPositionSliderMoved);
+    connect(controlpanelFS_.ui_.VideoPosition_slider, &QSlider::sliderMoved, this, &SpyderPlayerApp::OnPositionSliderMoved);
+    connect(controlpanel_.ui_.VideoPosition_slider, &QSlider::sliderReleased, this, &SpyderPlayerApp::OnPositionSliderReleased);
+    connect(controlpanelFS_.ui_.VideoPosition_slider, &QSlider::sliderReleased, this, &SpyderPlayerApp::OnPositionSliderReleased);
+
+    controlpanel_.ui_.VideoPosition_slider->setEnabled(false);
+    controlpanelFS_.ui_.VideoPosition_slider->setEnabled(false);
+    controlpanel_.ui_.CloseCaption_button->setEnabled(false);
+    controlpanelFS_.ui_.CloseCaption_button->setEnabled(false);
+
     // Connect Player Signals
     connect(player_, &VideoPlayer::SIGNAL_UpdatePosition, this, &SpyderPlayerApp::VideoTimePositionChanged);
     connect(player_, &VideoPlayer::SIGNAL_ErrorOccured, this, &SpyderPlayerApp::PlayerErrorOccured);
     connect(player_, &VideoPlayer::SIGNAL_PlayerStateChanged, this, &SpyderPlayerApp::PlaybackStateChanged);
+    connect(player_, &VideoPlayer::SIGNAL_EnableSubtitles, this, &SpyderPlayerApp::EnableSubtitles);
 
     //-----------------------------,
     // Setup Timers
@@ -158,6 +172,12 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent): QWidget(parent)
     playbackStatusTimer_->setInterval(interval);
     connect(playbackStatusTimer_, &QTimer::timeout, this, &SpyderPlayerApp::UpdatePlaybackStatus);
 
+    //-----------------------------
+    // Setup Drop Down Menus
+    //-----------------------------
+    subtitlesMenu_ = new QMenu(this);
+    subtitlesMenu_->connect(subtitlesMenu_, &QMenu::triggered, this, &SpyderPlayerApp::SelectSubtitleTrack);
+    
     //-----------------------------
     // Size the Fonts
     //-----------------------------
@@ -189,12 +209,16 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent): QWidget(parent)
 // Destructor
 SpyderPlayerApp::~SpyderPlayerApp()
 {
+    screensaverInhibitor_->uninhibit();
     delete appData_;
     delete playlistManager_;
     delete player_;
+    delete screensaverInhibitor_;
 }
 
-
+//***********************************************************************************
+// Initialization Functions
+//***********************************************************************************
 void SpyderPlayerApp::InitializePlayLists()
 {
     splashscreen_.show();
@@ -553,6 +577,7 @@ void SpyderPlayerApp::PlayerMinimized()
     player_->ChangeUpdateTimerInterval(true);
     overlay_->hide();
 }
+
 void SpyderPlayerApp::ShowControlPanel()
 {
     int panel_width = controlpanelFS_.width();
@@ -595,7 +620,7 @@ void SpyderPlayerApp::TogglePlaylistView()
 {
     if (isPlaylistVisible_)
     {
-        PRINT << "TogglePlaylistView - HIDE";
+        //PRINT << "TogglePlaylistView - HIDE";
         ui_.Horizontal_splitter->setSizes({0, 1000});  // Hide left side
         ui_.Horizontal_splitter->setHandleWidth(1);
         isPlaylistVisible_ = false;
@@ -604,7 +629,7 @@ void SpyderPlayerApp::TogglePlaylistView()
     }
     else
     {
-        PRINT << "TogglePlaylistView - SHOW";
+        //PRINT << "TogglePlaylistView - SHOW";
         ui_.Horizontal_splitter->setSizes({400, 1000});  // Show left side
         ui_.Horizontal_splitter->setHandleWidth(4);
         isPlaylistVisible_ = true;
@@ -699,13 +724,9 @@ void SpyderPlayerApp::PlaybackStateChanged(ENUM_PLAYER_STATE state)
         ShowCursorNormal();
         PlayerDurationChanged(player_->GetVideoDuration());
         ChangePlayingUIStates(true);
-        //self.screensaverInhibitor.inhibit()
+        screensaverInhibitor_->inhibit();
         retryPlaying_ = true;
         ui_.Status_label->setText("");
-
-        controlpanelFS_.ui_.CloseCaption_button->setEnabled(subtitlesEnabled_);
-        controlpanel_.ui_.CloseCaption_button->setEnabled(subtitlesEnabled_);
-
         playbackStatusTimer_->start();
     }
     else if (state == ENUM_PLAYER_STATE::LOADING)
@@ -724,7 +745,7 @@ void SpyderPlayerApp::PlaybackStateChanged(ENUM_PLAYER_STATE state)
         {
             ShowCursorNormal();
             ui_.Status_label->setText("Invalid Media or Source");
-            //self.screensaverInhibitor.uninhibit()
+            screensaverInhibitor_->uninhibit();
         }
     }
     else 
@@ -732,7 +753,7 @@ void SpyderPlayerApp::PlaybackStateChanged(ENUM_PLAYER_STATE state)
         ShowCursorNormal();
         ChangePlayingUIStates(false);
         //stalledVideoTimer_->stop();
-        //self.screensaverInhibitor.uninhibit()
+        screensaverInhibitor_->uninhibit();
         ui_.Status_label->setText("");
     }
 
@@ -762,6 +783,52 @@ void SpyderPlayerApp::OnHSplitterResized(int pos, int index)
         ShowControlPanel();
 }
 
+void SpyderPlayerApp::EnableSubtitles(bool enable)
+{
+    subtitlesEnabled_ = enable;
+    controlpanelFS_.ui_.CloseCaption_button->setEnabled(enable);
+    controlpanel_.ui_.CloseCaption_button->setEnabled(enable); 
+}
+
+void SpyderPlayerApp::ShowSubtitleTracks()
+{
+    if (subtitlesEnabled_)
+    {
+        QList<QPair <int, QString>> tracks = player_->GetSubtitleTracks();
+
+        //PRINT << "Available Subtitle Tracks: " << tracks.size();
+
+        if (tracks.size() > 0)
+        {
+            subtitlesMenu_->clear();
+
+            for(const auto& track : tracks)
+            {
+                if (track.second.isEmpty())
+                    subtitlesMenu_->addAction("Track " + QString::number(track.first));
+                else
+                    subtitlesMenu_->addAction(track.second);
+            }
+            //subtitlesMenu_->connect(subtitlesMenu_, &QMenu::triggered, this, &SpyderPlayerApp::SelectSubtitleTrack);
+            subtitlesMenu_->exec(QCursor::pos());
+        }
+    }
+}
+
+void SpyderPlayerApp::SelectSubtitleTrack(QAction* menuItem)
+{
+    // Get the index of the selected track
+    QList<QAction*> menuSelections = subtitlesMenu_->actions();
+    int index = menuSelections.indexOf(menuItem);
+
+    QList<QPair <int, QString>> tracks = player_->GetSubtitleTracks();
+
+
+    PRINT << "Selected menu index:" << index;
+    PRINT << "Selected track:" << tracks[index].first;
+    player_->SetSubtitleTrack(tracks[index].first);
+}
+
 void SpyderPlayerApp::UserActivityDetected()
 {
     // Add the implementation of this function here
@@ -769,14 +836,15 @@ void SpyderPlayerApp::UserActivityDetected()
     {
         ShowCursorNormal();
         controlpanelFS_.show();
-        controlpanelFS_.activateWindow();
+        //controlpanelFS_.activateWindow();
+        overlay_->activateWindow();
         controlpanelFS_.raise();
         inactivityTimer_->start();
     }
 }
 void SpyderPlayerApp::InactivityDetected()
 {
-    if (isFullScreen_ and !controlpanelFS_.hasFocus() )
+    if (isFullScreen_ and !controlpanelFS_.hasFocus() and !subtitlesMenu_->isVisible())
     {
         controlpanelFS_.hide();
         overlay_->activateWindow();
@@ -803,7 +871,7 @@ void SpyderPlayerApp::InactivityDetected()
                 QApplication.setOverrideCursor(Qt.CursorShape.BlankCursor)
                 
                 
-                */
+    */
 }
 
 void SpyderPlayerApp::StalledVideoDetected()
@@ -871,16 +939,14 @@ void SpyderPlayerApp::StopPlayer()
 
 void SpyderPlayerApp::SeekForward()
 {
-    int duration = player_->GetVideoDuration();
-    if (duration> 0)
-        player_->SetPosition(duration + 10000);
+    if (videoDuration_ > 0)
+        player_->SetPosition(player_->GetPosition() + 10000);
 }
 
 void SpyderPlayerApp::SeekBackward()
 {
-    int duration = player_->GetVideoDuration();
-    if (duration> 0)
-        player_->SetPosition(duration - 10000);
+    if (videoDuration_ > 0)
+        player_->SetPosition(player_->GetPosition() - 10000);
 }
 
 void SpyderPlayerApp::PlayNextChannel()
@@ -977,7 +1043,7 @@ void SpyderPlayerApp::DecreaseVolume()
 }
 
 //*****************************************************************************************
-// Slider Functions
+// Positon Slider Functions
 //*****************************************************************************************
 void SpyderPlayerApp::OnPositionSliderPressed()
 {
@@ -1011,7 +1077,7 @@ void SpyderPlayerApp::OnPositionSliderReleased()
 
     if (isFullScreen_)
     {
-        //overlay_->activateWindow();
+        overlay_->activateWindow();
         overlay_->setFocus();
         inactivityTimer_->start();
     }
