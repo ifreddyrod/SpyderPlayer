@@ -2,9 +2,12 @@
 #define APPDATA_H
 
 #include <QWidget>
-#include <string>
-#include <vector>
-#include <map>
+#include <QString>
+#include <QVector>
+#include <QMap>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QJsonDocument>
 #include "Global.h"
 
 //#include "VideoPlayer.h" // Assuming ENUM_PLAYER_TYPE is defined here
@@ -19,7 +22,7 @@ public:
     ENUM_SOURCE_TYPE sourceType;
     string source;
 
-    static PlayListEntry* validate_and_create(const map<string, string>& data);
+    static PlayListEntry* validate_and_create(const QMap<QString, QString>& data);
 };
 
 class AppHotKeys 
@@ -47,7 +50,7 @@ public:
     int playPrevious = Qt::Key::Key_Comma;
     int stopVideo = Qt::Key::Key_S;
 
-    static AppHotKeys validate_and_create(const map<string, int>& data);
+    static AppHotKeys validate_and_create(const QMap<QString, int>& data);
 };
 
 class AppData 
@@ -56,9 +59,9 @@ public:
     ENUM_PLAYER_TYPE PlayerType_;
     string PlayListsPath_;
     AppHotKeys HotKeys_;
-    vector<PlayListEntry*> Library_;
-    vector<PlayListEntry*> Favorites_;
-    vector<PlayListEntry*> PlayLists_;
+    QVector<PlayListEntry*> Library_;
+    QVector<PlayListEntry*> Favorites_;
+    QVector<PlayListEntry*> PlayLists_;
     string dataFilePath_;
 
     AppData(const string& filePath);
@@ -69,6 +72,6 @@ public:
 
 extern string GetPlatform();
 extern string GetUserAppDataDirectory(string platform, string appName);
-extern void SavePlayListToFile(const vector<PlayListEntry*>& playlist, const string& filepath);
+extern void SavePlayListToFile(const QVector<PlayListEntry*>& playlist, const string& filepath);
 
 #endif // APPDATA_H

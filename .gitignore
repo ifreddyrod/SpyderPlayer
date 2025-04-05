@@ -2,7 +2,6 @@
 .vscode
 .DS_Store
 
-SpyderPlayer.pro
 SpyderPlayer.pro.user
 
 build
