@@ -64,6 +64,7 @@ public:
     AppData(const string& filePath);
     void Load(const string& filePath);
     void Save();
+    void CreateDefaultSettings();
 };
 
 extern string GetPlatform();

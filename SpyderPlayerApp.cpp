@@ -552,7 +552,6 @@ void SpyderPlayerApp::PlayerFullScreen()
     isPlaylistVisible_ = false;
     setWindowState(Qt::WindowState::WindowFullScreen);
     isFullScreen_ = true;
-    ShowControlPanel();
     player_->GetVideoPanel()->showFullScreen();
     player_->ChangeUpdateTimerInterval(true);
     ui_.Horizontal_splitter->setHandleWidth(1);
@@ -560,11 +559,12 @@ void SpyderPlayerApp::PlayerFullScreen()
     overlay_->show();
     overlay_->Resize();
     overlay_->setFocus();
+    ShowControlPanel();
     //player_->GetVideoPanel()->setFocus();
 
     if (platform_ == "Linux")
         // Initial postion is off when going to fullscreen in linux, so just hide it initially
-        controlpanelFS_.hide(); 
+        controlpanelFS_.hide();
 
     overlay_->activateWindow();
     inactivityTimer_->start();
@@ -620,7 +620,7 @@ void SpyderPlayerApp::TogglePlaylistView()
 {
     if (isPlaylistVisible_)
     {
-        //PRINT << "TogglePlaylistView - HIDE";
+        PRINT << "TogglePlaylistView - HIDE";
         ui_.Horizontal_splitter->setSizes({0, 1000});  // Hide left side
         ui_.Horizontal_splitter->setHandleWidth(1);
         isPlaylistVisible_ = false;
@@ -629,7 +629,7 @@ void SpyderPlayerApp::TogglePlaylistView()
     }
     else
     {
-        //PRINT << "TogglePlaylistView - SHOW";
+        PRINT << "TogglePlaylistView - SHOW";
         ui_.Horizontal_splitter->setSizes({400, 1000});  // Show left side
         ui_.Horizontal_splitter->setHandleWidth(4);
         isPlaylistVisible_ = true;
@@ -835,7 +835,12 @@ void SpyderPlayerApp::UserActivityDetected()
     if (isFullScreen_ )
     {
         ShowCursorNormal();
-        controlpanelFS_.show();
+
+        if (platform_ == "Linux")
+            ShowControlPanel();
+        else
+            controlpanelFS_.show();
+
         //controlpanelFS_.activateWindow();
         overlay_->activateWindow();
         controlpanelFS_.raise();

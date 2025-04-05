@@ -7,6 +7,7 @@
 #include <QString>
 #include <QDebug>
 #include <map>
+#include <filesystem>
 
 using namespace std;
 

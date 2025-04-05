@@ -55,10 +55,38 @@ AppHotKeys AppHotKeys::validate_and_create(const map<string, int>& data)
     return hotkeys;
 }
 
-AppData::AppData(const string& filePath) 
+AppData::AppData(const string& filePath)
 {
     dataFilePath_ = filePath;
-    Load(dataFilePath_);
+
+    // Check if file exists
+    std::ifstream checkFile(filePath);
+    if (!checkFile.good())
+    {
+        // File doesn't exist or can't be opened, create with defaults
+        CreateDefaultSettings();
+        Save(); // Save the default settings to create the file
+        Load(dataFilePath_);
+    }
+    else
+    {
+        checkFile.close();
+        Load(dataFilePath_);
+    }
+}
+
+void AppData::CreateDefaultSettings()
+{
+    // Set default values
+    PlayerType_ = ENUM_PLAYER_TYPE::QTMEDIA; // Use appropriate default
+    PlayListsPath_ = ""; // Set default path as needed
+
+    // HotKeys_ already has default values from its constructor
+
+    // Initialize empty lists
+    Library_.clear();
+    Favorites_.clear();
+    PlayLists_.clear();
 }
 
 void AppData::Load(const string& filePath) 
@@ -97,9 +125,17 @@ void AppData::Load(const string& filePath)
     // Parse hotkeys
     map<string, int> hotkeysMap;
     const Json::Value& hotkeysJson = root["HotKeys"];
-    for (const auto& memberName : hotkeysJson.getMemberNames()) 
+    for (const auto& memberName : hotkeysJson.getMemberNames())
     {
-        hotkeysMap[memberName] = hotkeysJson[memberName].asInt();
+        // Check if the value is an integer before conversion
+        if (hotkeysJson[memberName].isInt()) {
+            hotkeysMap[memberName] = hotkeysJson[memberName].asInt();
+        } else {
+            // Skip or provide a default value
+            std::cerr << "Warning: Hotkey '" << memberName << "' is not an integer value" << std::endl;
+            // Optionally assign a default value
+            // hotkeysMap[memberName] = defaultValue;
+        }
     }
     HotKeys_ = AppHotKeys::validate_and_create(hotkeysMap);
 
