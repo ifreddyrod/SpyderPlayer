@@ -1,4 +1,4 @@
-QT       += core gui
+QT       += core gui multimedia multimediawidgets
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -23,10 +23,6 @@ win32 {
     INCLUDEPATH += /usr/local/include
     LIBS +=
 }
-
-
-
-QT += multimedia multimediawidgets
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.

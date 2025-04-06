@@ -71,7 +71,7 @@ public:
 };
 
 extern string GetPlatform();
-extern string GetUserAppDataDirectory(string platform, string appName);
+extern string GetUserAppDataDirectory(string appName);
 extern void SavePlayListToFile(const QVector<PlayListEntry*>& playlist, const string& filepath);
 
 #endif // APPDATA_H

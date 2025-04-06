@@ -38,7 +38,7 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent): QWidget(parent)
     //-----------------------------
     // Load AppData from file
     //-----------------------------
-    string data_path = GetUserAppDataDirectory(platform_, "SpyderPlayerTest") + "/" + appdataFilename; 
+    string data_path = GetUserAppDataDirectory("SpyderPlayerTest") + "/" + appdataFilename; 
 
     PRINT << "AppData Path: " << data_path;
 
@@ -566,7 +566,7 @@ void SpyderPlayerApp::PlayerFullScreen()
         // Initial postion is off when going to fullscreen in linux, so just hide it initially
         controlpanelFS_.hide();
 
-    overlay_->activateWindow();
+    //overlay_->activateWindow();
     inactivityTimer_->start();
     //PRINT << "PlayerFullScreen";
 }
@@ -842,14 +842,14 @@ void SpyderPlayerApp::UserActivityDetected()
             controlpanelFS_.show();
 
         //controlpanelFS_.activateWindow();
-        overlay_->activateWindow();
+        //overlay_->activateWindow();
         controlpanelFS_.raise();
         inactivityTimer_->start();
     }
 }
 void SpyderPlayerApp::InactivityDetected()
 {
-    if (isFullScreen_ and !controlpanelFS_.hasFocus() and !subtitlesMenu_->isVisible())
+    if (isFullScreen_ and !controlpanelFS_.hasFocus() and !subtitlesMenu_->isVisible() and !isPlaylistVisible_)
     {
         controlpanelFS_.hide();
         overlay_->activateWindow();
@@ -1027,6 +1027,9 @@ void SpyderPlayerApp::ChangeVolume()
 
 void SpyderPlayerApp::IncreaseVolume()
 {
+    if (player_->IsMuted())
+        return;
+
     int volume = player_->GetVolume();
     volume = volume + 10;
     if (volume > 100)
@@ -1038,6 +1041,9 @@ void SpyderPlayerApp::IncreaseVolume()
 
 void SpyderPlayerApp::DecreaseVolume()
 {
+    if (player_->IsMuted())
+        return;
+        
     int volume = player_->GetVolume();
     volume = volume - 10;
     if (volume < 0)

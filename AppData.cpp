@@ -10,6 +10,8 @@
 #include <QDebug>
 #include <iostream>
 #include <QtCore/QStandardPaths>
+#include <QStandardPaths>
+
 
 PlayListEntry* PlayListEntry::validate_and_create(const QMap<QString, QString>& data) 
 {
@@ -375,31 +377,22 @@ GetUserAppDataDirectory()
     
     Returns: string representing the user's app data directory
 =====================================================================================*/
-string GetUserAppDataDirectory(string platform, string appName)
+string GetUserAppDataDirectory(string appName)
 {
     string directory = "";
 
-    if (platform.empty())
-    {
-        platform = GetPlatform();
-    }
+#ifdef _WIN32
 
-    if (platform == "Windows")
-    {
-        directory = filesystem::path(getenv("APPDATA")) / appName;
-    }
-    else if (platform == "Linux")
-    {
-        directory = filesystem::path(getenv("HOME")) / ".config" / appName; 
-    }
-    else if (platform == "Darwin")
-    {
-        directory = filesystem::path(getenv("HOME")) / "Library" / "Application Support" / appName;
-    }
-    else
-    {
-        directory = "";
-    }
+    QString appDataPath = QStandardPaths::writableLocation(QStandardPaths::HomeLocation) +"/AppData/Roaming/" + QSTR(appName) ;
+    directory = STR(appDataPath);
+
+#elif __linux__
+
+    directory = filesystem::path(getenv("HOME")) / ".config" / appName;
+#elif __APPLE__
+
+    directory = filesystem::path(getenv("HOME")) / "Library" / "Application Support" / appName;
+#endif
 
     if (!directory.empty())
     {
