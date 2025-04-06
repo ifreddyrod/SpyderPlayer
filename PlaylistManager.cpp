@@ -735,7 +735,9 @@ void PlaylistManager::LoadPlayList(PlayListEntry playlist, bool isPersistent)
     }
     else
     {
-        ;  // Handle temporay playlist
+        // Handle temporay playlist
+        playlistTreeItem = new TreeItem(PAD(QSTR(playlistName)), PLAYLIST_COLOR, true, false);
+        playlistTree_->addTopLevelItem(playlistTreeItem);
     }
 
     // Iterate through the channelList and create tree items
