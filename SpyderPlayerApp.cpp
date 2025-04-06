@@ -506,7 +506,7 @@ void SpyderPlayerApp::mouseReleaseEvent(QMouseEvent *event)
     }
     /*if (isFullScreen_)
         controlpanelFS_.raise();*/
-
+    activateWindow();
     QWidget::mouseReleaseEvent(event);
 }
 
@@ -514,7 +514,8 @@ void SpyderPlayerApp::resizeEvent(QResizeEvent *event)
 {
     UserActivityDetected();
     overlay_->Resize();
-    overlay_->activateWindow();
+    //overlay_->activateWindow();
+    activateWindow();
 
     QWidget::resizeEvent(event);
 }
@@ -1043,7 +1044,7 @@ void SpyderPlayerApp::DecreaseVolume()
 {
     if (player_->IsMuted())
         return;
-        
+
     int volume = player_->GetVolume();
     volume = volume - 10;
     if (volume < 0)

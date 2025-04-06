@@ -1,15 +1,18 @@
+TARGET = SPYDERPlayer
+
 QT       += core gui multimedia multimediawidgets
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++17 sdk_no_version_check
 
-
+ICON += assets/icons/spider_dark_icon.icns
 
 # macOS specific settings
 macx {
     INCLUDEPATH += /usr/local/include
     LIBS +=
+
 }
 
 # Linux specific settings
