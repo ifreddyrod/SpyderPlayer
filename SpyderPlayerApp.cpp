@@ -516,7 +516,8 @@ void SpyderPlayerApp::mouseReleaseEvent(QMouseEvent *event)
     if (isFullScreen_)
         controlpanelFS_.raise();
     else
-        activateWindow();
+        controlpanel_.setFocus();
+        //activateWindow();
 
     QWidget::mouseReleaseEvent(event);
 }
