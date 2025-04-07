@@ -514,7 +514,7 @@ TreeItem* PlaylistManager::GetChannelFromTree(QString playListName, QString chan
         if (playlistTreeText == searchList_->GetItemName()) continue; // or item.GetItemName() == self.favoritesList.GetItemName():
         
         // If Playlist is found, then index through the channels of the playlist
-        PRINT << "Looking for playlist: " << playlistTreeText;
+        //PRINT << "Looking for playlist: " << playlistTreeText;
         if (playlistTreeText == playListName) 
         {
             for (int childRow = 0; childRow < item->childCount(); childRow++) 

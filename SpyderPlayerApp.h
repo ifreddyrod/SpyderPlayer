@@ -16,6 +16,7 @@
 #include "VideoPlayer.h"
 #include "QtPlayer.h"
 #include "ScreensaverInhibitor.h"
+#include "SettingsManager.h"
 
 using namespace std;
 
@@ -54,6 +55,7 @@ private:
     QPoint controlpanelPosition_ = QPoint(0, 0);
     int volume_ = 100;
     bool retryPlaying_ = true;
+    int retryCount_ = 3;
 
     // Gui Forms
     Ui::PlayerMainWindow ui_;
@@ -63,6 +65,8 @@ private:
     VideoOverlay* overlay_;
     PlaylistManager* playlistManager_;
     ScreensaverInhibitor* screensaverInhibitor_;
+    SettingsManager* settingsManager_;
+
 
     // Event Overrides
     bool eventFilter(QObject *object, QEvent *event) override;
@@ -89,6 +93,7 @@ private:
     void SelectSubtitleTrack(QAction* menuItem);
     void UserActivityDetected();
     void StalledVideoDetected();
+    void ShowSettings();
 
     // Player Functions
     void InitPlayer();

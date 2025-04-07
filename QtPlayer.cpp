@@ -45,6 +45,7 @@ void QtPlayer::InitPlayer()
 void QtPlayer::SetVideoSource(const std::string& videoSource) 
 {
     source_ = videoSource;
+    player_->setSource(QUrl(QSTR("")));
     player_->setSource(QUrl(QSTR(source_)));
     subtitleCount_ = -1;
     subtitleIndex_ = -1;
@@ -171,7 +172,10 @@ void QtPlayer::PlaybackStateChanged(QMediaPlayer::PlaybackState state)
 void QtPlayer::MediaStatusChanged(QMediaPlayer::MediaStatus mediaState) 
 {
     PRINT << "[Player State] -- " << PlayerStateToString(currentState_);
-    PRINT << "[Media Status] -- " << qt_getEnumName(mediaState);
+    QMetaEnum metaEnum = QMetaEnum::fromType<QMediaPlayer::MediaStatus>();
+    QString mediaStateStr = metaEnum.valueToKey(mediaState);
+    PRINT << "[Media Status] -- " << mediaStateStr;
+
 
     if (currentState_ == ENUM_PLAYER_STATE::PAUSED)
         return;
@@ -254,7 +258,7 @@ void QtPlayer::MediaStatusChanged(QMediaPlayer::MediaStatus mediaState)
         if (duration_ > 0)
             currentState_ = ENUM_PLAYER_STATE::ENDED;
         else 
-            currentState_ = ENUM_PLAYER_STATE::STOPPED;
+            currentState_ = ENUM_PLAYER_STATE::STALLED;
     }
     else if (mediaState == QMediaPlayer::MediaStatus::NoMedia)
     {

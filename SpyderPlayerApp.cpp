@@ -89,6 +89,11 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent): QWidget(parent)
     overlay_->SetAppObject(this);
 
     //-----------------------------
+    // Setup Settings Manager
+    //-----------------------------
+    settingsManager_ = new SettingsManager(appData_);
+
+    //-----------------------------
     // Connect signals
     //-----------------------------
     // Double Click Channel
@@ -97,6 +102,8 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent): QWidget(parent)
     connect(ui_.Search_button, &QPushButton::clicked, this, &SpyderPlayerApp::SearchChannels);
 
     connect(ui_.Horizontal_splitter, &QSplitter::splitterMoved, this, &SpyderPlayerApp::OnHSplitterResized);
+
+    connect(ui_.Settings_button, &QPushButton::clicked, this, &SpyderPlayerApp::ShowSettings);
 
     // Connect Controller Buttons 
     connect(controlpanel_.ui_.Play_button, &QPushButton::clicked, this, &SpyderPlayerApp::PlayPausePlayer);
@@ -165,7 +172,8 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent): QWidget(parent)
     connect(inactivityTimer_, &QTimer::timeout, this, &SpyderPlayerApp::InactivityDetected);
 
     stalledVideoTimer_ = new QTimer(this);
-    stalledVideoTimer_->setInterval(5000);
+    stalledVideoTimer_->setInterval(3000);
+    connect(stalledVideoTimer_, &QTimer::timeout, this, &SpyderPlayerApp::StalledVideoDetected);
     
     playbackStatusTimer_ = new QTimer(this);
     int interval = appData_->PlayerType_ == ENUM_PLAYER_TYPE::QTMEDIA ? 3000 : 10000;
@@ -229,21 +237,19 @@ void SpyderPlayerApp::InitializePlayLists()
 
     for(const auto& playlist: appData_->PlayLists_)
     {
-        PRINT << "Loading playlist: " << playlist->name;
-
         splashscreen_.UpdateStatus("Loading " + QSTR(playlist->name) + " ....");
         splashscreen_.UpdateStatus("Loading " + QSTR(playlist->name)  + " ....");
         playlistManager_->LoadPlayList(*playlist);
     }
     // Load Library Playlist
-    splashscreen_.UpdateStatus("Loading Library ....", 1000);
+    splashscreen_.UpdateStatus("Loading Library ....");
     playlistManager_->LoadLibrary();
 
     // Load Favorites last to verify that items in other playlists have been loaded
-    splashscreen_.UpdateStatus("Loading Favorites ....", 1000);
+    splashscreen_.UpdateStatus("Loading Favorites ....");
     playlistManager_->LoadFavorites();
     
-    splashscreen_.UpdateStatus("Initialization Complete", 1000);
+    splashscreen_.UpdateStatus("Initialization Complete", 500);
 
     // Show Main Window
     splashscreen_.hide();
@@ -697,6 +703,7 @@ void SpyderPlayerApp::PlayerDurationChanged(qint64 duration)
 void SpyderPlayerApp::VideoTimePositionChanged(qint64 position)
 {
     videoPosition_ = position;
+    stalledVideoTimer_->start();
 
     if (videoChangesPosition_)
     {
@@ -726,9 +733,11 @@ void SpyderPlayerApp::PlaybackStateChanged(ENUM_PLAYER_STATE state)
         PlayerDurationChanged(player_->GetVideoDuration());
         ChangePlayingUIStates(true);
         screensaverInhibitor_->inhibit();
-        retryPlaying_ = true;
+        //retryPlaying_ = true;
+        retryCount_ = 3;
         ui_.Status_label->setText("");
         playbackStatusTimer_->start();
+        stalledVideoTimer_->start();
     }
     else if (state == ENUM_PLAYER_STATE::LOADING)
     {
@@ -737,20 +746,23 @@ void SpyderPlayerApp::PlaybackStateChanged(ENUM_PLAYER_STATE state)
     }
     else if (state == ENUM_PLAYER_STATE::STALLED && videoDuration_ == 0)
     {
-        if (retryPlaying_)
+        //if (retryPlaying_)
+        if (retryCount_ > 0)
         {
             ShowCursorBusy();
             StalledVideoDetected();
         }
         else
         {
+            stalledVideoTimer_->stop();
             ShowCursorNormal();
             ui_.Status_label->setText("Invalid Media or Source");
-            screensaverInhibitor_->uninhibit();
+            screensaverInhibitor_->uninhibit(); 
         }
     }
     else 
     {
+        stalledVideoTimer_->stop();
         ShowCursorNormal();
         ChangePlayingUIStates(false);
         //stalledVideoTimer_->stop();
@@ -882,18 +894,27 @@ void SpyderPlayerApp::InactivityDetected()
 
 void SpyderPlayerApp::StalledVideoDetected()
 {
-    if (retryPlaying_)
+    //if (retryPlaying_)
+    if (retryCount_ > 0)
     {
-        //stalledVideoTimer_->stop();
-        ui_.Status_label->setText("Stalled Video - Resetting");
+        stalledVideoTimer_->stop();
+        ui_.Status_label->setText("Stalled Video - Resetting(" + QString::number(retryCount_) + ")");
+        PRINT << "Stalled Video - Resetting... Retry Count: " << retryCount_;
         player_->Stop();
-        QThread::msleep(3000);
+        //QThread::msleep(1000);
         player_->RefreshVideoSource();
         player_->Play();
-        retryPlaying_ = false;
+        //retryPlaying_ = false;
+        retryCount_--;
     }
     else
         ChangePlayingUIStates(false);
+}
+
+void SpyderPlayerApp::ShowSettings()
+{
+    PRINT << "ShowSettings Button Pressed";
+    settingsManager_->ShowSettingsMainScreen(true);
 }
 
 //*****************************************************************************************

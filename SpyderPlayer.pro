@@ -33,11 +33,13 @@ win32 {
 
 SOURCES += \
     AppData.cpp \
+    DraggableWidget.cpp \
     Global.cpp \
     M3UPaser.cpp \
     PlaylistManager.cpp \
     QtPlayer.cpp \
     ScreensaverInhibitor.cpp \
+    SettingsManager.cpp \
     SplashScreen.cpp \
     VideoControlPanel.cpp \
     VideoOverlay.cpp \
@@ -47,11 +49,13 @@ SOURCES += \
 
 HEADERS += \
     AppData.h \
+    DraggableWidget.h \
     Global.h \
     M3UParser.h \
     PlaylistManager.h \
     QtPlayer.h \
     ScreensaverInhibitor.h \
+    SettingsManager.h \
     SplashScreen.h \
     SpyderPlayerApp.h \
     VideoControlPanel.h \
