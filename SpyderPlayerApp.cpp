@@ -472,6 +472,7 @@ void SpyderPlayerApp::mousePressEvent(QMouseEvent *event)
         if (!isFullScreen_)
         {
             mouseMoveActive_ = true;
+            activateWindow();
             //overlay_->hide();
         }
     }
@@ -492,6 +493,8 @@ void SpyderPlayerApp::mouseMoveEvent(QMouseEvent *event)
 
         // Update the press position for the next movement calculation
         mousePressPos_ = event->globalPosition().toPoint();
+
+        activateWindow();
     }
 
     QWidget::mouseMoveEvent(event);
@@ -510,9 +513,11 @@ void SpyderPlayerApp::mouseReleaseEvent(QMouseEvent *event)
         overlay_->Resize();
         //overlay_->activateWindow();
     }
-    /*if (isFullScreen_)
-        controlpanelFS_.raise();*/
-    activateWindow();
+    if (isFullScreen_)
+        controlpanelFS_.raise();
+    else
+        activateWindow();
+
     QWidget::mouseReleaseEvent(event);
 }
 
