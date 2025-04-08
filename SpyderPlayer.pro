@@ -32,9 +32,12 @@ win32 {
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    AboutScreen.cpp \
     AppData.cpp \
+    AppSettingsScreen.cpp \
     DraggableWidget.cpp \
     Global.cpp \
+    HotKeyEditorScreen.cpp \
     M3UPaser.cpp \
     PlaylistManager.cpp \
     QtPlayer.cpp \
@@ -48,9 +51,12 @@ SOURCES += \
     SpyderPlayerApp.cpp
 
 HEADERS += \
+    AboutScreen.h \
     AppData.h \
+    AppSettingsScreen.h \
     DraggableWidget.h \
     Global.h \
+    HotKeyEditorScreen.h \
     M3UParser.h \
     PlaylistManager.h \
     QtPlayer.h \

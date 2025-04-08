@@ -4,6 +4,9 @@
 #include "Global.h"
 #include "DraggableWidget.h"
 #include "AppData.h"
+#include "AppSettingsScreen.h"
+#include "AboutScreen.h"
+#include "HotKeyEditorScreen.h"
 
 #include <QWidget>
 #include <QStackedWidget>
@@ -13,9 +16,6 @@
 #include "ui_PlayListSettings.h"
 #include "ui_EntryEditor.h"
 #include "ui_OpenFileSelection.h"
-#include "ui_PlayerSettings.h"
-#include "ui_HotkeySettings.h"
-#include "ui_About.h"
 
 enum ENUM_SETTINGS_VIEWS
 {
@@ -32,7 +32,10 @@ enum ENUM_SETTINGS_VIEWS
     HOTKEYS = 10,
     ABOUT = 11
 };
-    
+
+//*****************************************************************************************
+// Settings Manager Class
+//*****************************************************************************************
 class SettingsManager : public QObject
 {
     Q_OBJECT
@@ -48,19 +51,20 @@ public:
     //void ShowLibraryEntryEditor(bool changesMade = false);
     //void ShowFavoritesEditor(bool changesMade = false);
     //void ShowFavoritesEntryEditor(bool changesMade = false);
-    //void ShowPlayerSettings();
-    //void ShowHotKeySettings();
-    //void ShowAboutScreen();
+    void ShowHotKeySettings();
+    void ShowAppSettings();
+    void ShowAboutScreen();
     void SaveSettings();
 
+    AppData* appData_;
+    bool changesMade_ = false;
 signals:
     void SIGNAL_ReLoadAllPlayLists();
     void SIGNAL_LoadMediaFile(PlayListEntry);
     void SIGNAL_LoadPlayList(PlayListEntry);
 
 private:
-    AppData* appData_;
-    bool changesMade_ = false;
+
     QStackedWidget* settingsStack_;
     DraggableWidget* mainScreen_;
     DraggableWidget* playlistEditor_;
@@ -71,9 +75,9 @@ private:
     DraggableWidget* favoritesEntry_;
     DraggableWidget* openFile_;
     DraggableWidget* openPlayList_;
-    DraggableWidget* playerSettings_;
-    DraggableWidget* hotKeySettings_;
-    DraggableWidget* about_;
+    AppSettings* appSettings_;
+    HotKeySettings* hotKeySettings_;
+    AboutScreen* about_;
 };
 
 
@@ -91,5 +95,7 @@ private:
     SettingsManager* settingsManager_;
 
 };
+
+
 
 #endif // SETTINGSMANAGER_H

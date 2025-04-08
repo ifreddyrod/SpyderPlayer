@@ -22,7 +22,7 @@ public:
     ENUM_SOURCE_TYPE sourceType;
     string source;
 
-    static PlayListEntry* validate_and_create(const QMap<QString, QString>& data);
+    static PlayListEntry* ValidateAndCreate(const QMap<QString, QString>& data);
 };
 
 class AppHotKeys 
@@ -50,7 +50,11 @@ public:
     int playPrevious = Qt::Key::Key_Comma;
     int stopVideo = Qt::Key::Key_S;
 
-    static AppHotKeys validate_and_create(const QMap<QString, int>& data);
+    // New methods to get and modify all hotkeys
+    QMap<QString, int> GetAllHotkeys() const;
+    void UpdateFromMap(const QMap<QString, int>& hotkeys);
+
+    static AppHotKeys ValidateAndCreate(const QMap<QString, int>& data);
 };
 
 class AppData 
@@ -70,8 +74,6 @@ public:
     void CreateDefaultSettings();
 };
 
-extern string GetPlatform();
-extern string GetUserAppDataDirectory(string appName);
 extern void SavePlayListToFile(const QVector<PlayListEntry*>& playlist, const string& filepath);
 
 #endif // APPDATA_H

@@ -1,4 +1,5 @@
 #include "Global.h"
+#include <QMessageBox>
 
 QString Format_ms_to_Time(qint64 ms)
 {   
@@ -17,6 +18,83 @@ QString Format_ms_to_Time(qint64 ms)
         << std::setw(2) << std::setfill('0') << seconds;
         
     return QSTR(ss.str());
+}
+
+int ShowSaveWarningDialog(QString title, QString message)
+{
+    QMessageBox msgBox;
+    msgBox.setText(message);
+    msgBox.setIcon(QMessageBox::Question);
+    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+    msgBox.setDefaultButton(QMessageBox::No);
+    msgBox.setEscapeButton(QMessageBox::Cancel);
+    msgBox.setWindowTitle(title);
+    int ret = msgBox.exec();
+}
+
+/*===================================================================================
+GetPlatform()
+
+    Description: Gets the current platform (Windows, Linux, or macOS) 
+
+    Parameters:
+        None
+
+    Returns: string representing the current platform
+=====================================================================================*/
+string GetPlatform()
+{
+#ifdef _WIN32
+    return "Windows";
+
+#elif __linux__
+    return "Linux";
+
+#elif __APPLE__
+    return "Darwin";
+#endif
+
+    return "";
+}
+
+/*===================================================================================
+GetUserAppDataDirectory()
+
+    Description: Gets the user's app data directory based on the current platform.  
+                 It will create the directory if it doesn't exist.
+
+    Parameters:
+        platform - string representing the platform (Windows, Linux, or macOS)
+        appName - string representing the name of the application
+    
+    Returns: string representing the user's app data directory
+=====================================================================================*/
+string GetUserAppDataDirectory(string appName)
+{
+    string directory = "";
+
+#ifdef _WIN32
+
+    QString appDataPath = QStandardPaths::writableLocation(QStandardPaths::HomeLocation) +"/AppData/Roaming/" + QSTR(appName) ;
+    directory = STR(appDataPath);
+
+#elif __linux__
+
+    directory = filesystem::path(getenv("HOME")) / ".config" / appName;
+#elif __APPLE__
+
+    directory = filesystem::path(getenv("HOME")) / "Library" / "Application Support" / appName;
+#endif
+
+    if (!directory.empty())
+    {
+        // Create the directory if it does not exist
+        if (!filesystem::exists(directory)) 
+        {
+            filesystem::create_directories(directory);
+        }
+    }
+    return directory;
 }
 
 ENUM_PLAYER_TYPE StringToPlayerTypeEnum(const string& playerTypeStr) 
