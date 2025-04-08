@@ -1,4 +1,5 @@
 #include "Global.h"
+#include <QStandardPaths>
 #include <QMessageBox>
 
 QString Format_ms_to_Time(qint64 ms)
@@ -29,7 +30,8 @@ int ShowSaveWarningDialog(QString title, QString message)
     msgBox.setDefaultButton(QMessageBox::No);
     msgBox.setEscapeButton(QMessageBox::Cancel);
     msgBox.setWindowTitle(title);
-    int ret = msgBox.exec();
+
+    return msgBox.exec();
 }
 
 /*===================================================================================
