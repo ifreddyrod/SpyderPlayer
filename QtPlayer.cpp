@@ -2,10 +2,12 @@
 #include <QSignalMapper> 
 #include <QThread> 
 #include <QMediaMetaData>
+#include "SpyderPlayerApp.h"
 
 QtPlayer::QtPlayer(Ui::PlayerMainWindow* mainWindow, QWidget* parent) : VideoPlayer(parent) 
 {
     mainWindow_ = mainWindow;
+    app_ = static_cast<SpyderPlayerApp*>(parent);
     videoPanel_ = new QVideoWidget(mainWindow->VideoView_widget);
 
     subtitleCount_ = -1;
@@ -22,6 +24,10 @@ QtPlayer::QtPlayer(Ui::PlayerMainWindow* mainWindow, QWidget* parent) : VideoPla
     connect(player_, &QMediaPlayer::positionChanged, this, &QtPlayer::PlayerPositionChanged);
     connect(player_, &QMediaPlayer::playbackStateChanged, this, &QtPlayer::PlaybackStateChanged);
     connect(player_, &QMediaPlayer::mediaStatusChanged, this, &QtPlayer::MediaStatusChanged);
+    //connect(player_, &QMediaPlayer::errorOccurred, this, &QtPlayer::HandleError);
+    /*connect(player_, &QMediaPlayer::bufferProgressChanged, this, [this](float progress) {
+        qDebug() << "----> Buffer Progress:" << progress;
+    });*/
 }
 
 QtPlayer::~QtPlayer() 
@@ -34,11 +40,12 @@ QtPlayer::~QtPlayer()
 void QtPlayer::InitPlayer() 
 {
     // Initialize player
-    player_ = new QMediaPlayer;
-    audioOutput_ = new QAudioOutput;
+    player_ = new QMediaPlayer(this);
+    audioOutput_ = new QAudioOutput(this);
     player_->setAudioOutput(audioOutput_);
     player_->setVideoOutput(videoPanel_);
-
+  
+    player_->setProperty("bufferProgress", 0.5); 
     videoWidget_ = static_cast<QWidget*>(videoPanel_);
 }
 
@@ -57,9 +64,24 @@ void QtPlayer::RefreshVideoSource()
     PRINT << "Refreshing Video Source";
     PRINT << "Source: " << source_;
 
+    //player_->stop();
+    /*PRINT << "Waiting for player to stop";
+    while(currentState_ == ENUM_PLAYER_STATE::PLAYING)
+    //while(player_->playbackState() != QMediaPlayer::StoppedState)
+    {
+        //QThread::msleep(250);
+        //Stop();
+    }*/
+
     player_->setSource(QUrl(QSTR("")));
-    QThread::msleep(1000);
-    SetVideoSource(source_);
+    PRINT << "Set Source to Empty";
+    int timedelay = app_->GetRetryTimeDelay();
+    PRINT << "Retry Time Delay: " << timedelay;
+    QThread::msleep(timedelay);
+    //QThread::msleep(1250);
+    PRINT << "Done sleeping";
+    player_->setSource(QUrl(QSTR(source_)));
+    PRINT << "Set Source";
     
 }
 
@@ -177,8 +199,8 @@ void QtPlayer::MediaStatusChanged(QMediaPlayer::MediaStatus mediaState)
     PRINT << "[Media Status] -- " << mediaStateStr;
 
 
-    if (currentState_ == ENUM_PLAYER_STATE::PAUSED)
-        return;
+    if (currentState_ == ENUM_PLAYER_STATE::PAUSED) // || currentState_ == ENUM_PLAYER_STATE::STOPPED)
+        return; //return UpdatePlayerState(currentState_);
     
     if (mediaState == QMediaPlayer::MediaStatus::BufferingMedia && duration_ == 0)
         currentState_ = ENUM_PLAYER_STATE::LOADING;
@@ -243,10 +265,10 @@ void QtPlayer::MediaStatusChanged(QMediaPlayer::MediaStatus mediaState)
 
         PRINT << "Highest resolution index: " << highest_resolution_index;
         // Select the highest resolution track
-        if (highest_resolution_index != -1)
+        if (highest_resolution_index != -1 and currentState_ == ENUM_PLAYER_STATE::PLAYING)
             player_->setActiveVideoTrack(highest_resolution_index);
 
-        /*if (currentState_ == ENUM_PLAYER_STATE::PLAYING)
+        /*if (currentState_ == ENUM_PLAYER_STATE::STOPPED)
             currentState_ = ENUM_PLAYER_STATE::PLAYING;*/
     }
     else if (mediaState == QMediaPlayer::MediaStatus::InvalidMedia)
@@ -311,6 +333,10 @@ QString QtPlayer::GetVideoResolution()
     return res_str;
 }
 
+void QtPlayer::HandleError(QMediaPlayer::Error error, const QString &errorString)
+{
+    PRINT << "!!!!---> QtPlayer Error: " << error << errorString;
+}
 
 void QtPlayer::list_video_tracks() 
 {

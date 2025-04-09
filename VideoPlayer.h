@@ -12,7 +12,6 @@
 //#include <vlc/vlc.h>
 #include "Global.h"
 
-
 // VideoPlayer class
 class VideoPlayer : public QWidget 
 {

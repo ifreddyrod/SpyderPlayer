@@ -7,6 +7,7 @@
 #include "AppSettingsScreen.h"
 #include "AboutScreen.h"
 #include "HotKeyEditorScreen.h"
+#include "OpenMediaScreen.h"
 
 #include <QWidget>
 #include <QStackedWidget>
@@ -15,7 +16,7 @@
 #include "ui_Settings.h"
 #include "ui_PlayListSettings.h"
 #include "ui_EntryEditor.h"
-#include "ui_OpenFileSelection.h"
+
 
 enum ENUM_SETTINGS_VIEWS
 {
@@ -51,11 +52,16 @@ public:
     //void ShowLibraryEntryEditor(bool changesMade = false);
     //void ShowFavoritesEditor(bool changesMade = false);
     //void ShowFavoritesEntryEditor(bool changesMade = false);
+    void ShowOpenPlayListScreen();
+    void LoadPlayList(PlayListEntry entry);
+    void ShowOpenFileScreen();
+    void LoadMediaFile(PlayListEntry entry);
     void ShowHotKeySettings();
     void ShowAppSettings();
     void ShowAboutScreen();
     void SaveSettings();
-
+    bool IsVisible() { return settingsStack_->isVisible(); }
+    
     AppData* appData_;
     bool changesMade_ = false;
 signals:
@@ -73,8 +79,8 @@ private:
     DraggableWidget* playlistEntry_;
     DraggableWidget* libraryEntry_;
     DraggableWidget* favoritesEntry_;
-    DraggableWidget* openFile_;
-    DraggableWidget* openPlayList_;
+    OpenMedia* openFile_;
+    OpenMedia* openPlayList_;
     AppSettings* appSettings_;
     HotKeySettings* hotKeySettings_;
     AboutScreen* about_;

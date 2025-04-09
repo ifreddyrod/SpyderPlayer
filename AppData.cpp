@@ -122,6 +122,8 @@ void AppData::CreateDefaultSettings()
     // Set default values
     PlayerType_ = ENUM_PLAYER_TYPE::QTMEDIA; 
     PlayListsPath_ = ""; // Set default path as needed
+    RetryCount_ = 3;
+    RetryDelay_ = 1000;
     
     // HotKeys_ already has default values from its constructor
     
@@ -133,6 +135,8 @@ void AppData::CreateDefaultSettings()
 
 void AppData::Load(const string& filePath) 
 {
+    bool needsSaving = false;  // Flag to determine if we need to save after loading
+    
     try {
         // Clear existing data
         for (auto& entry : Library_) delete entry;
@@ -148,6 +152,7 @@ void AppData::Load(const string& filePath)
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
             PRINT << "Error opening file:" << QString::fromStdString(filePath);
             CreateDefaultSettings(); // Fall back to defaults
+            needsSaving = true;
             return;
         }
 
@@ -159,32 +164,121 @@ void AppData::Load(const string& filePath)
         if (doc.isNull() || !doc.isObject()) {
             PRINT << "Invalid JSON format";
             CreateDefaultSettings();
+            needsSaving = true;
             return;
         }
         
         QJsonObject root = doc.object();
 
-        // Parse basic settings
-        PlayerType_ = StringToPlayerTypeEnum(root["PlayerType"].toString().toStdString());
-        PlayListsPath_ = root["PlayListPath"].toString().toStdString();
-
+        // Parse basic settings with default fallbacks
+        if (root.contains("PlayerType")) {
+            PlayerType_ = StringToPlayerTypeEnum(root["PlayerType"].toString().toStdString());
+        } else {
+            PlayerType_ = ENUM_PLAYER_TYPE::QTMEDIA;
+            root["PlayerType"] = QString::fromStdString(PlayerTypeToString(PlayerType_));
+            needsSaving = true;
+            PRINT << "Missing PlayerType, using default";
+        }
+        
+        if (root.contains("PlayListPath")) {
+            PlayListsPath_ = root["PlayListPath"].toString().toStdString();
+        } else {
+            PlayListsPath_ = "";
+            root["PlayListPath"] = QString::fromStdString(PlayListsPath_);
+            needsSaving = true;
+            PRINT << "Missing PlayListPath, using default";
+        }
+        
+        if (root.contains("RetryCount")) {
+            RetryCount_ = root["RetryCount"].toInt();
+        } else {
+            RetryCount_ = 3;
+            root["RetryCount"] = RetryCount_;
+            needsSaving = true;
+            PRINT << "Missing RetryCount, using default";
+        }
+        
+        if (root.contains("RetryDelay")) {
+            RetryDelay_ = root["RetryDelay"].toInt();
+        } else {
+            RetryDelay_ = 1000;
+            root["RetryDelay"] = RetryDelay_;
+            needsSaving = true;
+            PRINT << "Missing RetryDelay, using default";
+        }
+        
+        PRINT << "Retry Count: " << RetryCount_;
+        PRINT << "Retry Delay: " << RetryDelay_;
+        
         // Parse hotkeys
         QMap<QString, int> hotkeysMap;
-        QJsonObject hotkeysJson = root["HotKeys"].toObject();
-        for (auto it = hotkeysJson.begin(); it != hotkeysJson.end(); ++it) {
-            if (it.value().isDouble()) {
-                hotkeysMap[it.key()] = it.value().toInt();
-            } else {
-                PRINT << "Warning: Hotkey" << it.key() << "is not an integer value";
+        
+        // Create a default hotkeys instance to get default values
+        AppHotKeys defaultHotKeys;
+        QMap<QString, int> defaultHotkeysMap = defaultHotKeys.GetAllHotkeys();
+        
+        if (root.contains("HotKeys") && root["HotKeys"].isObject()) {
+            QJsonObject hotkeysJson = root["HotKeys"].toObject();
+            
+            // Merge with defaults - for each expected hotkey
+            for (auto it = defaultHotkeysMap.begin(); it != defaultHotkeysMap.end(); ++it) {
+                if (hotkeysJson.contains(it.key()) && hotkeysJson[it.key()].isDouble()) {
+                    hotkeysMap[it.key()] = hotkeysJson[it.key()].toInt();
+                } else {
+                    // Use default and mark for saving
+                    hotkeysMap[it.key()] = it.value();
+                    hotkeysJson[it.key()] = it.value();
+                    needsSaving = true;
+                    PRINT << "Missing or invalid hotkey:" << it.key() << ", using default";
+                }
             }
+            
+            // Update the root object
+            root["HotKeys"] = hotkeysJson;
+        } else {
+            // No hotkeys section at all
+            hotkeysMap = defaultHotkeysMap;
+            QJsonObject hotkeysJson;
+            for (auto it = hotkeysMap.begin(); it != hotkeysMap.end(); ++it) {
+                hotkeysJson[it.key()] = it.value();
+            }
+            root["HotKeys"] = hotkeysJson;
+            needsSaving = true;
+            PRINT << "Missing HotKeys section, using defaults";
         }
+        
         HotKeys_ = AppHotKeys::ValidateAndCreate(hotkeysMap);
 
-        // Parse Library (if exists)
+        // Initialize empty arrays if missing
+        if (!root.contains("Library") || !root["Library"].isArray()) {
+            root["Library"] = QJsonArray();
+            needsSaving = true;
+            PRINT << "Missing Library section, creating empty array";
+        }
+        
+        if (!root.contains("Favorites") || !root["Favorites"].isArray()) {
+            root["Favorites"] = QJsonArray();
+            needsSaving = true;
+            PRINT << "Missing Favorites section, creating empty array";
+        }
+        
+        if (!root.contains("PlayLists") || !root["PlayLists"].isArray()) {
+            root["PlayLists"] = QJsonArray();
+            needsSaving = true;
+            PRINT << "Missing PlayLists section, creating empty array";
+        }
+
+        // Parse Library
         QJsonArray libraryJson = root["Library"].toArray();
         for (int i = 0; i < libraryJson.size(); ++i) {
             QJsonObject entryJson = libraryJson[i].toObject();
             QMap<QString, QString> entryMap;
+            
+            // Skip entries missing required fields
+            if (!entryJson.contains("name") || !entryJson.contains("sourceType") || !entryJson.contains("source")) {
+                PRINT << "Skipping library entry with missing required fields";
+                continue;
+            }
             
             entryMap["name"] = entryJson["name"].toString();
             if (entryJson.contains("parentName")) {
@@ -205,6 +299,12 @@ void AppData::Load(const string& filePath)
             QJsonObject entryJson = favoritesJson[i].toObject();
             QMap<QString, QString> entryMap;
             
+            // Skip entries missing required fields
+            if (!entryJson.contains("name") || !entryJson.contains("sourceType") || !entryJson.contains("source")) {
+                PRINT << "Skipping favorites entry with missing required fields";
+                continue;
+            }
+            
             entryMap["name"] = entryJson["name"].toString();
             if (entryJson.contains("parentName")) {
                 entryMap["parentName"] = entryJson["parentName"].toString();
@@ -224,6 +324,12 @@ void AppData::Load(const string& filePath)
             QJsonObject entryJson = playlistsJson[i].toObject();
             QMap<QString, QString> entryMap;
             
+            // Skip entries missing required fields
+            if (!entryJson.contains("name") || !entryJson.contains("sourceType") || !entryJson.contains("source")) {
+                PRINT << "Skipping playlist entry with missing required fields";
+                continue;
+            }
+            
             entryMap["name"] = entryJson["name"].toString();
             if (entryJson.contains("parentName")) {
                 entryMap["parentName"] = entryJson["parentName"].toString();
@@ -236,14 +342,34 @@ void AppData::Load(const string& filePath)
                 PlayLists_.push_back(entry);
             }
         }
+        
+        // If any defaults were applied, save the updated JSON
+        if (needsSaving) {
+            QFile saveFile(QString::fromStdString(filePath));
+            if (saveFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+                QJsonDocument updatedDoc(root);
+                saveFile.write(updatedDoc.toJson(QJsonDocument::Indented));
+                saveFile.close();
+                PRINT << "Saved updated configuration with default values";
+            } else {
+                PRINT << "Failed to save updated configuration with defaults";
+            }
+        }
     }
     catch (const std::exception& e) {
         PRINT << "Exception during Load:" << e.what();
         CreateDefaultSettings(); // Fall back to defaults
+        needsSaving = true;
     }
     catch (...) {
         PRINT << "Unknown exception during Load";
         CreateDefaultSettings(); // Fall back to defaults
+        needsSaving = true;
+    }
+    
+    // Save if we created default settings
+    if (needsSaving) {
+        Save();
     }
 }
 
@@ -264,6 +390,8 @@ void AppData::Save()
         // Add basic settings
         root["PlayerType"] = QString::fromStdString(PlayerTypeToString(PlayerType_));
         root["PlayListPath"] = QString::fromStdString(PlayListsPath_);
+        root["RetryCount"] = RetryCount_;
+        root["RetryDelay"] = RetryDelay_;
         
         // Add hotkeys - use getAllHotkeys() for consistency
         QJsonObject hotkeysJson;

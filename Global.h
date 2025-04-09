@@ -8,6 +8,10 @@
 #include <QDebug>
 #include <map>
 #include <filesystem>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QStandardPaths>
+#include <QMessageBox>
 
 using namespace std;
 

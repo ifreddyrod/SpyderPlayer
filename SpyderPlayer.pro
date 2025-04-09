@@ -39,6 +39,7 @@ SOURCES += \
     Global.cpp \
     HotKeyEditorScreen.cpp \
     M3UPaser.cpp \
+    OpenMediaScreen.cpp \
     PlaylistManager.cpp \
     QtPlayer.cpp \
     ScreensaverInhibitor.cpp \
@@ -58,6 +59,7 @@ HEADERS += \
     Global.h \
     HotKeyEditorScreen.h \
     M3UParser.h \
+    OpenMediaScreen.h \
     PlaylistManager.h \
     QtPlayer.h \
     ScreensaverInhibitor.h \

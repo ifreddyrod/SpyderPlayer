@@ -17,10 +17,13 @@ AppSettings::AppSettings(SettingsManager* settingsManager)
     connect(ui_.PlaylistPath_textedit, &QTextEdit::textChanged, this, &AppSettings::PathChanged);
     connect(ui_.OpenPath_button, &QPushButton::clicked, this, &AppSettings::OpenPathButtonClicked);
     connect(ui_.Save_button, &QPushButton::clicked, this, &AppSettings::SaveButtonClicked);
+    connect(ui_.RetryCount_box, &QSpinBox::valueChanged, this, &AppSettings::RetryCountChanged);
+    connect(ui_.RetryTimeDelay_box, &QSpinBox::valueChanged, this, &AppSettings::RetryDelayChanged);
 }
 
 void AppSettings::ShowAppSettings()
 {
+    blockSignals(true);
     string playerType = PlayerTypeToString(settingsManager_->appData_->PlayerType_);
     string playListsPath = settingsManager_->appData_->PlayListsPath_;
 
@@ -29,7 +32,11 @@ void AppSettings::ShowAppSettings()
 
     ui_.PlaylistPath_textedit->setText(QSTR(playListsPath));
     ui_.PlayerType_combobox->setCurrentText(QSTR(playerType));
+    ui_.RetryCount_box->setValue(settingsManager_->appData_->RetryCount_);
+    ui_.RetryTimeDelay_box->setValue(settingsManager_->appData_->RetryDelay_);
+
     modified_ = false;
+    blockSignals(false);
 }
 
 void AppSettings::BackButtonClicked()
@@ -82,12 +89,24 @@ void AppSettings::OpenPathButtonClicked()
     }
 }
 
+void AppSettings::RetryCountChanged()
+{
+    modified_ = true;
+}
+
+void AppSettings::RetryDelayChanged()
+{
+    modified_ = true;
+}
+
 void AppSettings::SaveButtonClicked()
 {
     if (modified_)
     {
         settingsManager_->appData_->PlayListsPath_ = ui_.PlaylistPath_textedit->toPlainText().toStdString();
         settingsManager_->appData_->PlayerType_ = StringToPlayerTypeEnum(ui_.PlayerType_combobox->currentText().toStdString());
+        settingsManager_->appData_->RetryCount_ = ui_.RetryCount_box->value();
+        settingsManager_->appData_->RetryDelay_ = ui_.RetryTimeDelay_box->value();
         settingsManager_->changesMade_ = true;
         settingsManager_->SaveSettings();
         settingsManager_->ShowSettingsMainScreen();

@@ -472,7 +472,7 @@ void SpyderPlayerApp::mousePressEvent(QMouseEvent *event)
         if (!isFullScreen_)
         {
             mouseMoveActive_ = true;
-            activateWindow();
+            setFocus();
             //overlay_->hide();
         }
     }
@@ -494,7 +494,7 @@ void SpyderPlayerApp::mouseMoveEvent(QMouseEvent *event)
         // Update the press position for the next movement calculation
         mousePressPos_ = event->globalPosition().toPoint();
 
-        activateWindow();
+        setFocus();
     }
 
     QWidget::mouseMoveEvent(event);
@@ -527,7 +527,7 @@ void SpyderPlayerApp::resizeEvent(QResizeEvent *event)
     UserActivityDetected();
     overlay_->Resize();
     //overlay_->activateWindow();
-    activateWindow();
+    setFocus();
 
     QWidget::resizeEvent(event);
 }
@@ -740,7 +740,7 @@ void SpyderPlayerApp::PlaybackStateChanged(ENUM_PLAYER_STATE state)
         ChangePlayingUIStates(true);
         screensaverInhibitor_->inhibit();
         //retryPlaying_ = true;
-        retryCount_ = 3;
+        retryCount_ = appData_->RetryCount_;
         ui_.Status_label->setText("");
         playbackStatusTimer_->start();
         stalledVideoTimer_->start();
@@ -873,7 +873,7 @@ void SpyderPlayerApp::InactivityDetected()
         controlpanelFS_.hide();
         overlay_->activateWindow();
 
-        if (!isPlaylistVisible_ /*&& !settingsManager_.settingStack.isVisible()*/)
+        if (!isPlaylistVisible_ && !settingsManager_->IsVisible())
             ShowCursorBlank();
     }
     /*if (isFullScreen_ && !controlpanelFS_.hasFocus() && !subtitlesMenu_->isVisible())
@@ -900,17 +900,15 @@ void SpyderPlayerApp::InactivityDetected()
 
 void SpyderPlayerApp::StalledVideoDetected()
 {
-    //if (retryPlaying_)
     if (retryCount_ > 0)
     {
+        player_->Stop();
         stalledVideoTimer_->stop();
         ui_.Status_label->setText("Stalled Video - Resetting(" + QString::number(retryCount_) + ")");
         PRINT << "Stalled Video - Resetting... Retry Count: " << retryCount_;
-        player_->Stop();
-        //QThread::msleep(1000);
+
         player_->RefreshVideoSource();
         player_->Play();
-        //retryPlaying_ = false;
         retryCount_--;
     }
     else
@@ -1174,4 +1172,9 @@ QString SpyderPlayerApp::GetWindowStateString()
         return "Fullscreen";
     else
         return "Normal";
+}
+
+int SpyderPlayerApp::GetRetryTimeDelay()
+{
+    return appData_->RetryDelay_;
 }

@@ -21,12 +21,17 @@ SettingsManager::SettingsManager(AppData* appData)
     about_ = new AboutScreen(this);
     appSettings_ = new AppSettings(this);
     hotKeySettings_ = new HotKeySettings(this);
+    openFile_ = new OpenMedia(this);
+    openPlayList_ = new OpenMedia(this, true);
 
     // Add Screens to settings stack
     settingsStack_->addWidget(mainScreen_);
     settingsStack_->addWidget(about_);
     settingsStack_->addWidget(appSettings_);
     settingsStack_->addWidget(hotKeySettings_);
+    settingsStack_->addWidget(openFile_);
+    settingsStack_->addWidget(openPlayList_);
+    
 
     // Setup Stack 
     settingsStack_->setFixedWidth(780);
@@ -42,6 +47,8 @@ SettingsManager::~SettingsManager()
     delete appSettings_;
     delete hotKeySettings_;
     delete settingsStack_;
+    delete openFile_;
+    delete openPlayList_;
 }
 
 
@@ -84,6 +91,34 @@ void SettingsManager::ShowHotKeySettings()
     settingsStack_->setCurrentIndex(ENUM_SETTINGS_VIEWS::MAIN + 3);
 }
 
+void SettingsManager::ShowOpenFileScreen()
+{
+    openFile_->ShowOpenMediaScreen();
+    //settingsStack_->setCurrentIndex(ENUM_SETTINGS_VIEWS::OPENFILE);
+    settingsStack_->setCurrentIndex(ENUM_SETTINGS_VIEWS::MAIN + 4);
+}
+
+void SettingsManager::LoadMediaFile(PlayListEntry entry)
+{
+    settingsStack_->setCurrentIndex(ENUM_SETTINGS_VIEWS::MAIN);
+    emit SIGNAL_LoadMediaFile(entry);
+    settingsStack_->hide();
+}
+
+void SettingsManager::ShowOpenPlayListScreen()
+{
+    openPlayList_->ShowOpenMediaScreen();
+    //settingsStack_->setCurrentIndex(ENUM_SETTINGS_VIEWS::OPENPLAYLIST);
+    settingsStack_->setCurrentIndex(ENUM_SETTINGS_VIEWS::MAIN + 5);
+}
+
+void SettingsManager::LoadPlayList(PlayListEntry entry)
+{
+    settingsStack_->setCurrentIndex(ENUM_SETTINGS_VIEWS::MAIN);
+    emit SIGNAL_LoadPlayList(entry);    
+    settingsStack_->hide();
+}
+
 void SettingsManager::SaveSettings()
 {
     if (changesMade_)
@@ -108,6 +143,8 @@ SettingsMain::SettingsMain(SettingsManager *settingsManager)
     connect(ui_.About_button, &QPushButton::clicked, settingsManager_, &SettingsManager::ShowAboutScreen);
     connect(ui_.PlayerSettings_button, &QPushButton::clicked, settingsManager_, &SettingsManager::ShowAppSettings);
     connect(ui_.HotKeys_button, &QPushButton::clicked, settingsManager_, &SettingsManager::ShowHotKeySettings);
+    connect(ui_.OpenMediaFile_button, &QPushButton::clicked, settingsManager_, &SettingsManager::ShowOpenFileScreen);
+    connect(ui_.OpenPlayList_button, &QPushButton::clicked, settingsManager_, &SettingsManager::ShowOpenPlayListScreen);
 
     //connect(ui_.PlayList_button, &QPushButton::clicked, settingsManager_, &SettingsManager::ShowSettingsMainScreen);
 }

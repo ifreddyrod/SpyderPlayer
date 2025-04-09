@@ -14,7 +14,9 @@
 #include <QSignalMapper>
 #include <QList>
 #include "ui_PlayerMainWindow.h"
-//#include <vlc/vlc.h>
+
+
+class SpyderPlayerApp;
 
 class QtPlayer : public VideoPlayer 
 {
@@ -50,8 +52,10 @@ public:
     void OnChangingPosition(bool isPlaying);
     void OnChangedPosition(bool isPlaying);
     void ChangeUpdateTimerInterval(bool isFullScreen);
+    void HandleError(QMediaPlayer::Error error, const QString &errorString); 
 
 private:
+    SpyderPlayerApp* app_;
     Ui::PlayerMainWindow* mainWindow_;
     QVideoWidget* videoPanel_;
     QMediaPlayer* player_;

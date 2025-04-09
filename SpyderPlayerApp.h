@@ -33,6 +33,7 @@ public:
     int GetVideoPanelWidth();
     int GetVideoPanelHeight();
     QWidget* GetVideoPanelWidget();
+    int GetRetryTimeDelay();
 
 private:
     QString version_ = "";

@@ -62,6 +62,8 @@ class AppData
 public:
     ENUM_PLAYER_TYPE PlayerType_;
     string PlayListsPath_;
+    int RetryCount_;
+    int RetryDelay_;
     AppHotKeys HotKeys_;
     QVector<PlayListEntry*> Library_;
     QVector<PlayListEntry*> Favorites_;

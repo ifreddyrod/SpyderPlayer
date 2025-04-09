@@ -1,6 +1,4 @@
 #include "Global.h"
-#include <QStandardPaths>
-#include <QMessageBox>
 
 QString Format_ms_to_Time(qint64 ms)
 {   

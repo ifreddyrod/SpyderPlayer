@@ -23,6 +23,8 @@ private:
     void PlayerTypeChanged();
     void PathChanged();
     void OpenPathButtonClicked();
+    void RetryCountChanged();
+    void RetryDelayChanged();
     void SaveButtonClicked();
 
     Ui::PlayerSettings ui_;
