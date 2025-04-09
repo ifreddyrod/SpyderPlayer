@@ -457,9 +457,9 @@ void SpyderPlayerApp::moveEvent(QMoveEvent *event)
     if (overlay_)
         overlay_->Resize();
 
-    UserActivityDetected();
+    //UserActivityDetected();
     QWidget::moveEvent(event);
-    overlay_->activateWindow();
+    //overlay_->activateWindow();
 }
 
 void SpyderPlayerApp::mousePressEvent(QMouseEvent *event)
@@ -472,8 +472,8 @@ void SpyderPlayerApp::mousePressEvent(QMouseEvent *event)
         if (!isFullScreen_)
         {
             mouseMoveActive_ = true;
-            setFocus();
-            //overlay_->hide();
+            //controlpanel_.setFocus();
+            overlay_->hide();
         }
     }
     QWidget::mousePressEvent(event);
@@ -494,7 +494,8 @@ void SpyderPlayerApp::mouseMoveEvent(QMouseEvent *event)
         // Update the press position for the next movement calculation
         mousePressPos_ = event->globalPosition().toPoint();
 
-        setFocus();
+        //if(!isFullScreen_)
+            //controlpanel_.activateWindow();
     }
 
     QWidget::mouseMoveEvent(event);
@@ -509,7 +510,7 @@ void SpyderPlayerApp::mouseReleaseEvent(QMouseEvent *event)
         // Reset when the left mouse button is released
         mousePressPos_ = QPoint();
         mouseMoveActive_ = false;
-        //overlay_->show();
+        overlay_->show();
         overlay_->Resize();
         //overlay_->activateWindow();
     }
