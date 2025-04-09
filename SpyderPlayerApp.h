@@ -11,7 +11,7 @@
 #include "AppData.h"
 #include "SplashScreen.h"
 #include "VideoControlPanel.h"
-#include "VideoOverlay.h"
+//###include "VideoOverlay.h"
 #include "PlaylistManager.h"
 #include "VideoPlayer.h"
 #include "QtPlayer.h"
@@ -63,7 +63,7 @@ private:
     SplashScreen splashscreen_;
     VideoControlPanel controlpanel_;
     VideoControlPanel controlpanelFS_;
-    VideoOverlay* overlay_;
+    //##VideoOverlay* overlay_;
     PlaylistManager* playlistManager_;
     ScreensaverInhibitor* screensaverInhibitor_;
     SettingsManager* settingsManager_;

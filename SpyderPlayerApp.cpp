@@ -85,8 +85,8 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent): QWidget(parent)
     //-----------------------------
     // Setup Video Overlay
     //-----------------------------
-    overlay_ = new VideoOverlay(this);
-    overlay_->SetAppObject(this);
+    //##overlay_ = new VideoOverlay(this);
+    //##overlay_->SetAppObject(this);
 
     //-----------------------------
     // Setup Settings Manager
@@ -254,12 +254,12 @@ void SpyderPlayerApp::InitializePlayLists()
     // Show Main Window
     splashscreen_.hide();
     this->setWindowOpacity(1.0);
-    overlay_->show();
+    //##overlay_->show();
     OnHSplitterResized(0, 0);
-    overlay_->Resize();
-    overlay_->activateWindow();
-    if(!isFullScreen_)
-        overlay_->hide();
+    //##overlay_->Resize();
+    //##overlay_->activateWindow();
+    //##if(!isFullScreen_)
+        //##overlay_->hide();
     //PRINT << "Initial Windowstate = " << windowState();
 }
 
@@ -456,8 +456,8 @@ bool SpyderPlayerApp::eventFilter(QObject *object, QEvent *event)
 
 void SpyderPlayerApp::moveEvent(QMoveEvent *event)
 {
-    if (overlay_)
-        overlay_->Resize();
+    //##if (overlay_)
+        //##overlay_->Resize();
 
     //UserActivityDetected();
     QWidget::moveEvent(event);
@@ -465,7 +465,7 @@ void SpyderPlayerApp::moveEvent(QMoveEvent *event)
 }
 
 void SpyderPlayerApp::mousePressEvent(QMouseEvent *event)
-{   //PRINT << "----> Mouse Press";
+{   
     UserActivityDetected();
     if (event->button() == Qt::MouseButton::LeftButton)
     {
@@ -482,7 +482,7 @@ void SpyderPlayerApp::mousePressEvent(QMouseEvent *event)
 }
 
 void SpyderPlayerApp::mouseMoveEvent(QMouseEvent *event)
-{   //PRINT << "----> Mouse Move";
+{   
     UserActivityDetected();
 
     if (mouseMoveActive_ && mousePressPos_.isNull() == false)
@@ -504,7 +504,7 @@ void SpyderPlayerApp::mouseMoveEvent(QMouseEvent *event)
 }
 
 void SpyderPlayerApp::mouseReleaseEvent(QMouseEvent *event)
-{   //PRINT << "----> Mouse Release";
+{   
     UserActivityDetected();
 
     if(event->button() == Qt::MouseButton::LeftButton)
@@ -518,8 +518,8 @@ void SpyderPlayerApp::mouseReleaseEvent(QMouseEvent *event)
     }
     if (isFullScreen_)
     {   
-        overlay_->show();
-        overlay_->Resize();
+        //##overlay_->show();
+        //##overlay_->Resize();
         controlpanelFS_.raise();
     }
     else
@@ -532,7 +532,7 @@ void SpyderPlayerApp::mouseReleaseEvent(QMouseEvent *event)
 void SpyderPlayerApp::resizeEvent(QResizeEvent *event)
 {
     UserActivityDetected();
-    overlay_->Resize();
+    //##overlay_->Resize();
     //overlay_->activateWindow();
     setFocus();
 
@@ -557,9 +557,9 @@ void SpyderPlayerApp::PlayerNormalScreen()
     isFullScreen_ = false;
     ShowControlPanel();
     //overlay_->show();
-    overlay_->hide();
-    overlay_->Resize();
-    overlay_->setFocus();
+    //##overlay_->hide();
+    //##overlay_->Resize();
+    //##overlay_->setFocus();
     //player_->GetVideoPanel()->activateWindow();
     //playlistManager_->setFocus();
     //overlay_->activateWindow();
@@ -577,9 +577,9 @@ void SpyderPlayerApp::PlayerFullScreen()
     player_->ChangeUpdateTimerInterval(true);
     ui_.Horizontal_splitter->setHandleWidth(1);
     //ui_.Vertical_splitter->setFocus();
-    overlay_->show();
-    overlay_->Resize();
-    overlay_->setFocus();
+    //##overlay_->show();
+    //##overlay_->Resize();
+    //##overlay_->setFocus();
     ShowControlPanel();
     //player_->GetVideoPanel()->setFocus();
 
@@ -596,7 +596,7 @@ void SpyderPlayerApp::PlayerMinimized()
 {
     setWindowState(Qt::WindowState::WindowMinimized);
     player_->ChangeUpdateTimerInterval(true);
-    overlay_->hide();
+    //##overlay_->hide();
 }
 
 void SpyderPlayerApp::ShowControlPanel()
@@ -645,8 +645,8 @@ void SpyderPlayerApp::TogglePlaylistView()
         ui_.Horizontal_splitter->setSizes({0, 1000});  // Hide left side
         ui_.Horizontal_splitter->setHandleWidth(1);
         isPlaylistVisible_ = false;
-        overlay_->Resize(true);
-        overlay_->setFocus();
+        //##overlay_->Resize(true);
+        //##overlay_->setFocus();
     }
     else
     {
@@ -654,13 +654,13 @@ void SpyderPlayerApp::TogglePlaylistView()
         ui_.Horizontal_splitter->setSizes({400, 1000});  // Show left side
         ui_.Horizontal_splitter->setHandleWidth(4);
         isPlaylistVisible_ = true;
-        overlay_->Resize();
-        overlay_->setFocus();
+        //##overlay_->Resize();
+        //##overlay_->setFocus();
     }
 
     if (isFullScreen_)
     {
-        overlay_->Resize();
+        //##overlay_->Resize();
         ShowControlPanel();
     }
 }
@@ -805,7 +805,7 @@ void SpyderPlayerApp::PlayerErrorOccured(const std::string& error)
 
 void SpyderPlayerApp::OnHSplitterResized(int pos, int index)
 {
-    overlay_->Resize();
+    //##overlay_->Resize();
     if (isFullScreen_)
         ShowControlPanel();
 }
@@ -879,7 +879,7 @@ void SpyderPlayerApp::InactivityDetected()
     if (isFullScreen_ and !controlpanelFS_.hasFocus() and !subtitlesMenu_->isVisible() and !isPlaylistVisible_)
     {
         controlpanelFS_.hide();
-        overlay_->activateWindow();
+        //##overlay_->activateWindow();
 
         if (!isPlaylistVisible_ && !settingsManager_->IsVisible())
             ShowCursorBlank();
@@ -1122,8 +1122,8 @@ void SpyderPlayerApp::OnPositionSliderReleased()
 
     if (isFullScreen_)
     {
-        overlay_->activateWindow();
-        overlay_->setFocus();
+        //##overlay_->activateWindow();
+        //##overlay_->setFocus();
         inactivityTimer_->start();
     }
 }

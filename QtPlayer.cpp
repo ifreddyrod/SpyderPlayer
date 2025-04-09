@@ -45,7 +45,7 @@ void QtPlayer::InitPlayer()
     player_->setAudioOutput(audioOutput_);
     player_->setVideoOutput(videoPanel_);
   
-    player_->setProperty("bufferProgress", 0.5); 
+    //player_->setProperty("bufferProgress", 0.5); 
     videoWidget_ = static_cast<QWidget*>(videoPanel_);
 }
 
