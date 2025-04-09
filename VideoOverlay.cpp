@@ -10,11 +10,11 @@ VideoOverlay::VideoOverlay(QWidget *parent) : QWidget(parent)
     setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
     setAttribute(Qt::WA_TranslucentBackground, true);
 
-    // Debug  - This will make the overlay much more visible
-    //overlayLabel_->setStyleSheet("color: white; background-color: rgba(255, 255, 255, 100); font:30pt; border: none;"); //rgba(0, 0, 0, 2)
+    // Debug  - This will make the overlay much more visible // 100
+    overlayLabel_->setStyleSheet("color: white; background-color: rgba(255, 255, 255, 0); font:30pt; border: none;"); //rgba(0, 0, 0, 2)
 
     // Normal
-    overlayLabel_->setStyleSheet("color: white; background-color: rgba(0, 0, 0, 2); font:30pt; border: none;"); //rgba(0, 0, 0, 2)
+    //overlayLabel_->setStyleSheet("color: white; background-color: rgba(0, 0, 0, 2); font:30pt; border: none;"); //rgba(0, 0, 0, 2)
 
     QString overlayTxt = "";
     ui_.Overlay_label->setText(overlayTxt);

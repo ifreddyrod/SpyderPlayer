@@ -258,6 +258,8 @@ void SpyderPlayerApp::InitializePlayLists()
     OnHSplitterResized(0, 0);
     overlay_->Resize();
     overlay_->activateWindow();
+    if(!isFullScreen_)
+        overlay_->hide();
     //PRINT << "Initial Windowstate = " << windowState();
 }
 
@@ -463,7 +465,7 @@ void SpyderPlayerApp::moveEvent(QMoveEvent *event)
 }
 
 void SpyderPlayerApp::mousePressEvent(QMouseEvent *event)
-{
+{   //PRINT << "----> Mouse Press";
     UserActivityDetected();
     if (event->button() == Qt::MouseButton::LeftButton)
     {
@@ -473,14 +475,14 @@ void SpyderPlayerApp::mousePressEvent(QMouseEvent *event)
         {
             mouseMoveActive_ = true;
             //controlpanel_.setFocus();
-            overlay_->hide();
+            //overlay_->hide();
         }
     }
     QWidget::mousePressEvent(event);
 }
 
 void SpyderPlayerApp::mouseMoveEvent(QMouseEvent *event)
-{
+{   //PRINT << "----> Mouse Move";
     UserActivityDetected();
 
     if (mouseMoveActive_ && mousePressPos_.isNull() == false)
@@ -502,7 +504,7 @@ void SpyderPlayerApp::mouseMoveEvent(QMouseEvent *event)
 }
 
 void SpyderPlayerApp::mouseReleaseEvent(QMouseEvent *event)
-{
+{   //PRINT << "----> Mouse Release";
     UserActivityDetected();
 
     if(event->button() == Qt::MouseButton::LeftButton)
@@ -510,12 +512,16 @@ void SpyderPlayerApp::mouseReleaseEvent(QMouseEvent *event)
         // Reset when the left mouse button is released
         mousePressPos_ = QPoint();
         mouseMoveActive_ = false;
-        overlay_->show();
-        overlay_->Resize();
+        //overlay_->show();
+        //overlay_->Resize();
         //overlay_->activateWindow();
     }
     if (isFullScreen_)
+    {   
+        overlay_->show();
+        overlay_->Resize();
         controlpanelFS_.raise();
+    }
     else
         controlpanel_.setFocus();
         //activateWindow();
@@ -550,7 +556,8 @@ void SpyderPlayerApp::PlayerNormalScreen()
     //setFocus();
     isFullScreen_ = false;
     ShowControlPanel();
-    overlay_->show();
+    //overlay_->show();
+    overlay_->hide();
     overlay_->Resize();
     overlay_->setFocus();
     //player_->GetVideoPanel()->activateWindow();
