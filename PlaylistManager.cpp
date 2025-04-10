@@ -629,11 +629,11 @@ void PlaylistManager::AddRemoveFavorites(QTreeWidgetItem* item) // Triggered whe
         ToggleItemCheckedinList(searchList, newFav, true);
 
         // Add new channel to appdata
-        PlayListEntry* entry = new PlayListEntry();
-        entry->name = STR(channelName);
-        entry->parentName = STR(channelPlaylist);
-        entry->sourceType = channelSource.indexOf("http") == 0 ? ENUM_SOURCE_TYPE::URL : ENUM_SOURCE_TYPE::LOCAL_FILE;
-        entry->source = STR(channelSource);
+        PlayListEntry entry;
+        entry.name = STR(channelName);
+        entry.parentName = STR(channelPlaylist);
+        entry.sourceType = channelSource.indexOf("http") == 0 ? ENUM_SOURCE_TYPE::URL : ENUM_SOURCE_TYPE::LOCAL_FILE;
+        entry.source = STR(channelSource);
 
         appData_->Favorites_.push_back(entry);
         SaveFavorites();
@@ -661,8 +661,8 @@ void PlaylistManager::AddRemoveFavorites(QTreeWidgetItem* item) // Triggered whe
         // Find Favorite Item in AppData and remove it
         for (int i = appData_->Favorites_.size() - 1; i >= 0; i--)
         {
-            PlayListEntry* favItem = appData_->Favorites_[i];
-            if (favItem->name == STR(channelName) && favItem->parentName == STR(channelPlaylist) && favItem->source == STR(channelSource)) 
+            PlayListEntry favItem = appData_->Favorites_[i];
+            if (favItem.name == STR(channelName) && favItem.parentName == STR(channelPlaylist) && favItem.source == STR(channelSource))
             {
                 appData_->Favorites_.erase(appData_->Favorites_.begin() + i);
                 SaveFavorites();
@@ -774,9 +774,9 @@ void PlaylistManager::LoadLibrary()
 
     for(const auto& item : appData_->Library_)
     {
-        TreeItem* newEntry = new TreeItem(PAD(QSTR(item->name)), QColor(), false);
+        TreeItem* newEntry = new TreeItem(PAD(QSTR(item.name)), QColor(), false);
         newEntry->SetPlayListName("Library");
-        newEntry->SetSource(QSTR(item->source));
+        newEntry->SetSource(QSTR(item.source));
 
         newEntry->setFlags(newEntry->flags() | Qt::ItemFlag::ItemIsUserCheckable); 
         newEntry->SetItemChecked(false);
@@ -805,7 +805,7 @@ void PlaylistManager::LoadFavorites()
     for(const auto& item : appData_->Favorites_)
     {
         // Find the item.playListName in the tree
-        TreeItem* favoriteItem = GetChannelFromTree(QSTR(item->parentName), QSTR(item->name), QSTR(item->source));  
+        TreeItem* favoriteItem = GetChannelFromTree(QSTR(item.parentName), QSTR(item.name), QSTR(item.source));
         //PRINT << "Looking for favorite: " << item->name << " from " << item->parentName << " playlist" << " from " << item->source;
 
         // If item is found, check it

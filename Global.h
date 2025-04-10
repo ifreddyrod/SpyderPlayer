@@ -81,4 +81,24 @@ enum class ENUM_PLAYER_STATE
 
 extern string PlayerStateToString(ENUM_PLAYER_STATE state);
 
+
+/******************************************************************************************* 
+    Setting Views ENUMERATION
+ *******************************************************************************************/
+enum ENUM_SETTINGS_VIEWS
+{
+    MAIN = 0,
+    PLAYLIST = 1,
+    LIBRARY  = 2,
+    FAVORITES = 3,
+    PLAYLIST_ENTRY = 4,
+    LIBRARY_ENTRY = 5,
+    FAVORITES_ENTRY = 6,
+    OPEN_PLAYLIST = 7,
+    OPEN_FILE = 8,
+    APPSETTINGS = 9,
+    HOTKEYS = 10,
+    ABOUT = 11
+};
+
 #endif // GLOBAL_H

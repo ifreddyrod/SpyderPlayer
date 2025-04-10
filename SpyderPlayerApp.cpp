@@ -237,9 +237,9 @@ void SpyderPlayerApp::InitializePlayLists()
 
     for(const auto& playlist: appData_->PlayLists_)
     {
-        splashscreen_.UpdateStatus("Loading " + QSTR(playlist->name) + " ....");
-        splashscreen_.UpdateStatus("Loading " + QSTR(playlist->name)  + " ....");
-        playlistManager_->LoadPlayList(*playlist);
+        splashscreen_.UpdateStatus("Loading " + QSTR(playlist.name) + " ....");
+        splashscreen_.UpdateStatus("Loading " + QSTR(playlist.name)  + " ....");
+        playlistManager_->LoadPlayList(playlist);
     }
     // Load Library Playlist
     splashscreen_.UpdateStatus("Loading Library ....");

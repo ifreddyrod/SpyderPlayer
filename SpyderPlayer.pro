@@ -38,6 +38,7 @@ SOURCES += \
     DraggableWidget.cpp \
     Global.cpp \
     HotKeyEditorScreen.cpp \
+    ListEditorScreen.cpp \
     M3UPaser.cpp \
     OpenMediaScreen.cpp \
     PlaylistManager.cpp \
@@ -48,6 +49,7 @@ SOURCES += \
     VideoControlPanel.cpp \
     VideoOverlay.cpp \
     VideoPlayer.cpp \
+    WidgetDelegates.cpp \
     main.cpp \
     SpyderPlayerApp.cpp
 
@@ -58,6 +60,7 @@ HEADERS += \
     DraggableWidget.h \
     Global.h \
     HotKeyEditorScreen.h \
+    ListEditorScreen.h \
     M3UParser.h \
     OpenMediaScreen.h \
     PlaylistManager.h \
@@ -68,7 +71,8 @@ HEADERS += \
     SpyderPlayerApp.h \
     VideoControlPanel.h \
     VideoOverlay.h \
-    VideoPlayer.h
+    VideoPlayer.h \
+    WidgetDelegates.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

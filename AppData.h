@@ -22,7 +22,7 @@ public:
     ENUM_SOURCE_TYPE sourceType;
     string source;
 
-    static PlayListEntry* ValidateAndCreate(const QMap<QString, QString>& data);
+    static PlayListEntry ValidateAndCreate(const QMap<QString, QString>& data);
 };
 
 class AppHotKeys 
@@ -65,9 +65,9 @@ public:
     int RetryCount_;
     int RetryDelay_;
     AppHotKeys HotKeys_;
-    QVector<PlayListEntry*> Library_;
-    QVector<PlayListEntry*> Favorites_;
-    QVector<PlayListEntry*> PlayLists_;
+    QVector<PlayListEntry> Library_;
+    QVector<PlayListEntry> Favorites_;
+    QVector<PlayListEntry> PlayLists_;
     string dataFilePath_;
 
     AppData(const string& filePath);

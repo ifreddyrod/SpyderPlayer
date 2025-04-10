@@ -23,6 +23,9 @@ SettingsManager::SettingsManager(AppData* appData)
     hotKeySettings_ = new HotKeySettings(this);
     openFile_ = new OpenMedia(this);
     openPlayList_ = new OpenMedia(this, true);
+    playlistEditor_ = new ListEditor(this, ENUM_SETTINGS_VIEWS::PLAYLIST);
+    libraryEditor_ = new ListEditor(this, ENUM_SETTINGS_VIEWS::LIBRARY);
+    favoritesEditor_ = new ListEditor(this, ENUM_SETTINGS_VIEWS::FAVORITES);
 
     // Add Screens to settings stack
     settingsStack_->addWidget(mainScreen_);
@@ -31,6 +34,9 @@ SettingsManager::SettingsManager(AppData* appData)
     settingsStack_->addWidget(hotKeySettings_);
     settingsStack_->addWidget(openFile_);
     settingsStack_->addWidget(openPlayList_);
+    settingsStack_->addWidget(playlistEditor_);
+    settingsStack_->addWidget(libraryEditor_);
+    settingsStack_->addWidget(favoritesEditor_);
     
 
     // Setup Stack 
@@ -49,6 +55,9 @@ SettingsManager::~SettingsManager()
     delete settingsStack_;
     delete openFile_;
     delete openPlayList_;
+    delete playlistEditor_;
+    delete libraryEditor_;
+    delete favoritesEditor_;
 }
 
 
@@ -119,14 +128,39 @@ void SettingsManager::LoadPlayList(PlayListEntry entry)
     settingsStack_->hide();
 }
 
-void SettingsManager::SaveSettings()
+void SettingsManager::ShowPlaylistEditor(bool changesMade)
 {
-    if (changesMade_)
-    {
-        // Save settings to file
-        appData_->Save();
-        changesMade_ = false;
-    }
+    changesMade_ |= changesMade;
+    playlistEditor_->AddEditList(appData_->PlayLists_);
+    playlistEditor_->ShowListEditor();
+    //settingsStack_->setCurrentIndex(ENUM_SETTINGS_VIEWS::PLAYLIST);
+    settingsStack_->setCurrentIndex(ENUM_SETTINGS_VIEWS::MAIN + 6);
+}
+
+void SettingsManager::ShowLibraryEditor(bool changesMade)
+{
+    changesMade_ |= changesMade;
+    libraryEditor_->AddEditList(appData_->Library_);
+    libraryEditor_->ShowListEditor();
+    //settingsStack_->setCurrentIndex(ENUM_SETTINGS_VIEWS::LIBRARY);
+    settingsStack_->setCurrentIndex(ENUM_SETTINGS_VIEWS::MAIN + 7);
+}
+
+void SettingsManager::ShowFavoritesEditor(bool changesMade)
+{
+    changesMade_ |= changesMade;
+    favoritesEditor_->AddEditList(appData_->Favorites_);
+    favoritesEditor_->ShowListEditor();
+    //settingsStack_->setCurrentIndex(ENUM_SETTINGS_VIEWS::FAVORITES);
+    settingsStack_->setCurrentIndex(ENUM_SETTINGS_VIEWS::MAIN + 8);
+}
+
+void SettingsManager::SaveSettings(bool changesMade)
+{
+    changesMade_ |= changesMade;
+    // Save settings to file
+    appData_->Save();
+
 }
 
 //*****************************************************************************************
@@ -145,6 +179,9 @@ SettingsMain::SettingsMain(SettingsManager *settingsManager)
     connect(ui_.HotKeys_button, &QPushButton::clicked, settingsManager_, &SettingsManager::ShowHotKeySettings);
     connect(ui_.OpenMediaFile_button, &QPushButton::clicked, settingsManager_, &SettingsManager::ShowOpenFileScreen);
     connect(ui_.OpenPlayList_button, &QPushButton::clicked, settingsManager_, &SettingsManager::ShowOpenPlayListScreen);
+    connect(ui_.PlayList_button, &QPushButton::clicked, settingsManager_, &SettingsManager::ShowPlaylistEditor);
+    connect(ui_.Library_button, &QPushButton::clicked, settingsManager_, &SettingsManager::ShowLibraryEditor);
+    connect(ui_.Favorites_button, &QPushButton::clicked, settingsManager_, &SettingsManager::ShowFavoritesEditor);
 
     //connect(ui_.PlayList_button, &QPushButton::clicked, settingsManager_, &SettingsManager::ShowSettingsMainScreen);
 }
