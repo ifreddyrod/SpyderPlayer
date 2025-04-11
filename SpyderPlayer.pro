@@ -1,6 +1,6 @@
 TARGET = SPYDERPlayer
 
-QT       += core gui multimedia multimediawidgets
+QT       += core gui multimedia multimediawidgets network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -36,6 +36,7 @@ SOURCES += \
     AppData.cpp \
     AppSettingsScreen.cpp \
     DraggableWidget.cpp \
+    EntryEditorScreen.cpp \
     Global.cpp \
     HotKeyEditorScreen.cpp \
     ListEditorScreen.cpp \
@@ -58,6 +59,7 @@ HEADERS += \
     AppData.h \
     AppSettingsScreen.h \
     DraggableWidget.h \
+    EntryEditorScreen.h \
     Global.h \
     HotKeyEditorScreen.h \
     ListEditorScreen.h \

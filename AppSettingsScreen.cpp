@@ -107,8 +107,7 @@ void AppSettings::SaveButtonClicked()
         settingsManager_->appData_->PlayerType_ = StringToPlayerTypeEnum(ui_.PlayerType_combobox->currentText().toStdString());
         settingsManager_->appData_->RetryCount_ = ui_.RetryCount_box->value();
         settingsManager_->appData_->RetryDelay_ = ui_.RetryTimeDelay_box->value();
-        settingsManager_->changesMade_ = true;
-        settingsManager_->SaveSettings();
+        settingsManager_->SaveSettings(true);
         settingsManager_->ShowSettingsMainScreen();
     }
 }

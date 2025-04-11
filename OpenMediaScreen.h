@@ -13,7 +13,7 @@ class OpenMedia : public DraggableWidget
 {
     Q_OBJECT    
 public:
-    explicit OpenMedia(SettingsManager* settingsManager, bool loadPlaylist = false);
+    explicit OpenMedia(SettingsManager* settingsManager, ENUM_SETTINGS_VIEWS viewType);
     ~OpenMedia();
     void ShowOpenMediaScreen();
 
@@ -27,8 +27,8 @@ private:
 
     Ui::OpenFileSelection ui_;
     SettingsManager* settingsManager_;
-    bool loadPlaylist_ = false;
     bool modified_ = false;
+    ENUM_SETTINGS_VIEWS viewType_;
 
 };
 

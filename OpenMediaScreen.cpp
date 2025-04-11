@@ -3,7 +3,7 @@
 #include "Global.h"
 
 
-OpenMedia::OpenMedia(SettingsManager* settingsManager, bool loadPlaylist) : settingsManager_(settingsManager), loadPlaylist_(loadPlaylist)
+OpenMedia::OpenMedia(SettingsManager* settingsManager, ENUM_SETTINGS_VIEWS viewType) : settingsManager_(settingsManager), viewType_(viewType)
 {
     ui_.setupUi(this);
     
@@ -24,7 +24,7 @@ void OpenMedia::ShowOpenMediaScreen()
 {
     blockSignals(true);
 
-    if(loadPlaylist_)
+    if(viewType_ == ENUM_SETTINGS_VIEWS::OPEN_PLAYLIST)
         ui_.Titlebar_label->setText("Enter a PlayList File or Paste URL");
     else
         ui_.Titlebar_label->setText("Open Local File or Paste URL");
@@ -102,7 +102,7 @@ void OpenMedia::OpenFileButtonClicked()
     QString filename;
 
     // Show Open Files Dialog
-    if (loadPlaylist_)
+    if(viewType_ == ENUM_SETTINGS_VIEWS::OPEN_PLAYLIST)
     {
         filename = QFileDialog::getOpenFileName(this, "Select PlayList File", QSTR(settingsManager_->appData_->PlayListsPath_), "PlayList Files (*.m3u *.m3u8)");
     }
@@ -125,7 +125,7 @@ void OpenMedia::OpenButtonClicked()
     QString source = ui_.Source_textedit->toPlainText();
     newEntry.source = STR(source);
 
-    if (loadPlaylist_)
+    if(viewType_ == ENUM_SETTINGS_VIEWS::OPEN_PLAYLIST)
     {
         if (newEntry.sourceType == ENUM_SOURCE_TYPE::LOCAL_FILE)
         {

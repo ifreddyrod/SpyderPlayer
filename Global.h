@@ -35,7 +35,7 @@ using namespace std;
  * Utility Functions
  *******************************************************************************************/
 extern QString Format_ms_to_Time(qint64 ms);
-extern int ShowSaveWarningDialog(QString title, QString message);
+extern int ShowSaveWarningDialog(QString title, QString message, bool showCancel = true);
 extern string GetPlatform();
 extern string GetUserAppDataDirectory(string appName);
 

@@ -76,6 +76,6 @@ public:
     void CreateDefaultSettings();
 };
 
-extern void SavePlayListToFile(const QVector<PlayListEntry*>& playlist, const string& filepath);
+extern void SavePlayListToFile(const QVector<PlayListEntry> playlist, const string& filepath);
 
 #endif // APPDATA_H

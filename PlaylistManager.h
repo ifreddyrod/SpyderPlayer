@@ -1,6 +1,7 @@
 #ifndef PLAYLISTMANAGER_H
 #define PLAYLISTMANAGER_H
 
+#include "AppData.h"
 #include <QObject>
 #include <QWidget>
 #include <QTreeWidgetItem>
@@ -9,7 +10,8 @@
 #include <QVariant>
 #include <QSignalMapper> 
 #include <QPointer> 
-#include "AppData.h"
+#include <QNetworkAccessManager>
+
 
 class TreeItem : public QTreeWidgetItem
 {
@@ -61,6 +63,9 @@ public:
     void SearchChannels(QString searchText);
     bool PlaylistTreeHasFocus();
     void PlaySelectedTreeItem();
+    void AddSessionMedia(PlayListEntry playlist);
+    void LoadSessionPlayLists();
+    void LoadSessionMedia();
 
 signals:
     void SIGNAL_PlaySelectedChannel(string, string);
@@ -81,6 +86,8 @@ private:
     TreeItem* GetPlayListFromSearch(QString playListName);
     void ToggleItemCheckedinList(TreeItem* playList, TreeItem* item, bool checked = true);
     void AddRemoveFavorites(QTreeWidgetItem* item);
+    bool IsEntryInSessionPlayList(PlayListEntry playlist);
+    bool IsEntryInSessionMedia(PlayListEntry media);
 
     // Event Overrides
     //bool eventFilter(QObject *object, QEvent *event) override;
@@ -92,7 +99,7 @@ private:
     TreeItem* lastSelectedItem_;
     int searchResultsCount_ = 0; 
     int currentItem_ = 0;
-    TreeItem* openedFilesList_;
+    
     QList<PlayListEntry> openedSessionPlayLists_;
     QList<PlayListEntry> openedSessionFiles_;
     QString lastSearchQuery_;
@@ -102,6 +109,8 @@ private:
     TreeItem* searchList_;
     TreeItem* favoritesList_;
     TreeItem* libraryList_;
+    TreeItem* sessionMediaList_;
+    QNetworkAccessManager* networkManager_;
 };
 
 #endif // PLAYLISTMANAGER_H

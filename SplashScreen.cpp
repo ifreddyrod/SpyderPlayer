@@ -12,7 +12,8 @@ SplashScreen::SplashScreen(QWidget *parent) : QWidget(parent), splash_timer_comp
     //qDebug() <<  "Picture: " << ui_.Background_image->pixmap();
 
     setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
-
+    setWindowModality(Qt::WindowModality::WindowModal);
+    
     CenterSplashScreen();
 
     splashtimer_.setInterval(5000);

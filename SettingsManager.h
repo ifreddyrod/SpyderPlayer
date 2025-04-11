@@ -9,14 +9,11 @@
 #include "HotKeyEditorScreen.h"
 #include "OpenMediaScreen.h"
 #include "ListEditorScreen.h"
-
+#include "EntryEditorScreen.h"
+#include "ui_Settings.h"
 #include <QWidget>
 #include <QStackedWidget>
 #include <QList>
-
-#include "ui_Settings.h"
-#include "ui_PlayListSettings.h"
-#include "ui_EntryEditor.h"
 
 
 //*****************************************************************************************
@@ -32,11 +29,11 @@ public:
     void ShowSettingsMainScreen(bool initialize = false);
     void HideSettingsScreen();
     void ShowPlaylistEditor(bool changesMade = false);
-    //void ShowPlaylistEntryEditor(bool changesMade = false);
     void ShowLibraryEditor(bool changesMade = false);
-    //void ShowLibraryEntryEditor(bool changesMade = false);
     void ShowFavoritesEditor(bool changesMade = false);
-    //void ShowFavoritesEntryEditor(bool changesMade = false);
+    void ShowPlayListEntryEditor(int index = -1);
+    void ShowLibraryEntryEditor(int index = -1);
+    void ShowFavoritesEntryEditor(int index = -1);
     void ShowOpenPlayListScreen();
     void LoadPlayList(PlayListEntry entry);
     void ShowOpenFileScreen();
@@ -48,7 +45,7 @@ public:
     bool IsVisible() { return settingsStack_->isVisible(); }
     
     AppData* appData_;
-    bool changesMade_ = false;
+    
 signals:
     void SIGNAL_ReLoadAllPlayLists();
     void SIGNAL_LoadMediaFile(PlayListEntry);
@@ -61,14 +58,15 @@ private:
     ListEditor* playlistEditor_;
     ListEditor* libraryEditor_;
     ListEditor* favoritesEditor_;
-    DraggableWidget* playlistEntry_;
-    DraggableWidget* libraryEntry_;
-    DraggableWidget* favoritesEntry_;
+    EntryEditor* playlistEntry_;
+    EntryEditor* libraryEntry_;
+    EntryEditor* favoritesEntry_;
     OpenMedia* openFile_;
     OpenMedia* openPlayList_;
     AppSettings* appSettings_;
     HotKeySettings* hotKeySettings_;
     AboutScreen* about_;
+    bool changesMade_ = false;
 };
 
 //*****************************************************************************************

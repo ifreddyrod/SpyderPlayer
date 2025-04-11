@@ -164,6 +164,11 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent): QWidget(parent)
     connect(player_, &VideoPlayer::SIGNAL_PlayerStateChanged, this, &SpyderPlayerApp::PlaybackStateChanged);
     connect(player_, &VideoPlayer::SIGNAL_EnableSubtitles, this, &SpyderPlayerApp::EnableSubtitles);
 
+    // Connect Settings Signals
+    connect(settingsManager_, &SettingsManager::SIGNAL_ReLoadAllPlayLists, this, &SpyderPlayerApp::InitializePlayLists);
+    connect(settingsManager_, &SettingsManager::SIGNAL_LoadPlayList, this, &SpyderPlayerApp::LoadSessionPlaylist);
+    connect(settingsManager_, &SettingsManager::SIGNAL_LoadMediaFile, this, &SpyderPlayerApp::LoadSessionMedia);
+
     //-----------------------------,
     // Setup Timers
     //-----------------------------
@@ -231,14 +236,14 @@ void SpyderPlayerApp::InitializePlayLists()
 {
     splashscreen_.show();
     splashscreen_.StartTimer();
-    splashscreen_.UpdateStatus("Loading Playlists:", 1000);
+    splashscreen_.UpdateStatus("Loading Playlists:", 250);
     
     playlistManager_->ResetAllLists();
 
     for(const auto& playlist: appData_->PlayLists_)
     {
         splashscreen_.UpdateStatus("Loading " + QSTR(playlist.name) + " ....");
-        splashscreen_.UpdateStatus("Loading " + QSTR(playlist.name)  + " ....");
+        //splashscreen_.UpdateStatus("Loading " + QSTR(playlist.name)  + " ....");
         playlistManager_->LoadPlayList(playlist);
     }
     // Load Library Playlist
@@ -248,6 +253,17 @@ void SpyderPlayerApp::InitializePlayLists()
     // Load Favorites last to verify that items in other playlists have been loaded
     splashscreen_.UpdateStatus("Loading Favorites ....");
     playlistManager_->LoadFavorites();
+    
+    // Load Session Playlists
+    splashscreen_.UpdateStatus("Loading Session Playlists ....");
+    playlistManager_->LoadSessionPlayLists();
+
+    // Load Session Media
+    splashscreen_.UpdateStatus("Loading Session Media ....");
+    playlistManager_->LoadSessionMedia();
+
+    // Collapse Playlist Tree
+    playlistManager_->CollapseAllPlaylists();
     
     splashscreen_.UpdateStatus("Initialization Complete", 500);
 
@@ -1136,6 +1152,20 @@ void SpyderPlayerApp::SearchChannels()
     // Search the Channels for Query
     QString query = ui_.Query_input->text();
     playlistManager_->SearchChannels(query);
+}
+
+void SpyderPlayerApp::LoadSessionMedia(PlayListEntry entry)
+{
+    ShowCursorBusy();
+    playlistManager_->AddSessionMedia(entry);
+    ShowCursorNormal();
+}
+
+void SpyderPlayerApp::LoadSessionPlaylist(PlayListEntry entry)
+{
+    ShowCursorBusy();
+    playlistManager_->LoadPlayList(entry, false);
+    ShowCursorNormal();
 }
 
 void SpyderPlayerApp::ShowCursorNormal()

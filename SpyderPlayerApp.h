@@ -119,13 +119,15 @@ private:
 
     // Utility Functions
     void SearchChannels();
+    void LoadSessionMedia(PlayListEntry entry);
+    void LoadSessionPlaylist(PlayListEntry entry);
     void InactivityDetected();
     void UpdatePlaybackStatus();
     QString GetWindowStateString();
     void ShowCursorNormal();
     void ShowCursorBusy();
     void ShowCursorBlank();
-    
+
 };
 
 

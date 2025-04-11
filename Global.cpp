@@ -19,14 +19,23 @@ QString Format_ms_to_Time(qint64 ms)
     return QSTR(ss.str());
 }
 
-int ShowSaveWarningDialog(QString title, QString message)
+int ShowSaveWarningDialog(QString title, QString message, bool showCancel)
 {
     QMessageBox msgBox;
     msgBox.setText(message);
     msgBox.setIcon(QMessageBox::Question);
-    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
-    msgBox.setDefaultButton(QMessageBox::No);
-    msgBox.setEscapeButton(QMessageBox::Cancel);
+    if (showCancel)
+    {
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+        msgBox.setDefaultButton(QMessageBox::No);
+        msgBox.setEscapeButton(QMessageBox::Cancel);
+    }
+    else
+    {
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        msgBox.setDefaultButton(QMessageBox::No);
+    }
+    
     msgBox.setWindowTitle(title);
 
     return msgBox.exec();

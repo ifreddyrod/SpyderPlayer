@@ -4,6 +4,12 @@
 #include <QEvent>
 #include <QKeyEvent>
 #include <QApplication>
+#include <QNetworkRequest>
+#include <QTemporaryFile>
+#include <QTextStream>
+#include <QNetworkReply>
+#include <QEventLoop>
+
 
 //***********************************************************
 // Color Definitions
@@ -105,7 +111,8 @@ PlaylistManager::PlaylistManager(QTreeWidget* playlistTreefromUI, AppData* appDa
 {
     playlistTree_ = playlistTreefromUI;
     appData_ = appData;
-
+    networkManager_ = new QNetworkAccessManager(this);
+    
     //--------------------------------
     // Setup the Tree
     //--------------------------------
@@ -153,8 +160,8 @@ void PlaylistManager::ResetAllLists()
     currentItem_ = 0;
     lastSelectedItem_ = nullptr;
     currentSelectedItem_ = nullptr;
-    openedSessionPlayLists_.clear();
-    openedSessionFiles_.clear();
+    sessionMediaList_ = nullptr;
+    //ClearPlayListItems(sessionMediaList_);
 }
 
 QString PlaylistManager::LoadStyleSheet() 
@@ -699,21 +706,87 @@ void PlaylistManager::LoadPlayList(PlayListEntry playlist, bool isPersistent)
 {
     string playlistPath = playlist.source;
     string playlistName = playlist.name;
+    QString plPath = QSTR(playlistPath);
     
     PRINT << "Loading playlist: " << playlistName;
     PRINT << "Playlist source: " << playlistPath;
 
     M3UParser m3uParser;
+    vector<Channel> channelList;
 
-    // Check if the file exists
-    if (!filesystem::exists(playlistPath)) 
+    //-----------------------------------------------
+    // Download remote playlist and parse it
+    //-----------------------------------------------
+    if (plPath.startsWith("http")) 
     {
-        PRINT << "File does not exist: " << playlistPath;
-        return;
-    }
+        QNetworkRequest request(plPath);
+        //request.setHeader(QNetworkRequest::UserAgentHeader, "SpyderPlayer/1.0");
+        //request.setRawHeader("Accept", "audio/x-mpegurl, application/vnd.apple.mpegurl, */*");
+        QNetworkReply *reply = networkManager_->get(request);
+        
+        // Set up a synchronous waiting loop (you could make this async with signals/slots instead)
+        QEventLoop loop;
+        connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+        loop.exec();
 
-    // Parse the M3U file
-    vector<Channel> channelList = m3uParser.ParseM3UFile(playlistPath);
+        if (reply->error() == QNetworkReply::NoError) 
+        {
+            // Check the content type (optional)
+            QByteArray contentType = reply->header(QNetworkRequest::ContentTypeHeader).toByteArray();
+            PRINT << "Received content type:" << contentType;
+            
+            // Get the raw data - don't force UTF-8 conversion yet
+            QByteArray responseData = reply->readAll();
+            
+            // Create a temporary file
+            QTemporaryFile tempFile;
+            tempFile.setAutoRemove(false); // We'll remove it manually
+            tempFile.setFileTemplate(QDir::tempPath() + "/XXXXXX.m3u");
+            
+            if (tempFile.open()) 
+            {
+                QString responseFile = tempFile.fileName();
+                
+                // Write the content to the temporary file
+                QTextStream out(&tempFile);
+                out << responseData;
+                tempFile.close();
+                
+                // Parse the file
+                channelList = m3uParser.ParseM3UFile(STR(responseFile));
+                
+                // Remove temporary file
+                QFile::remove(responseFile);
+            } 
+            else 
+            {
+                PRINT << "Failed to create temporary file";
+                return;
+            }
+        } 
+        else 
+        {
+            PRINT << "Error fetching remote playlist:" << reply->errorString();
+            return;
+        }
+        reply->deleteLater();
+        disconnect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    }
+    //--------------------
+    // Parse Local File
+    //--------------------
+    else 
+    {
+        // Check if the file exists
+        if (!filesystem::exists(playlistPath)) 
+        {
+            PRINT << "File does not exist: " << playlistPath;
+            return;
+        }
+
+        // Parse the M3U file
+        channelList = m3uParser.ParseM3UFile(playlistPath);
+    }
 
     // Check if channelList is empty
     if (channelList.empty()) 
@@ -730,14 +803,27 @@ void PlaylistManager::LoadPlayList(PlayListEntry playlist, bool isPersistent)
 
     if (isPersistent) 
     {
+        // Handle persistent playlist
         playlistTreeItem = new TreeItem(PAD(QSTR(playlistName)), PLAYLIST_COLOR, true);
-        playlistTree_->addTopLevelItem(playlistTreeItem);
     }
     else
     {
         // Handle temporay playlist
-        playlistTreeItem = new TreeItem(PAD(QSTR(playlistName)), PLAYLIST_COLOR, true, false);
+        playlistTreeItem = new TreeItem(PAD(QSTR(playlistName)), SESSION_COLOR, true, false);
+        // Check if playlist is already loaded
+        if(IsEntryInSessionPlayList(playlist) == false)
+        {
+            openedSessionPlayLists_.push_back(playlist);
+        }
+    }
+
+    // Check that playlistTreeItem has not been added to tree, if not add it
+    if( GetPlayListFromTree(QSTR(playlistName)) == nullptr)
         playlistTree_->addTopLevelItem(playlistTreeItem);
+    else
+    {
+        PRINT << "Playlist already loaded: " << playlistName;
+        return;
     }
 
     // Iterate through the channelList and create tree items
@@ -943,26 +1029,77 @@ void PlaylistManager::PlaySelectedTreeItem()
     }
 }
 
-// Event Filter 
-/*bool PlaylistManager::eventFilter(QObject *object, QEvent *event) 
+bool PlaylistManager::IsEntryInSessionPlayList(PlayListEntry playlist)
 {
-    if (this->hasFocus())
+    for (const auto& item : openedSessionPlayLists_)
     {
-        if (event->type() == QEvent::Type::KeyPress)
+        if (item.name == playlist.name)
         {
-            QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
-            if (keyEvent->key() == Qt::Key::Key_Escape)
-            {
-                return true;
-            }
-            //else if (keyEvent->key() == appData_
+            return true;
         }
     }
-    else
+    return false;
+}
+bool PlaylistManager::IsEntryInSessionMedia(PlayListEntry playlist)
+{
+    for (const auto& item : openedSessionFiles_)
     {
-        ; //return QApplication::sendEvent(object, event);
+        if (item.name == playlist.name)
+        {
+            return true;
+        }
+    }
+    return false;   
+}
+
+void PlaylistManager::AddSessionMedia(PlayListEntry media)
+{
+    playlistTree_->blockSignals(true);
+    
+    //If not files have been opened yet, create the root item
+    if (sessionMediaList_ == nullptr)
+    {
+        //PRINT << "Creating Session Media Tree list";
+        sessionMediaList_ = new TreeItem(PAD("Session Media"), SESSION_COLOR, true, false);
+        AppendPlayList(sessionMediaList_);
     }
 
-    return false;
-}*/
+    // Create new tree item
+    QString mediaName = QSTR(media.name);
+    TreeItem* newEntry = new TreeItem(PAD(mediaName), QColor(), false, false);
+    newEntry->SetPlayListName("Session Media");
+    newEntry->SetSource(QSTR(media.source));
 
+    // Add Media if it is not already in the list
+    if (GetChannelFromTree("Session Media", mediaName, QSTR(media.source)) != nullptr)
+    {
+        PRINT << "Session media " << mediaName << " already has been added.";
+        return;
+    }
+
+    AppendChannel(sessionMediaList_, newEntry);
+    UpdatePlayListChannelCount(sessionMediaList_);
+
+    if(!IsEntryInSessionMedia(media))
+        openedSessionFiles_.push_back(media);
+    
+    sessionMediaList_->setExpanded(true);
+    playlistTree_->setCurrentItem(sessionMediaList_);
+    playlistTree_->blockSignals(false);
+}
+
+void PlaylistManager::LoadSessionPlayLists()
+{
+    for(const auto& item : openedSessionPlayLists_)
+    {
+        LoadPlayList(item, false);
+    }
+}
+
+void PlaylistManager::LoadSessionMedia()
+{
+    for(const auto& item : openedSessionFiles_)
+    {
+        AddSessionMedia(item);
+    }
+}

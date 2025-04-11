@@ -497,7 +497,7 @@ void AppData::Save()
     }
 }
 
-void SavePlayListToFile(const QVector<PlayListEntry>& playlist, const string& filepath) 
+void SavePlayListToFile(const QVector<PlayListEntry> playlist, const string& filepath) 
 {
     QFile file(QString::fromStdString(filepath));
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text))

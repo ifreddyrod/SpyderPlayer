@@ -23,14 +23,15 @@ private:
     void ReorderButtonClicked();
     void ApplyButtonClicked();
     void CancelButtonClicked();
-
-    bool eventFilter(QObject *object, QEvent *event) override;
-    void dropEvent(QDropEvent* event) override;
-
-    
     void UpdateTable();
     void UnSelectRows();
     void RowSelected(int row, int col);
+    void DeleteButtonClicked();
+    void EditButtonClicked();
+    void AddNewButtonClicked();
+
+    bool eventFilter(QObject *object, QEvent *event) override;
+    void dropEvent(QDropEvent* event) override;
 
     Ui::PlayListSettings ui_;
     SettingsManager* settingsManager_;

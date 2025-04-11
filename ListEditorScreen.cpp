@@ -61,9 +61,9 @@ ListEditor::ListEditor(SettingsManager* settingsManager, ENUM_SETTINGS_VIEWS vie
     ui_.PlayList_table->setAcceptDrops(false);
     // Connect Slots
     connect(ui_.Back_button, &QPushButton::clicked, this, &ListEditor::BackButtonClicked);
-    //connect(ui_.AddNew_button, &QPushButton::clicked, this, &ListEditor::AddNewButtonClicked);
-    //connect(ui_.Edit_button, &QPushButton::clicked, this, &ListEditor::EditButtonClicked);
-    //connect(ui_.Delete_button, &QPushButton::clicked, this, &ListEditor::DeleteButtonClicked);
+    connect(ui_.AddNew_button, &QPushButton::clicked, this, &ListEditor::AddNewButtonClicked);
+    connect(ui_.Edit_button, &QPushButton::clicked, this, &ListEditor::EditButtonClicked);
+    connect(ui_.Delete_button, &QPushButton::clicked, this, &ListEditor::DeleteButtonClicked);
     connect(ui_.Apply_button, &QPushButton::clicked, this, &ListEditor::ApplyButtonClicked);
     connect(ui_.Reorder_button, &QPushButton::clicked, this, &ListEditor::ReorderButtonClicked);
     connect(ui_.Cancel_button, &QPushButton::clicked, this, &ListEditor::CancelButtonClicked);
@@ -291,4 +291,48 @@ void ListEditor::CancelButtonClicked()
     ui_.Cancel_button->hide();
     reordering_ = false;
     UpdateTable();
+}
+
+void ListEditor::EditButtonClicked()
+{
+    int row = ui_.PlayList_table->currentRow();
+    
+    if (viewType_ == ENUM_SETTINGS_VIEWS::PLAYLIST)
+        settingsManager_->ShowPlayListEntryEditor(row);
+    else if (viewType_ == ENUM_SETTINGS_VIEWS::LIBRARY)
+        settingsManager_->ShowLibraryEntryEditor(row);
+    else if (viewType_ == ENUM_SETTINGS_VIEWS::FAVORITES)
+        settingsManager_->ShowFavoritesEntryEditor(row);
+}
+
+void ListEditor::AddNewButtonClicked()
+{
+    if (viewType_ == ENUM_SETTINGS_VIEWS::PLAYLIST)
+        settingsManager_->ShowPlayListEntryEditor();
+    else if (viewType_ == ENUM_SETTINGS_VIEWS::LIBRARY)
+        settingsManager_->ShowLibraryEntryEditor();
+    else if (viewType_ == ENUM_SETTINGS_VIEWS::FAVORITES)
+        settingsManager_->ShowFavoritesEntryEditor();
+}
+
+void ListEditor::DeleteButtonClicked()
+{
+    if (editList_.size() == 0)
+        return;
+
+    // Get selected row
+    int row = ui_.PlayList_table->currentRow();
+
+    // If valid row selected, warn user about deletion
+    if (row >= 0)
+    {
+        if(ShowSaveWarningDialog("Delete Entry", "Are you sure you want to delete " + QSTR(editList_[row].name) + "?", false) == QMessageBox::Yes)
+        {
+            editList_.removeAt(row);
+            settingsManager_->SaveSettings(true);
+            UpdateTable();
+        }
+        else
+            return;
+    }
 }
