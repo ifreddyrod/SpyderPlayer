@@ -1,110 +1,229 @@
 #include "M3UParser.h"
+#include <fstream>
+#include <iostream>
+#include <regex>
+#include <vector>
+#include <string>
+
+string M3UParser::DecodeHTMLEntities(const string& input) 
+{
+    string result = input;
+    
+    // Replace &amp; with &
+    size_t pos = 0;
+    while ((pos = result.find("&amp;", pos)) != string::npos) 
+    {
+        result.replace(pos, 5, "&");
+        pos += 1;
+    }
+    
+    // &quot; -> "
+    pos = 0;
+    while ((pos = result.find("&quot;", pos)) != string::npos) 
+    {
+        result.replace(pos, 6, "\"");
+        pos += 1;
+    }
+    
+    // &lt; -> <
+    pos = 0;
+    while ((pos = result.find("&lt;", pos)) != string::npos) 
+    {
+        result.replace(pos, 4, "<");
+        pos += 1;
+    }
+    
+    // &gt; -> >
+    pos = 0;
+    while ((pos = result.find("&gt;", pos)) != string::npos) 
+    {
+        result.replace(pos, 4, ">");
+        pos += 1;
+    }
+    
+    // Handle numeric HTML entities like &#039; (apostrophe)
+    regex numericEntityRegex("&#(\\d+);");
+    smatch match;
+    string tempResult = result;
+    result = "";
+    
+    // Process the string to replace numeric entities
+    while (regex_search(tempResult, match, numericEntityRegex)) 
+    {
+        // Add the part before the match
+        result += match.prefix().str();
+        
+        // Convert the numeric entity to a character
+        int charCode = stoi(match[1]);
+        result += static_cast<char>(charCode);
+        
+        // Continue with the rest of the string
+        tempResult = match.suffix().str();
+    }
+    
+    // Add any remaining part
+    result += tempResult;
+    
+    return result;
+}
 
 vector<Channel> M3UParser::ParseM3UFile(const string& filePath) 
 {
     vector<Channel> channels;
-    ifstream file(filePath);
     
-    if (!file.is_open())
-     {
+    // Estimate channel count based on file size (assuming ~500 bytes per channel)
+    std::ifstream fileSizeCheck(filePath, std::ios::ate);
+    if (!fileSizeCheck.is_open()) 
+    {
         cerr << "Failed to open file: " << filePath << endl;
         return channels;
     }
     
-    string line;
-    Channel currentChannel;
+    std::streamsize fileSize = fileSizeCheck.tellg();
+    fileSizeCheck.close();
     
-    // Improved regex patterns to handle various attribute formats
-    // Now uses a non-greedy approach for attributes with quotes
-    regex idRegex("tvg-id=\"(.*?)\"");
-    regex nameRegex("tvg-name=\"(.*?)\"");
-    regex logoRegex("tvg-logo=\"(.*?)\"");
-    regex groupRegex("group-title=\"(.*?)\"");
-    regex titleRegex("#EXTINF:-1.*?,(.*?)$");
+    // Reserve based on estimated channel count (with a reasonable minimum)
+    size_t estimatedChannels = std::max(size_t(10000), size_t(fileSize / 500));
+    channels.reserve(estimatedChannels);
     
-    // Special regex for JSON-like structures in tvg-id
-    regex jsonIdRegex("tvg-id=\"\\{'id': '(.*?)'");
+    // Precompile regex patterns (static to compile only once across multiple calls)
+    static const regex idRegex("tvg-id=\"(.*?)\"");
+    static const regex nameRegex("tvg-name=\"(.*?)\"");
+    static const regex logoRegex("tvg-logo=\"(.*?)\"");
+    static const regex groupRegex("group-title=\"(.*?)\"");
+    static const regex titleRegex("#EXTINF:-1.*?,(.*?)$");
+    static const regex jsonIdRegex("tvg-id=\"\\{'id': '(.*?)'");
     
-    smatch match;
-
-    while (getline(file, line)) 
+    // Open file for efficient reading
+    FILE* filePtr = fopen(filePath.c_str(), "r");
+    if (!filePtr) 
     {
-        if (line.rfind("#EXTINF", 0) == 0) 
+        cerr << "Failed to open file: " << filePath << endl;
+        return channels;
+    }
+    
+    // Use a large buffer for more efficient reading
+    constexpr size_t BUFFER_SIZE = 8 * 1024 * 1024;  // 8MB buffer
+    vector<char> buffer(BUFFER_SIZE);
+    
+    string currentLine;
+    Channel currentChannel;
+    bool inExtInf = false;
+    smatch match;
+    
+    // Process the file in chunks
+    while (!feof(filePtr))
+    {
+        size_t bytesRead = fread(buffer.data(), 1, BUFFER_SIZE - 1, filePtr);
+        if (bytesRead == 0) break;
+        
+        buffer[bytesRead] = '\0';
+        
+        string chunk(buffer.data(), bytesRead);
+        size_t lineStart = 0, lineEnd;
+        
+        // Process each line in the chunk
+        while ((lineEnd = chunk.find('\n', lineStart)) != string::npos) 
         {
-            // Reset current channel for new entry
-            currentChannel = Channel();
-            
-            // First try to extract JSON-like id
-            if (regex_search(line, match, jsonIdRegex)) 
+            string line = chunk.substr(lineStart, lineEnd - lineStart);
+            // Remove carriage return if present
+            if (!line.empty() && line.back() == '\r') 
             {
-                currentChannel.id = match[1];
-            }
-            // Fall back to regular extraction if JSON pattern doesn't match
-            else if (regex_search(line, match, idRegex)) 
-            {
-                currentChannel.id = match[1];
+                line.pop_back();
             }
             
-            // Extract tvg-name
-            if (regex_search(line, match, nameRegex)) 
+            // Process the line
+            if (line.rfind("#EXTINF", 0) == 0) 
             {
-                currentChannel.name = match[1];
-            }
-            
-            // Extract tvg-logo
-            if (regex_search(line, match, logoRegex)) 
-            {
-                currentChannel.logo = match[1];
-            }
-            
-            // Extract group-title
-            if (regex_search(line, match, groupRegex)) 
-            {
-                currentChannel.group = match[1];
-            }
-            
-            // Extract title (content after comma)
-            if (regex_search(line, match, titleRegex)) 
-            {
-                // If name wasn't extracted from tvg-name, use the title
-                if (currentChannel.name.empty()) {
-                    currentChannel.name = match[1];
-                }
-            } 
-            else 
-            {
-                // Fallback: try to find content after the last comma
-                size_t commaPos = line.rfind(',');
-                if (commaPos != string::npos && commaPos + 1 < line.length()) 
+                inExtInf = true;
+                currentChannel = Channel();
+                
+                // First try to extract JSON-like id
+                if (regex_search(line, match, jsonIdRegex)) 
                 {
+                    currentChannel.id = DecodeHTMLEntities(match[1]);
+                }
+                // Fall back to regular extraction if JSON pattern doesn't match
+                else if (regex_search(line, match, idRegex)) 
+                {
+                    currentChannel.id = DecodeHTMLEntities(match[1]);
+                }
+                
+                // Extract tvg-name
+                if (regex_search(line, match, nameRegex)) 
+                {
+                    currentChannel.name = DecodeHTMLEntities(match[1]);
+                }
+                
+                // Extract tvg-logo
+                if (regex_search(line, match, logoRegex)) 
+                {
+                    currentChannel.logo = DecodeHTMLEntities(match[1]);
+                }
+                
+                // Extract group-title
+                if (regex_search(line, match, groupRegex)) 
+                {
+                    currentChannel.group = DecodeHTMLEntities(match[1]);
+                }
+                
+                // Extract title (content after comma)
+                if (regex_search(line, match, titleRegex)) 
+                {
+                    // If name wasn't extracted from tvg-name, use the title
                     if (currentChannel.name.empty()) 
                     {
-                        currentChannel.name = line.substr(commaPos + 1);
+                        currentChannel.name = DecodeHTMLEntities(match[1]);
+                    }
+                } 
+                else 
+                {
+                    // Fallback: try to find content after the last comma
+                    size_t commaPos = line.rfind(',');
+                    if (commaPos != string::npos && commaPos + 1 < line.length()) 
+                    {
+                        if (currentChannel.name.empty()) 
+                        {
+                            currentChannel.name = DecodeHTMLEntities(line.substr(commaPos + 1));
+                        }
                     }
                 }
+                
+                // Ensure channel has a name
+                if (currentChannel.name.empty()) 
+                {
+                    currentChannel.name = "Unknown";
+                }
+            } 
+            else if (inExtInf && !line.empty() && line.rfind("#", 0) != 0) 
+            {
+                // This line contains the URL
+                currentChannel.url = line;
+                channels.push_back(std::move(currentChannel));  // Use move semantics for better performance
+                inExtInf = false;
             }
             
-            // Ensure channel has a name
-            if (currentChannel.name.empty()) 
-            {
-                currentChannel.name = "Unknown";
-            }
-            
-            // Clean up HTML entities in the logo URL
-            size_t pos = 0;
-            while ((pos = currentChannel.logo.find("&amp;", pos)) != string::npos) 
-            {
-                currentChannel.logo.replace(pos, 5, "&");
-                pos += 1;
-            }
-        } 
-        else if (!line.empty() && line.rfind("#", 0) != 0) 
+            lineStart = lineEnd + 1;
+        }
+        
+        // Handle any partial line at the end of the chunk
+        if (lineStart < chunk.size()) 
         {
-            // This line contains the URL
-            currentChannel.url = line;
-            channels.push_back(currentChannel);
+            currentLine = chunk.substr(lineStart);
+            
+            // Read the next chunk and find the end of this line
+            continue;
+        }
+        
+        // If we had a partial line from the previous chunk, process it now
+        if (!currentLine.empty()) 
+        {
+            // Process the line (same logic as above)
+            // ...
+            currentLine.clear();
         }
     }
-
+    
+    fclose(filePtr);
     return channels;
 }

@@ -24,6 +24,9 @@ class M3UParser
 public:
     M3UParser() {};
     vector<Channel> ParseM3UFile(const string& filePath); 
+    
+private:
+    string DecodeHTMLEntities(const string& input);
 };
 
 #endif

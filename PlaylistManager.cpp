@@ -220,7 +220,7 @@ QString PlaylistManager::LoadStyleSheet()
     QTreeView::item:selected
     {
     background-color: rgb(30, 30, 30);
-    border: 1px solid black;
+    border: 1px solid rgb(30, 30, 30);
     border-left-color: transparent;
     border-right-color: transparent;
     color: white;
@@ -229,7 +229,7 @@ QString PlaylistManager::LoadStyleSheet()
     QTreeView::item:hover
     {
     background-color: rgb(35, 11, 63);
-    border: 1px solid rgb(82, 26, 149);
+    border: 1px solid transparent;
     border-left-color: transparent;
     border-right-color: transparent;
     color: white;
