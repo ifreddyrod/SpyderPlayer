@@ -45,7 +45,7 @@ extern string GetUserAppDataDirectory(string appName);
 enum ENUM_PLAYER_TYPE 
 {   VLC, 
     QTMEDIA, 
-    UNKNOWN
+    FFMPEG
 };
 
 extern ENUM_PLAYER_TYPE StringToPlayerTypeEnum(const string& playerTypeStr);

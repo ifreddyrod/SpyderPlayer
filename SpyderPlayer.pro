@@ -1,4 +1,4 @@
-TARGET = SPYDERPlayer
+TARGET = SpyderPlayer
 
 QT       += core gui multimedia multimediawidgets network
 
@@ -8,10 +8,13 @@ CONFIG += c++17 sdk_no_version_check
 
 ICON += assets/icons/spider_dark_icon.icns
 
+# FFmpeg
+#LIBS += -L/usr/local/lib -lavformat -lavcodec -lavutil -lswscale -lswresample
+
 # macOS specific settings
 macx {
     INCLUDEPATH += /usr/local/include
-    LIBS +=
+    LIBS +=  # -lavformat -lavcodec -lavutil -lswscale -lswresample
 
 }
 

@@ -111,7 +111,8 @@ ENUM_PLAYER_TYPE StringToPlayerTypeEnum(const string& playerTypeStr)
     static const std::unordered_map<std::string, ENUM_PLAYER_TYPE> playerTypeMap = 
     {
         {"VLC", VLC},
-        {"QTMEDIA", QTMEDIA}
+        {"QTMEDIA", QTMEDIA},
+        {"FFMPEG", FFMPEG}
     };
 
     std::string upperCaseStr = playerTypeStr;
@@ -123,7 +124,7 @@ ENUM_PLAYER_TYPE StringToPlayerTypeEnum(const string& playerTypeStr)
         return it->second;
     } else 
     {
-        return UNKNOWN; // Default or error value
+        return QTMEDIA; // Default or error value
     }
 }
 
@@ -135,6 +136,8 @@ string PlayerTypeToString(ENUM_PLAYER_TYPE playerType)
             return "VLC";
         case QTMEDIA:
             return "QTMEDIA";
+        case FFMPEG:
+            return "FFMPEG";
         default:
             return "UNKNOWN";
     }

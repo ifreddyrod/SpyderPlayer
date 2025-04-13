@@ -3,6 +3,7 @@
 #include <QThread> 
 #include <QMediaMetaData>
 #include "SpyderPlayerApp.h"
+#include <QMetaEnum>
 
 QtPlayer::QtPlayer(Ui::PlayerMainWindow* mainWindow, QWidget* parent) : VideoPlayer(parent) 
 {
@@ -24,7 +25,7 @@ QtPlayer::QtPlayer(Ui::PlayerMainWindow* mainWindow, QWidget* parent) : VideoPla
     connect(player_, &QMediaPlayer::positionChanged, this, &QtPlayer::PlayerPositionChanged);
     connect(player_, &QMediaPlayer::playbackStateChanged, this, &QtPlayer::PlaybackStateChanged);
     connect(player_, &QMediaPlayer::mediaStatusChanged, this, &QtPlayer::MediaStatusChanged);
-    //connect(player_, &QMediaPlayer::errorOccurred, this, &QtPlayer::HandleError);
+    connect(player_, &QMediaPlayer::errorOccurred, this, &QtPlayer::HandleError);
     /*connect(player_, &QMediaPlayer::bufferProgressChanged, this, [this](float progress) {
         qDebug() << "----> Buffer Progress:" << progress;
     });*/
@@ -61,8 +62,8 @@ void QtPlayer::SetVideoSource(const std::string& videoSource)
 
 void QtPlayer::RefreshVideoSource() 
 {
-    PRINT << "Refreshing Video Source";
-    PRINT << "Source: " << source_;
+    PRINT << "REFRESH: Refreshing Video Source";
+    PRINT << "REFRESH: Source: " << source_;
 
     //player_->stop();
     /*PRINT << "Waiting for player to stop";
@@ -74,14 +75,14 @@ void QtPlayer::RefreshVideoSource()
     }*/
 
     player_->setSource(QUrl(QSTR("")));
-    PRINT << "Set Source to Empty";
+    PRINT << "REFRESH: Set Source to Empty";
     int timedelay = app_->GetRetryTimeDelay();
-    PRINT << "Retry Time Delay: " << timedelay;
+    PRINT << "REFRESH: Retry Time Delay: " << timedelay;
     QThread::msleep(timedelay);
     //QThread::msleep(1250);
-    PRINT << "Done sleeping";
+    PRINT << "REFRESH: Done sleeping";
     player_->setSource(QUrl(QSTR(source_)));
-    PRINT << "Set Source";
+    PRINT << "REFRESH: Set Source";
     
 }
 

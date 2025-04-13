@@ -213,10 +213,6 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent): QWidget(parent)
     ui_.Status_label->setText("Player: " + QSTR(PlayerTypeToString(appData_->PlayerType_)));
 
     installEventFilter(this);
-
-    /*splashScreen->show();
-
-    ui->Status_label->setText(version);*/
 }
 
 // Destructor
@@ -270,8 +266,10 @@ void SpyderPlayerApp::InitializePlayLists()
     // Show Main Window
     splashscreen_.hide();
     this->setWindowOpacity(1.0);
+
     //##overlay_->show();
     OnHSplitterResized(0, 0);
+
     //##overlay_->Resize();
     //##overlay_->activateWindow();
     //##if(!isFullScreen_)
@@ -285,6 +283,10 @@ void SpyderPlayerApp::InitPlayer()
     {
         player_ = new QtPlayer(&ui_, this);
     }
+    /*else if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::FFMPEG)
+    {
+        player_ = new FFmpegPlayer(&ui_, this);
+    }*/
     /*else if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::VLC)
     {
         player_ = new VLCPlayer(this);
@@ -416,6 +418,10 @@ bool SpyderPlayerApp::eventFilter(QObject *object, QEvent *event)
             else if(keyEvent->key() ==  Qt::Key::Key_Return) 
             {
                 playlistManager_->PlaySelectedTreeItem();
+            }
+            else if(keyEvent->key() ==  appData_->HotKeys_.showOptions)
+            {
+                ShowSettings();
             }
 
             // Only process these if Playlist Tree is not focused
@@ -1109,6 +1115,8 @@ void SpyderPlayerApp::DecreaseVolume()
 void SpyderPlayerApp::OnPositionSliderPressed()
 {
     isVideoPlaying_ = player_->GetPlayerState() == ENUM_PLAYER_STATE::PLAYING;
+    if (isVideoPlaying_)
+        stalledVideoTimer_->stop();
 
     player_->OnChangingPosition(isVideoPlaying_);
     if (isFullScreen_)
@@ -1134,7 +1142,10 @@ void SpyderPlayerApp::OnPositionSliderReleased()
     VideoTimePositionChanged(videoPosition_);
     player_->OnChangedPosition(isVideoPlaying_);
     if (isVideoPlaying_)
+    {
         ChangePlayingUIStates(true);
+        stalledVideoTimer_->start();
+    }
 
     if (isFullScreen_)
     {

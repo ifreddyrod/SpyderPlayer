@@ -303,7 +303,8 @@ QTableWidget
     </rect>
    </property>
    <property name="styleSheet">
-    <string notr="true">background-color: qlineargradient(spread:pad, x1:0.369, y1:0.182, x2:1, y2:1, stop:0 rgba(57, 9, 126, 255), stop:1 rgba(129, 18, 129, 255));</string>
+    <string notr="true">/*background-color: qlineargradient(spread:pad, x1:0.369, y1:0.182, x2:1, y2:1, stop:0 rgba(57, 9, 126, 255), stop:1 rgba(129, 18, 129, 255));*/
+background-color: qlineargradient(spread:pad, x1:0.506931, y1:0.295636, x2:1, y2:1, stop:0 rgba(35, 6, 77, 255), stop:1 rgba(90, 13, 90, 255));</string>
    </property>
   </widget>
   <widget class="QPushButton" name="Apply_button">

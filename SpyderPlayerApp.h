@@ -15,6 +15,7 @@
 #include "PlaylistManager.h"
 #include "VideoPlayer.h"
 #include "QtPlayer.h"
+//#include "FFmpegPlayer.h"
 #include "ScreensaverInhibitor.h"
 #include "SettingsManager.h"
 
