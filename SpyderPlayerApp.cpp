@@ -285,11 +285,13 @@ void SpyderPlayerApp::InitPlayer()
     }
     /*else if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::FFMPEG)
     {
-        player_ = new FFmpegPlayer(&ui_, this);
+        //player_ = new FFmpegPlayer(&ui_, this);
+        player_ = new QtAvPlayer(&ui_, this);
     }*/
     /*else if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::VLC)
     {
-        player_ = new VLCPlayer(this);
+        player_ = new VLCPlayer(&ui_, this);
+        //player_->InitPlayer();
     }*/
 }
 
@@ -782,6 +784,10 @@ void SpyderPlayerApp::PlaybackStateChanged(ENUM_PLAYER_STATE state)
     }
     else if (state == ENUM_PLAYER_STATE::STALLED && videoDuration_ == 0)
     {
+        /*stalledVideoTimer_->stop();
+        ShowCursorNormal();
+        ui_.Status_label->setText("Invalid Media or Source");
+        screensaverInhibitor_->uninhibit(); */
         //if (retryPlaying_)
         if (retryCount_ > 0)
         {
@@ -932,6 +938,10 @@ void SpyderPlayerApp::StalledVideoDetected()
 {
     if (retryCount_ > 0)
     {
+        /*retryCount_--;
+        stalledVideoTimer_->stop();
+        return;*/
+
         player_->Stop();
         stalledVideoTimer_->stop();
         ui_.Status_label->setText("Stalled Video - Resetting(" + QString::number(retryCount_) + ")");

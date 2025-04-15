@@ -13,8 +13,8 @@ ICON += assets/icons/spider_dark_icon.icns
 
 # macOS specific settings
 macx {
-    INCLUDEPATH += /usr/local/include
-    LIBS +=  # -lavformat -lavcodec -lavutil -lswscale -lswresample
+    INCLUDEPATH += /usr/local/include #/Applications/VLC.app/Contents/MacOS/include
+    LIBS += #-L/Applications/VLC.app/Contents/MacOS/lib -lvlc -lvlccore # -lavformat -lavcodec -lavutil -lswscale -lswresample
 
 }
 
@@ -50,6 +50,7 @@ SOURCES += \
     ScreensaverInhibitor.cpp \
     SettingsManager.cpp \
     SplashScreen.cpp \
+    StreamBuffer.cpp \
     VideoControlPanel.cpp \
     VideoOverlay.cpp \
     VideoPlayer.cpp \
@@ -74,6 +75,7 @@ HEADERS += \
     SettingsManager.h \
     SplashScreen.h \
     SpyderPlayerApp.h \
+    StreamBuffer.h \
     VideoControlPanel.h \
     VideoOverlay.h \
     VideoPlayer.h \
