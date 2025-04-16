@@ -194,12 +194,16 @@ QString PlaylistManager::LoadStyleSheet()
     }
     QTreeView::branch:selected:open
     {
-    background-color: black;
+    background-color:  black; 
     }
     QTreeView::branch:selected:closed
     {
     background-color: black;
-    }           
+    }      
+    QTreeView::branch:selected
+    {
+    background-color: rgb(30, 30, 30);
+    }     
 
     QTreeView::branch:hover:open
     {
@@ -209,11 +213,6 @@ QString PlaylistManager::LoadStyleSheet()
     {
     background-color: rgb(35, 11, 63);
     }  
-    QTreeView::branch:selected
-    {
-    background-color: rgb(30, 30, 30);
-    }  
-
     QTreeWidget::item
     {
     height: 50px;

@@ -1,8 +1,9 @@
 // StreamBuffer.cpp
 #include "StreamBuffer.h"
+#include <QDebug>
 
 StreamBuffer::StreamBuffer(const QUrl &url, QObject *parent)
-    : QIODevice(parent), url_(url) 
+    : QIODevice(parent), url_(url), retryCount_(0)
 {
     open(QIODevice::ReadOnly);
     buffer_ = new QBuffer(this);
@@ -13,42 +14,62 @@ StreamBuffer::StreamBuffer(const QUrl &url, QObject *parent)
     StartRequest();
 }
 
-StreamBuffer::~StreamBuffer() 
+StreamBuffer::~StreamBuffer()
 {
-    if (reply_) reply_->deleteLater();
+    Stop();
     delete buffer_;
     delete retryTimer_;
     delete manager_;
 }
 
-qint64 StreamBuffer::readData(char *data, qint64 maxlen) 
+void StreamBuffer::Stop()
+{
+    retryTimer_->stop();
+    if (reply_)
+    {
+        disconnect(reply_, nullptr, this, nullptr);
+        reply_->abort();
+        reply_->deleteLater();
+        reply_ = nullptr;
+    }
+}
+
+qint64 StreamBuffer::readData(char *data, qint64 maxlen)
 {
     qint64 bytesRead = buffer_->read(data, maxlen);
-    PRINT << "StreamBuffer: Read" << bytesRead << "bytes, buffer size:" << buffer_->size();
+    qDebug() << "StreamBuffer: Read" << bytesRead << "bytes, buffer size:" << buffer_->size();
     return bytesRead;
 }
 
-qint64 StreamBuffer::writeData(const char *, qint64) 
+qint64 StreamBuffer::writeData(const char *, qint64)
 {
     return -1;
 }
 
-bool StreamBuffer::isSequential() const 
+bool StreamBuffer::isSequential() const
 {
     return true;
 }
 
-void StreamBuffer::StartRequest() 
+void StreamBuffer::StartRequest()
 {
+    if (retryCount_ >= 5)
+    {
+        qDebug() << "StreamBuffer: Max retries reached, stopping";
+        Stop();
+        emit ErrorOccurred("Max retries reached in StreamBuffer");
+        return;
+    }
+
     retryTimer_->stop();
     QNetworkRequest request(url_);
     request.setRawHeader("Connection", "keep-alive");
-    request.setRawHeader("User-Agent", "Mozilla/5.0 (QtMediaPlayer)"); // Mimic browser
+    request.setRawHeader("User-Agent", "Mozilla/5.0 (QtMediaPlayer)");
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::ManualRedirectPolicy);
     request.setTransferTimeout(15000);
 
     QSslConfiguration sslConfig = QSslConfiguration::defaultConfiguration();
-    sslConfig.setPeerVerifyMode(QSslSocket::VerifyNone); // Warning: Use cautiously
+    sslConfig.setPeerVerifyMode(QSslSocket::VerifyNone);
     request.setSslConfiguration(sslConfig);
 
     reply_ = manager_->get(request);
@@ -56,59 +77,78 @@ void StreamBuffer::StartRequest()
     connect(reply_, &QNetworkReply::finished, this, &StreamBuffer::HandleFinished);
     connect(reply_, &QNetworkReply::errorOccurred, this, &StreamBuffer::HandleError);
     connect(reply_, &QNetworkReply::redirected, this, &StreamBuffer::HandleRedirect);
-    PRINT << "StreamBuffer: Starting request for" << url_.toString();
+    qDebug() << "StreamBuffer: Starting request for" << url_.toString();
+    retryCount_++;
 }
 
-void StreamBuffer::DataAvailable() 
+void StreamBuffer::DataAvailable()
 {
+    if (!reply_)
+        return;
     QByteArray data = reply_->readAll();
-    if (buffer_->size() < 20971520 && !data.isEmpty()) {
+    if (buffer_->size() < 20971520 && !data.isEmpty())
+    {
         buffer_->write(data);
-        PRINT << "StreamBuffer: Wrote" << data.size() << "bytes, buffer size:" << buffer_->size();
+        qDebug() << "StreamBuffer: Wrote" << data.size() << "bytes, buffer size:" << buffer_->size();
+        if (buffer_->size() >= 1048576)
+            emit BufferReady();
         emit readyRead();
-    } 
-    else 
+    }
+    else
     {
-        PRINT << "StreamBuffer: Skipped write, buffer size:" << buffer_->size() << "data size:" << data.size();
+        qDebug() << "StreamBuffer: Skipped write, buffer size:" << buffer_->size() << "data size:" << data.size();
     }
 }
 
-void StreamBuffer::HandleFinished() 
+void StreamBuffer::HandleFinished()
 {
+    if (!reply_)
+        return;
     QByteArray data = reply_->readAll();
-    if (buffer_->size() < 20971520 && !data.isEmpty()) 
+    qint64 status = reply_->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    qDebug() << "StreamBuffer: Request finished, HTTP status:" << status;
+
+    if (!data.isEmpty() && buffer_->size() < 20971520)
     {
         buffer_->write(data);
-        PRINT << "StreamBuffer: Wrote" << data.size() << "bytes on finish";
+        qDebug() << "StreamBuffer: Wrote" << data.size() << "bytes on finish";
     }
-    qint64 status = reply_->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    PRINT << "StreamBuffer: Request finished, HTTP status:" << status;
-    if (status >= 200 && status < 300 && buffer_->size() > 0) 
+
+    if (status >= 200 && status < 300 && buffer_->size() > 0)
     {
-        PRINT << "StreamBuffer: Valid response, buffer size:" << buffer_->size();
-    } 
-    else 
-    {
-        PRINT << "StreamBuffer: Empty or failed response, retrying";
+        qDebug() << "StreamBuffer: Valid response, buffer size:" << buffer_->size();
+        retryCount_ = 0;
     }
+    else
+    {
+        qDebug() << "StreamBuffer: Empty or failed response, retrying";
+        reply_->deleteLater();
+        reply_ = nullptr;
+        retryTimer_->start(2000);
+    }
+
     reply_->deleteLater();
     reply_ = nullptr;
-    retryTimer_->start(1000);
 }
 
-void StreamBuffer::HandleError(QNetworkReply::NetworkError) 
+void StreamBuffer::HandleError(QNetworkReply::NetworkError code)
 {
-    PRINT << "StreamBuffer: Network error:" << reply_->errorString() << "URL:" << url_.toString();
+    if (!reply_)
+        return;
+    qDebug() << "StreamBuffer: Network error:" << reply_->errorString() << "Code:" << code << "URL:" << url_.toString();
     reply_->deleteLater();
     reply_ = nullptr;
-    retryTimer_->start(1000);
+    retryTimer_->start(2000);
 }
 
-void StreamBuffer::HandleRedirect(const QUrl &redirectUrl) 
+void StreamBuffer::HandleRedirect(const QUrl &redirectUrl)
 {
+    if (!reply_)
+        return;
     qDebug() << "StreamBuffer: Redirected to:" << redirectUrl;
     url_ = redirectUrl;
     reply_->deleteLater();
     reply_ = nullptr;
+    retryCount_ = 0;
     StartRequest();
 }

@@ -52,7 +52,7 @@ public:
     QList<QPair<int, QString>> GetSubtitleTracks();
     void SetSubtitleTrack(int index);
     QString GetVideoResolution();
-    void list_video_tracks();
+    void ListVideoTracks();
 
     void OnChangingPosition(bool isPlaying);
     void OnChangedPosition(bool isPlaying);
@@ -61,6 +61,7 @@ public:
     void CheckTimeout();
     void CheckPlaybackHealth();
     void StartWatchdog();
+    void HandleStreamBufferError(const QString &error);
 
 private:
     void SetupPlayer();
