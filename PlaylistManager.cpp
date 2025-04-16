@@ -187,27 +187,33 @@ QString PlaylistManager::LoadStyleSheet()
     image: url("%1");
     background-color: black;
     }
-    QTreeView::branch:open:selected
-    {
-    background-color: rgb(35, 11, 63);
-    }
-    QTreeView::branch:open:hover
-    {
-    background-color: rgb(35, 11, 63);
-    }           
     QTreeView::branch:closed:has-children
     {
     image: url("%2");
     background-color: black;
     }
-    QTreeView::branch:closed:hover
+    QTreeView::branch:selected:open
+    {
+    background-color: black;
+    }
+    QTreeView::branch:selected:closed
+    {
+    background-color: black;
+    }           
+
+    QTreeView::branch:hover:open
     {
     background-color: rgb(35, 11, 63);
     }  
-    QTreeView::branch:closed:selected
+    QTreeView::branch:hover:closed
+    {
+    background-color: rgb(35, 11, 63);
+    }  
+    QTreeView::branch:selected
     {
     background-color: rgb(30, 30, 30);
     }  
+
     QTreeWidget::item
     {
     height: 50px;

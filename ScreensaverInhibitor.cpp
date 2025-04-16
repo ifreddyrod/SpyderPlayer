@@ -43,6 +43,9 @@ void ScreensaverInhibitor::uninhibit()
 
 // Windows implementation
 #ifdef _WIN32
+#define _AVX512BF16VLINTRIN_H_INCLUDED
+#define _AVX512BF16INTRIN_H_INCLUDED
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
 WindowsInhibitor::WindowsInhibitor() 

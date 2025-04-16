@@ -38,7 +38,7 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent): QWidget(parent)
     //-----------------------------
     // Load AppData from file
     //-----------------------------
-    string data_path = GetUserAppDataDirectory("SpyderPlayerTest") + "/" + appdataFilename; 
+    string data_path = GetUserAppDataDirectory("SpyderPlayer") + "/" + appdataFilename; 
 
     PRINT << "AppData Path: " << data_path;
 
