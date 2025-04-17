@@ -30,6 +30,7 @@ public:
     bool IsPlayList(); 
     TreeItem* Child(int index);
     TreeItem* Parent();
+    void SetItemSelected(bool selected);
 
 private:
     QString playListName_;
@@ -37,6 +38,7 @@ private:
     QString source_;
     bool isPlayList_;
     bool isPersistent_;
+    QColor bgColor_;
 
 };
 

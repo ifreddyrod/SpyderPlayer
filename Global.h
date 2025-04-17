@@ -12,6 +12,7 @@
 #include <QMessageBox>
 #include <QStandardPaths>
 #include <QMessageBox>
+#include <QApplication>
 
 using namespace std;
 
@@ -38,6 +39,9 @@ extern QString Format_ms_to_Time(qint64 ms);
 extern int ShowSaveWarningDialog(QString title, QString message, bool showCancel = true);
 extern string GetPlatform();
 extern string GetUserAppDataDirectory(string appName);
+extern void SetCursorNormal();
+extern void SetCursorBusy();
+extern void SetCursorBlank();
 
 /******************************************************************************************* 
     Player Type ENUMERATION

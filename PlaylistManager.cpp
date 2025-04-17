@@ -19,6 +19,7 @@
 #define FAVORITES_COLOR  QColor(20, 6, 36)
 #define SEARCH_COLOR   QColor(20, 6, 36) 
 #define SESSION_COLOR   QColor(39, 0, 42) 
+#define ITEM_SELECTED_COLOR QColor(0, 5, 60)
 
 
 //************************************************************************************************
@@ -34,6 +35,7 @@ TreeItem::TreeItem(QString nameText, QColor bgColor, bool isPlayList, bool isPer
 
     if (bgColor.isValid()) 
     {
+        bgColor_ = bgColor;
         setBackground(0, bgColor);
     }
 }
@@ -104,6 +106,11 @@ TreeItem* TreeItem::Parent()
     return dynamic_cast<TreeItem*>(QTreeWidgetItem::parent());
 }
 
+void TreeItem::SetItemSelected(bool isSelected)
+{
+    setBackground(0, isSelected ? ITEM_SELECTED_COLOR : bgColor_);
+}
+
 //************************************************************************************************
 // PlaylistManager Class
 //************************************************************************************************
@@ -159,6 +166,8 @@ void PlaylistManager::ResetAllLists()
     searchResultsCount_ = 0; 
     currentItem_ = 0;
     lastSelectedItem_ = nullptr;
+    if (currentSelectedItem_ != nullptr)
+        currentSelectedItem_->SetItemSelected(false);
     currentSelectedItem_ = nullptr;
     sessionMediaList_ = nullptr;
     //ClearPlayListItems(sessionMediaList_);
@@ -241,8 +250,8 @@ QString PlaylistManager::LoadStyleSheet()
 
     QTreeView::item:selected
     {
-    background-color: rgb(30, 30, 30);
-    border: 1px solid rgb(30, 30, 30);
+    background-color: rgb(20, 20, 20);
+    border: 1px solid rgb(20, 20, 20);
     border-left-color: transparent;
     border-right-color: transparent;
     color: white;
@@ -452,6 +461,8 @@ QPair<string, string> PlaylistManager::GetAdjacentChannel(bool forward)
         currentList = static_cast<TreeItem*>(currentSelectedItem_->parent());
     }
 
+    TreeItem *temp = currentSelectedItem_;
+    lastSelectedItem_ = temp;
     int currentListCount = currentList->childCount();
 
     int currentIndex = currentList->indexOfChild(currentSelectedItem_);
@@ -463,6 +474,10 @@ QPair<string, string> PlaylistManager::GetAdjacentChannel(bool forward)
     // Retrieve the channel name (displayed)
     string channel_name = currentSelectedItem_->GetItemName().toStdString();
     string source = currentSelectedItem_->GetSource().toStdString();
+
+    if (lastSelectedItem_ != nullptr)
+        lastSelectedItem_->SetItemSelected(false);
+    currentSelectedItem_->SetItemSelected(true);
 
     // Set Tree to Selected Item
     playlistTree_->setCurrentItem(currentSelectedItem_);
@@ -477,7 +492,7 @@ QPair<string, string> PlaylistManager::GotoLastSelectedChannel()
         return { "", "" };
     }
 
-    TreeItem* temp = currentSelectedItem_;
+    TreeItem *temp = currentSelectedItem_;
     currentSelectedItem_ = lastSelectedItem_;
     lastSelectedItem_ = temp;
 
@@ -487,6 +502,10 @@ QPair<string, string> PlaylistManager::GotoLastSelectedChannel()
     // Retrieve the hidden URL (stored in UserRole)
     string source = currentSelectedItem_->GetSource().toStdString();
 
+    if (lastSelectedItem_ != nullptr)
+        lastSelectedItem_->SetItemSelected(false);
+    currentSelectedItem_->SetItemSelected(true);
+    
     // Set Tree to Selected Item
     playlistTree_->setCurrentItem(currentSelectedItem_);
 
@@ -523,6 +542,10 @@ void PlaylistManager::ItemDoubleClicked(QTreeWidgetItem* item)
 
     lastSelectedItem_ = currentSelectedItem_;
     currentSelectedItem_ = treeItem;
+
+    currentSelectedItem_->SetItemSelected(true);
+    if (lastSelectedItem_ != nullptr)
+        lastSelectedItem_->SetItemSelected(false);
 
     playlistTree_->setFocus();
 

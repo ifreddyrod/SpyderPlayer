@@ -66,6 +66,21 @@ string GetPlatform()
     return "";
 }
 
+void SetCursorNormal()
+{
+    QApplication::setOverrideCursor(Qt::ArrowCursor);
+}
+
+void SetCursorBusy()
+{
+    QApplication::setOverrideCursor(Qt::BusyCursor);
+}
+
+void SetCursorBlank()
+{
+    QApplication::setOverrideCursor(Qt::BlankCursor);
+}
+
 /*===================================================================================
 GetUserAppDataDirectory()
 

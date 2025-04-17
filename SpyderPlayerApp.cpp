@@ -1191,17 +1191,17 @@ void SpyderPlayerApp::LoadSessionPlaylist(PlayListEntry entry)
 
 void SpyderPlayerApp::ShowCursorNormal()
 {
-    QApplication::setOverrideCursor(Qt::ArrowCursor);
+    SetCursorNormal();
 }
 
 void SpyderPlayerApp::ShowCursorBusy()
 {
-    QApplication::setOverrideCursor(Qt::BusyCursor);
+    SetCursorBusy();
 }
 
 void SpyderPlayerApp::ShowCursorBlank()
 {
-    QApplication::setOverrideCursor(Qt::BlankCursor);
+    SetCursorBlank();
 }
 
 int SpyderPlayerApp::GetVideoPanelWidth()
