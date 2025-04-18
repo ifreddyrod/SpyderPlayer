@@ -32,6 +32,7 @@ public:
     virtual void Pause() = 0;
     virtual void Stop() = 0;
     virtual void SetPosition(qint64 position) = 0;
+    virtual void SkipPosition(qint64 position) = 0;
     virtual qint64 GetPosition() = 0;
     virtual void SetVolume(int volume) = 0;
     virtual int GetVolume() = 0;

@@ -11,7 +11,7 @@ EntryEditor::EntryEditor(SettingsManager* settingsManager, ENUM_SETTINGS_VIEWS v
 
     connect(ui_.Name_textedit, &QLineEdit::textChanged, this, &EntryEditor::EntryNameChanged);
     connect(ui_.SourceType_combobox, &QComboBox::currentIndexChanged, this, &EntryEditor::SourceTypeChanged);
-    connect(ui_.Source_textedit, &QTextEdit::textChanged, this, &EntryEditor::SourceChanged);
+    connect(ui_.Source_textedit, &QTextEdit::textChanged, this, &EntryEditor::SourceChanged); 
 }
 
 
@@ -161,10 +161,10 @@ void EntryEditor::OpenFileButtonClicked()
 void EntryEditor::SaveButtonClicked()
 {
     // Copy fields to entry
-    editEntry_.name = STR(ui_.Name_textedit->text());
+    editEntry_.name = STR(ui_.Name_textedit->text().trimmed());
     editEntry_.sourceType = ui_.SourceType_combobox->currentIndex() == 0 ? ENUM_SOURCE_TYPE::LOCAL_FILE : ENUM_SOURCE_TYPE::URL;
-    editEntry_.source = STR(ui_.Source_textedit->toPlainText());
-    
+    editEntry_.source = STR(ui_.Source_textedit->toPlainText().trimmed());
+
     //--------------------
     // Add New Entry
     //--------------------

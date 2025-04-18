@@ -279,10 +279,14 @@ void SpyderPlayerApp::InitializePlayLists()
 
 void SpyderPlayerApp::InitPlayer()
 {
-    if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::QTMEDIA)
+    // Only 1 Player Type available at this time
+    player_ = new QtPlayer(&ui_, this);
+
+    
+    /*if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::QTMEDIA)
     {
         player_ = new QtPlayer(&ui_, this);
-    }
+    }*/
     /*else if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::FFMPEG)
     {
         //player_ = new FFmpegPlayer(&ui_, this);
@@ -741,7 +745,9 @@ void SpyderPlayerApp::PlayerDurationChanged(qint64 duration)
 void SpyderPlayerApp::VideoTimePositionChanged(qint64 position)
 {
     videoPosition_ = position;
-    stalledVideoTimer_->start();
+
+    // Only start timer if video is streaming live, not fixed duration video
+    if (videoDuration_ > 0 ) stalledVideoTimer_->start();  
 
     if (videoChangesPosition_)
     {
@@ -775,7 +781,7 @@ void SpyderPlayerApp::PlaybackStateChanged(ENUM_PLAYER_STATE state)
         retryCount_ = appData_->RetryCount_;
         ui_.Status_label->setText("");
         playbackStatusTimer_->start();
-        stalledVideoTimer_->start();
+        //stalledVideoTimer_->start();
     }
     else if (state == ENUM_PLAYER_STATE::LOADING)
     {
@@ -1011,13 +1017,13 @@ void SpyderPlayerApp::StopPlayer()
 void SpyderPlayerApp::SeekForward()
 {
     if (videoDuration_ > 0)
-        player_->SetPosition(player_->GetPosition() + 10000);
+        player_->SkipPosition(player_->GetPosition() + 10000);
 }
 
 void SpyderPlayerApp::SeekBackward()
 {
     if (videoDuration_ > 0)
-        player_->SetPosition(player_->GetPosition() - 10000);
+        player_->SkipPosition(player_->GetPosition() - 10000);
 }
 
 void SpyderPlayerApp::PlayNextChannel()
@@ -1126,7 +1132,9 @@ void SpyderPlayerApp::OnPositionSliderPressed()
 {
     isVideoPlaying_ = player_->GetPlayerState() == ENUM_PLAYER_STATE::PLAYING;
     if (isVideoPlaying_)
+    {
         stalledVideoTimer_->stop();
+    }
 
     player_->OnChangingPosition(isVideoPlaying_);
     if (isFullScreen_)
@@ -1154,7 +1162,7 @@ void SpyderPlayerApp::OnPositionSliderReleased()
     if (isVideoPlaying_)
     {
         ChangePlayingUIStates(true);
-        stalledVideoTimer_->start();
+        //stalledVideoTimer_->start();
     }
 
     if (isFullScreen_)

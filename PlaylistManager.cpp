@@ -747,6 +747,7 @@ void PlaylistManager::AddRemoveFavorites(QTreeWidgetItem* item) // Triggered whe
 
 void PlaylistManager::LoadPlayList(PlayListEntry playlist, bool isPersistent)
 {
+    SetCursorBusy();
     string playlistPath = playlist.source;
     string playlistName = playlist.name;
     QString plPath = QSTR(playlistPath);
@@ -804,12 +805,14 @@ void PlaylistManager::LoadPlayList(PlayListEntry playlist, bool isPersistent)
             else 
             {
                 PRINT << "Failed to create temporary file";
+                SetCursorNormal();
                 return;
             }
         } 
         else 
         {
             PRINT << "Error fetching remote playlist:" << reply->errorString();
+            SetCursorNormal();
             return;
         }
         reply->deleteLater();
@@ -824,6 +827,7 @@ void PlaylistManager::LoadPlayList(PlayListEntry playlist, bool isPersistent)
         if (!filesystem::exists(playlistPath)) 
         {
             PRINT << "File does not exist: " << playlistPath;
+            SetCursorNormal();
             return;
         }
 
@@ -835,6 +839,7 @@ void PlaylistManager::LoadPlayList(PlayListEntry playlist, bool isPersistent)
     if (channelList.empty()) 
     {
         PRINT << "Channel list is empty for playlist: " << playlistName;
+        SetCursorNormal();
         return;
     }
 
@@ -866,6 +871,7 @@ void PlaylistManager::LoadPlayList(PlayListEntry playlist, bool isPersistent)
     else
     {
         PRINT << "Playlist already loaded: " << playlistName;
+        SetCursorNormal();
         return;
     }
 
@@ -893,11 +899,13 @@ void PlaylistManager::LoadPlayList(PlayListEntry playlist, bool isPersistent)
 
     UpdatePlayListChannelCount(playlistTreeItem);
     playlistTree_->blockSignals(false);
+    SetCursorNormal();
 
 }
 
 void PlaylistManager::LoadLibrary() 
 {
+    SetCursorBusy();
     playlistTree_->blockSignals(true);
     ClearPlayListItems(libraryList_);
 
@@ -916,6 +924,7 @@ void PlaylistManager::LoadLibrary()
 
     UpdatePlayListChannelCount(libraryList_);
     playlistTree_->blockSignals(false);
+    SetCursorNormal();
 }
 
 void PlaylistManager::SaveFavorites() 
@@ -926,6 +935,7 @@ void PlaylistManager::SaveFavorites()
 
 void PlaylistManager::LoadFavorites() 
 {
+    SetCursorBusy();
     // Block signals
     playlistTree_->blockSignals(true);  
     ClearPlayListItems(favoritesList_);
@@ -963,10 +973,12 @@ void PlaylistManager::LoadFavorites()
 
     UpdatePlayListChannelCount(favoritesList_);
     playlistTree_->blockSignals(false);
+    SetCursorNormal();
 }
 
 void PlaylistManager::SearchChannels(QString searchText)
 {
+    SetCursorBusy();
     //PRINT << "SearchChannels: " << searchText;
 
     // Return if search text is empty
@@ -1054,6 +1066,7 @@ void PlaylistManager::SearchChannels(QString searchText)
 
     // Emit the tree layout changed signal
     EmitTreeLayoutChanged();
+    SetCursorNormal();
 }
 
 void PlaylistManager::PlaySelectedTreeItem()

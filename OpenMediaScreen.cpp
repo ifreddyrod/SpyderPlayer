@@ -122,7 +122,7 @@ void OpenMedia::OpenButtonClicked()
 {
     PlayListEntry newEntry;
     newEntry.sourceType = ui_.SourceType_combobox->currentIndex() == 0 ? ENUM_SOURCE_TYPE::LOCAL_FILE : ENUM_SOURCE_TYPE::URL;
-    QString source = ui_.Source_textedit->toPlainText();
+    QString source = ui_.Source_textedit->toPlainText().trimmed();
     newEntry.source = STR(source);
 
     if(viewType_ == ENUM_SETTINGS_VIEWS::OPEN_PLAYLIST)

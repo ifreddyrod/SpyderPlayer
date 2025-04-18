@@ -30,7 +30,7 @@ QPushButton
 
 QPushButton:hover 
 {
-	background-color: rgb(35, 11, 63);
+	background-color: rgb(40, 40, 40);
 }
 
 QPushButton:disabled
@@ -101,7 +101,7 @@ QComboBox QAbstractItemView {
     </rect>
    </property>
    <property name="styleSheet">
-    <string notr="true">background-color: rgb(27, 27, 27);</string>
+    <string notr="true">background-color: rgb(40, 40, 40);</string>
    </property>
    <widget class="QLabel" name="Titlebar_label">
     <property name="geometry">
