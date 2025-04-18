@@ -918,26 +918,6 @@ void SpyderPlayerApp::InactivityDetected()
         if (!isPlaylistVisible_ && !settingsManager_->IsVisible())
             ShowCursorBlank();
     }
-    /*if (isFullScreen_ && !controlpanelFS_.hasFocus() && !subtitlesMenu_->isVisible())
-    {
-        controlpanelFS_.hide();
-        overlay_->setFocus();
-                
-        if (!isPlaylistVisible_ && !settingsManager_.settingStack.isVisible())
-            QApplication::setOverrideCursor(Qt::BlankCursor);
-    } */
-
-    /*
-    
-            if self.isFullScreen and not self.controlPanelFS.hasFocus() and not self.subtitlesMenu.isVisible():
-            self.controlPanelFS.hide()
-            self.overlay.setFocus()
-                      
-            if not self.playListVisible and not self.settingsManager.settingStack.isVisible():
-                QApplication.setOverrideCursor(Qt.CursorShape.BlankCursor)
-                
-                
-    */
 }
 
 void SpyderPlayerApp::StalledVideoDetected()

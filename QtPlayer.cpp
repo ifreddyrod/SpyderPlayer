@@ -21,11 +21,11 @@ QtPlayer::QtPlayer(Ui::PlayerMainWindow* mainWindow, QWidget* parent)
 
     InitPlayer();
 
-    connect(player_, &QMediaPlayer::durationChanged, this, &QtPlayer::PlayerDurationChanged);
-    connect(player_, &QMediaPlayer::positionChanged, this, &QtPlayer::PlayerPositionChanged);
-    connect(player_, &QMediaPlayer::playbackStateChanged, this, &QtPlayer::PlaybackStateChanged);
-    connect(player_, &QMediaPlayer::mediaStatusChanged, this, &QtPlayer::MediaStatusChanged);
-    connect(player_, &QMediaPlayer::errorOccurred, this, &QtPlayer::HandleError);
+    //connect(player_, &QMediaPlayer::durationChanged, this, &QtPlayer::PlayerDurationChanged);
+    //connect(player_, &QMediaPlayer::positionChanged, this, &QtPlayer::PlayerPositionChanged);
+    //connect(player_, &QMediaPlayer::playbackStateChanged, this, &QtPlayer::PlaybackStateChanged);
+    //connect(player_, &QMediaPlayer::mediaStatusChanged, this, &QtPlayer::MediaStatusChanged);
+    //connect(player_, &QMediaPlayer::errorOccurred, this, &QtPlayer::HandleError);
 }
 
 QtPlayer::~QtPlayer()
@@ -138,6 +138,8 @@ void QtPlayer::Play()
                         player_->setSource(QUrl(QString::fromStdString(source_)));
                         if (duration_ > 0)
                             player_->setPosition(position_);
+                            
+                        audioOutput_->setMuted(isMuted_);
                         player_->play();
                         retryCount_++;
                         PRINT << "QtPlayer: Attempting direct playback, retry:" << retryCount_;
@@ -151,6 +153,7 @@ void QtPlayer::Play()
                             if (duration_ > 0)
                                 player_->setPosition(position_);
 
+                            audioOutput_->setMuted(isMuted_);
                             player_->play();
                             PRINT << "QtPlayer: StreamBuffer ready, playing";
                         });
@@ -287,7 +290,8 @@ bool QtPlayer::IsMuted()
 
 void QtPlayer::Mute(bool mute)
 {
-    audioOutput_->setMuted(mute);
+    isMuted_ = mute;
+    audioOutput_->setMuted(isMuted_);
 }
 
 void QtPlayer::PlayerDurationChanged(int duration)

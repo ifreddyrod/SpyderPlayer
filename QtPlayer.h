@@ -71,6 +71,7 @@ private:
     QVideoWidget* videoPanel_;
     QMediaPlayer* player_;
     QAudioOutput* audioOutput_;
+    bool isMuted_ = false;
     int subtitleCount_;
     QList<QPair<int, QString>> subtitleList_;
     int subtitleIndex_;
