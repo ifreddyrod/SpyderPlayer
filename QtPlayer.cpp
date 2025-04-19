@@ -86,14 +86,8 @@ void QtPlayer::SetVideoSource(const std::string& videoSource)
 void QtPlayer::RefreshVideoSource()
 {
     PRINT << "REFRESH: Refreshing Video Source: " << source_;
-    player_->stop();
-    if (streamBuffer_)
-    {
-        streamBuffer_->Stop();
-        streamBuffer_->deleteLater();
-        streamBuffer_ = nullptr;
-    }
-    player_->setSource(QUrl(""));
+
+    SetVideoSource(source_);
     int timedelay = app_->GetRetryTimeDelay();
     PRINT << "REFRESH: Retry Time Delay: " << timedelay;
     QThread::msleep(timedelay);
@@ -212,6 +206,7 @@ void QtPlayer::Pause()
     {
         player_->pause();
         timeoutTimer_->stop();
+        watchdogTimer_->stop();
     }
     catch (const std::exception& e)
     {
@@ -224,7 +219,9 @@ void QtPlayer::Stop()
 {
     try
     {
+        player_->stop();
         timeoutTimer_->stop();
+        watchdogTimer_->stop();
         if (streamBuffer_)
         {
             streamBuffer_->Stop();
@@ -236,7 +233,6 @@ void QtPlayer::Stop()
         subtitleCount_ = -1;
         subtitleIndex_ = 0;
         duration_ = 0;
-        player_->stop();
     }
     catch (const std::exception& e)
     {
@@ -467,6 +463,8 @@ void QtPlayer::HandleError(QMediaPlayer::Error error, const QString &errorString
         PRINT << "Stream error, retrying with " << (streamBuffer_ ? "direct playback" : "StreamBuffer") << "...";
         retryCount_++;
         player_->stop();
+        currentState_ = ENUM_PLAYER_STATE::LOADING;
+
         if (streamBuffer_)
         {
             streamBuffer_->Stop();
@@ -618,7 +616,8 @@ void QtPlayer::CheckPlaybackHealth()
                 streamBuffer_ = nullptr;
             }
             SetupPlayer();
-            QTimer::singleShot(2000 * retryCount_, this, &QtPlayer::Play);
+            //QTimer::singleShot(2000 * retryCount_, this, &QtPlayer::Play);
+            QTimer::singleShot(2000, this, &QtPlayer::Play);
             stallCount = 0;
         }
     }

@@ -47,23 +47,15 @@ string M3UParser::DecodeHTMLEntities(const string& input)
     string tempResult = result;
     result = "";
     
-    // Process the string to replace numeric entities
     while (regex_search(tempResult, match, numericEntityRegex)) 
     {
-        // Add the part before the match
         result += match.prefix().str();
-        
-        // Convert the numeric entity to a character
         int charCode = stoi(match[1]);
         result += static_cast<char>(charCode);
-        
-        // Continue with the rest of the string
         tempResult = match.suffix().str();
     }
     
-    // Add any remaining part
     result += tempResult;
-    
     return result;
 }
 
@@ -88,7 +80,6 @@ vector<Channel> M3UParser::ParseM3UFile(const string& filePath)
     static const regex nameRegex("tvg-name=\"(.*?)\"");
     static const regex logoRegex("tvg-logo=\"(.*?)\"");
     static const regex groupRegex("group-title=\"(.*?)\"");
-    static const regex titleRegex("#EXTINF:-1.*?,(.*?)$");
     
     // Open file for efficient reading
     FILE* filePtr = fopen(filePath.c_str(), "r");
@@ -128,16 +119,11 @@ vector<Channel> M3UParser::ParseM3UFile(const string& filePath)
                 line.pop_back();
             }
             
-            // Skip empty lines
-            if (line.empty()) 
-            {
-                lineStart = lineEnd + 1;
-                continue;
-            }
-            
             // Process the line
             if (line.rfind("#EXTINF", 0) == 0) 
             {
+                // If we were already in an EXTINF block and encounter a new one,
+                // reset without adding the previous channel (incomplete)
                 inExtInf = true;
                 currentChannel = Channel();
                 
@@ -165,24 +151,27 @@ vector<Channel> M3UParser::ParseM3UFile(const string& filePath)
                     currentChannel.group = DecodeHTMLEntities(match[1]);
                 }
                 
-                // Extract title (fallback for name)
-                if (regex_search(line, match, titleRegex)) 
+                // Extract channel name (fallback if tvg-name not present)
+                if (currentChannel.name.empty()) 
                 {
-                    if (currentChannel.name.empty()) 
+                    // Manually find the last comma outside of quotes
+                    bool inQuotes = false;
+                    size_t lastComma = string::npos;
+                    for (size_t i = 0; i < line.length(); ++i) 
                     {
-                        currentChannel.name = DecodeHTMLEntities(match[1]);
-                    }
-                } 
-                else 
-                {
-                    // Fallback: try to find content after the last comma
-                    size_t commaPos = line.rfind(',');
-                    if (commaPos != string::npos && commaPos + 1 < line.length()) 
-                    {
-                        if (currentChannel.name.empty()) 
+                        if (line[i] == '"') 
                         {
-                            currentChannel.name = DecodeHTMLEntities(line.substr(commaPos + 1));
+                            inQuotes = !inQuotes;
                         }
+                        else if (line[i] == ',' && !inQuotes) 
+                        {
+                            lastComma = i;
+                        }
+                    }
+                    
+                    if (lastComma != string::npos && lastComma + 1 < line.length()) 
+                    {
+                        currentChannel.name = DecodeHTMLEntities(line.substr(lastComma + 1));
                     }
                 }
                 
@@ -192,19 +181,14 @@ vector<Channel> M3UParser::ParseM3UFile(const string& filePath)
                     currentChannel.name = "Unknown";
                 }
             } 
-            else if (inExtInf && line.rfind("#", 0) == 0) 
-            {
-                // Skip #EXTVLCOPT or other # lines (e.g., comments)
-                lineStart = lineEnd + 1;
-                continue;
-            } 
-            else if (inExtInf && !line.empty()) 
+            else if (inExtInf && !line.empty() && line.rfind("#", 0) != 0) 
             {
                 // This line contains the URL
                 currentChannel.url = line;
                 channels.push_back(std::move(currentChannel));
                 inExtInf = false;
             }
+            // If line is empty or starts with # (e.g., #EXTVLCOPT), skip it but keep inExtInf state
             
             lineStart = lineEnd + 1;
         }

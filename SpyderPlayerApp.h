@@ -89,7 +89,7 @@ private:
     void ChangePlayingUIStates(bool isPlaying);
     void PlaybackStateChanged(ENUM_PLAYER_STATE state);
     void PlayerDurationChanged(qint64 duration);
-    void VideoTimePositionChanged(qint64 position);
+    void PlayerPositionChanged(qint64 position);
     void PlayerErrorOccured(const std::string& error);
     void ShowVideoResolution();
     void EnableSubtitles(bool enable);

@@ -159,7 +159,7 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent): QWidget(parent)
     controlpanelFS_.ui_.CloseCaption_button->setEnabled(false);
 
     // Connect Player Signals
-    connect(player_, &VideoPlayer::SIGNAL_UpdatePosition, this, &SpyderPlayerApp::VideoTimePositionChanged);
+    connect(player_, &VideoPlayer::SIGNAL_UpdatePosition, this, &SpyderPlayerApp::PlayerPositionChanged);
     connect(player_, &VideoPlayer::SIGNAL_ErrorOccured, this, &SpyderPlayerApp::PlayerErrorOccured);
     connect(player_, &VideoPlayer::SIGNAL_PlayerStateChanged, this, &SpyderPlayerApp::PlaybackStateChanged);
     connect(player_, &VideoPlayer::SIGNAL_EnableSubtitles, this, &SpyderPlayerApp::EnableSubtitles);
@@ -742,7 +742,7 @@ void SpyderPlayerApp::PlayerDurationChanged(qint64 duration)
     }
 }
 
-void SpyderPlayerApp::VideoTimePositionChanged(qint64 position)
+void SpyderPlayerApp::PlayerPositionChanged(qint64 position)
 {
     videoPosition_ = position;
 
@@ -777,7 +777,7 @@ void SpyderPlayerApp::PlaybackStateChanged(ENUM_PLAYER_STATE state)
         PlayerDurationChanged(player_->GetVideoDuration());
         ChangePlayingUIStates(true);
         screensaverInhibitor_->inhibit();
-        //retryPlaying_ = true;
+        retryPlaying_ = false;
         retryCount_ = appData_->RetryCount_;
         ui_.Status_label->setText("");
         playbackStatusTimer_->start();
@@ -795,7 +795,11 @@ void SpyderPlayerApp::PlaybackStateChanged(ENUM_PLAYER_STATE state)
         ui_.Status_label->setText("Invalid Media or Source");
         screensaverInhibitor_->uninhibit(); */
         //if (retryPlaying_)
-        if (retryCount_ > 0)
+        if (retryPlaying_)
+        {
+            // Do nothing...
+        }
+        else if (retryCount_ > 0)
         {
             ShowCursorBusy();
             StalledVideoDetected();
@@ -813,7 +817,6 @@ void SpyderPlayerApp::PlaybackStateChanged(ENUM_PLAYER_STATE state)
         stalledVideoTimer_->stop();
         ShowCursorNormal();
         ChangePlayingUIStates(false);
-        //stalledVideoTimer_->stop();
         screensaverInhibitor_->uninhibit();
         ui_.Status_label->setText("");
     }
@@ -922,23 +925,25 @@ void SpyderPlayerApp::InactivityDetected()
 
 void SpyderPlayerApp::StalledVideoDetected()
 {
+    retryPlaying_ = true;
     if (retryCount_ > 0)
     {
         /*retryCount_--;
         stalledVideoTimer_->stop();
         return;*/
-
+        PRINT << "-----------------> STALLED VIDEO DETECTED <-----------------";
         player_->Stop();
         stalledVideoTimer_->stop();
         ui_.Status_label->setText("Stalled Video - Resetting(" + QString::number(retryCount_) + ")");
         PRINT << "Stalled Video - Resetting... Retry Count: " << retryCount_;
 
         player_->RefreshVideoSource();
-        player_->Play();
+        //player_->Play();
         retryCount_--;
     }
     else
         ChangePlayingUIStates(false);
+    retryPlaying_ = false;
 }
 
 void SpyderPlayerApp::ShowSettings()
@@ -973,7 +978,10 @@ void SpyderPlayerApp::PlayPausePlayer()
     ENUM_PLAYER_STATE state = player_->GetPlayerState();
 
     if (state == ENUM_PLAYER_STATE::PLAYING)
+    {
         player_->Pause();
+        stalledVideoTimer_->stop();
+    }
     else
     {
         // Check if video reached end, if so stop and restart at beginning
@@ -990,6 +998,7 @@ void SpyderPlayerApp::PlayPausePlayer()
 
 void SpyderPlayerApp::StopPlayer()
 {
+    stalledVideoTimer_->stop();
     player_->Stop();
     ui_.Status_label->setText("");
 }
@@ -1137,7 +1146,7 @@ void SpyderPlayerApp::OnPositionSliderMoved()
 
 void SpyderPlayerApp::OnPositionSliderReleased()
 {
-    VideoTimePositionChanged(videoPosition_);
+    PlayerPositionChanged(videoPosition_);
     player_->OnChangedPosition(isVideoPlaying_);
     if (isVideoPlaying_)
     {
