@@ -81,7 +81,7 @@ private:
     qint64 lastPosition_ = -1;
     QMediaPlayer::MediaStatus mediaState_;
     int retryCount_ = 0;
-    static constexpr int MAX_RETRIES = 5;
+    static constexpr int MAX_RETRIES = 10;
 };
 
 #endif // QTMEDIA_H

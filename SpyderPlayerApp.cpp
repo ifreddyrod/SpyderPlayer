@@ -177,7 +177,7 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent): QWidget(parent)
     connect(inactivityTimer_, &QTimer::timeout, this, &SpyderPlayerApp::InactivityDetected);
 
     stalledVideoTimer_ = new QTimer(this);
-    stalledVideoTimer_->setInterval(3000);
+    stalledVideoTimer_->setInterval(5000);
     connect(stalledVideoTimer_, &QTimer::timeout, this, &SpyderPlayerApp::StalledVideoDetected);
     
     playbackStatusTimer_ = new QTimer(this);

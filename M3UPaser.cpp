@@ -71,28 +71,24 @@ vector<Channel> M3UParser::ParseM3UFile(const string& filePath)
 {
     vector<Channel> channels;
     
-    // Estimate channel count based on file size (assuming ~500 bytes per channel)
+    // Estimate channel count and reserve space
     std::ifstream fileSizeCheck(filePath, std::ios::ate);
     if (!fileSizeCheck.is_open()) 
     {
         cerr << "Failed to open file: " << filePath << endl;
         return channels;
     }
-    
     std::streamsize fileSize = fileSizeCheck.tellg();
     fileSizeCheck.close();
-    
-    // Reserve based on estimated channel count (with a reasonable minimum)
     size_t estimatedChannels = std::max(size_t(10000), size_t(fileSize / 500));
     channels.reserve(estimatedChannels);
     
-    // Precompile regex patterns (static to compile only once across multiple calls)
+    // Precompile regex patterns
     static const regex idRegex("tvg-id=\"(.*?)\"");
     static const regex nameRegex("tvg-name=\"(.*?)\"");
     static const regex logoRegex("tvg-logo=\"(.*?)\"");
     static const regex groupRegex("group-title=\"(.*?)\"");
     static const regex titleRegex("#EXTINF:-1.*?,(.*?)$");
-    static const regex jsonIdRegex("tvg-id=\"\\{'id': '(.*?)'");
     
     // Open file for efficient reading
     FILE* filePtr = fopen(filePath.c_str(), "r");
@@ -102,7 +98,7 @@ vector<Channel> M3UParser::ParseM3UFile(const string& filePath)
         return channels;
     }
     
-    // Use a large buffer for more efficient reading
+    // Use a large buffer
     constexpr size_t BUFFER_SIZE = 8 * 1024 * 1024;  // 8MB buffer
     vector<char> buffer(BUFFER_SIZE);
     
@@ -132,45 +128,46 @@ vector<Channel> M3UParser::ParseM3UFile(const string& filePath)
                 line.pop_back();
             }
             
+            // Skip empty lines
+            if (line.empty()) 
+            {
+                lineStart = lineEnd + 1;
+                continue;
+            }
+            
             // Process the line
             if (line.rfind("#EXTINF", 0) == 0) 
             {
                 inExtInf = true;
                 currentChannel = Channel();
                 
-                // First try to extract JSON-like id
-                if (regex_search(line, match, jsonIdRegex)) 
-                {
-                    currentChannel.id = DecodeHTMLEntities(match[1]);
-                }
-                // Fall back to regular extraction if JSON pattern doesn't match
-                else if (regex_search(line, match, idRegex)) 
+                // Extract tvg-id (optional)
+                if (regex_search(line, match, idRegex)) 
                 {
                     currentChannel.id = DecodeHTMLEntities(match[1]);
                 }
                 
-                // Extract tvg-name
+                // Extract tvg-name (preferred for name)
                 if (regex_search(line, match, nameRegex)) 
                 {
                     currentChannel.name = DecodeHTMLEntities(match[1]);
                 }
                 
-                // Extract tvg-logo
+                // Extract tvg-logo (optional)
                 if (regex_search(line, match, logoRegex)) 
                 {
                     currentChannel.logo = DecodeHTMLEntities(match[1]);
                 }
                 
-                // Extract group-title
+                // Extract group-title (optional)
                 if (regex_search(line, match, groupRegex)) 
                 {
                     currentChannel.group = DecodeHTMLEntities(match[1]);
                 }
                 
-                // Extract title (content after comma)
+                // Extract title (fallback for name)
                 if (regex_search(line, match, titleRegex)) 
                 {
-                    // If name wasn't extracted from tvg-name, use the title
                     if (currentChannel.name.empty()) 
                     {
                         currentChannel.name = DecodeHTMLEntities(match[1]);
@@ -195,11 +192,17 @@ vector<Channel> M3UParser::ParseM3UFile(const string& filePath)
                     currentChannel.name = "Unknown";
                 }
             } 
-            else if (inExtInf && !line.empty() && line.rfind("#", 0) != 0) 
+            else if (inExtInf && line.rfind("#", 0) == 0) 
+            {
+                // Skip #EXTVLCOPT or other # lines (e.g., comments)
+                lineStart = lineEnd + 1;
+                continue;
+            } 
+            else if (inExtInf && !line.empty()) 
             {
                 // This line contains the URL
                 currentChannel.url = line;
-                channels.push_back(std::move(currentChannel));  // Use move semantics for better performance
+                channels.push_back(std::move(currentChannel));
                 inExtInf = false;
             }
             
@@ -210,18 +213,19 @@ vector<Channel> M3UParser::ParseM3UFile(const string& filePath)
         if (lineStart < chunk.size()) 
         {
             currentLine = chunk.substr(lineStart);
-            
-            // Read the next chunk and find the end of this line
-            continue;
         }
-        
-        // If we had a partial line from the previous chunk, process it now
-        if (!currentLine.empty()) 
+        else 
         {
-            // Process the line (same logic as above)
-            // ...
             currentLine.clear();
         }
+    }
+    
+    // Handle last URL without newline
+    if (inExtInf && !currentLine.empty() && currentLine.rfind("#", 0) != 0) 
+    {
+        currentChannel.url = currentLine;
+        channels.push_back(std::move(currentChannel));
+        inExtInf = false;
     }
     
     fclose(filePtr);
