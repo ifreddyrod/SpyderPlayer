@@ -21,6 +21,10 @@ QtPlayer::QtPlayer(Ui::PlayerMainWindow* mainWindow, QWidget* parent)
 
     InitPlayer();
 
+    stalledVideoTimer_ = new QTimer(this);
+    stalledVideoTimer_->setInterval(5000);
+    connect(stalledVideoTimer_, &QTimer::timeout, this, &QtPlayer::StalledVideoDetected);
+
     //connect(player_, &QMediaPlayer::durationChanged, this, &QtPlayer::PlayerDurationChanged);
     //connect(player_, &QMediaPlayer::positionChanged, this, &QtPlayer::PlayerPositionChanged);
     //connect(player_, &QMediaPlayer::playbackStateChanged, this, &QtPlayer::PlaybackStateChanged);
@@ -300,6 +304,7 @@ void QtPlayer::PlayerPositionChanged(int position)
 {
     position_ = position;
     UpdatePosition(position);
+    stalledVideoTimer_->start();
 }
 
 ENUM_PLAYER_STATE QtPlayer::GetPlayerState()
@@ -396,10 +401,12 @@ void QtPlayer::MediaStatusChanged(QMediaPlayer::MediaStatus mediaState)
     {
         currentState_ = ENUM_PLAYER_STATE::STALLED;
         timeoutTimer_->stop();
+        stalledVideoTimer_->stop();
     }
     else if (mediaState == QMediaPlayer::EndOfMedia)
     {
         timeoutTimer_->stop();
+        stalledVideoTimer_->stop();
         if (duration_ > 0)
             currentState_ = ENUM_PLAYER_STATE::ENDED;
         else
@@ -409,11 +416,13 @@ void QtPlayer::MediaStatusChanged(QMediaPlayer::MediaStatus mediaState)
     {
         currentState_ = ENUM_PLAYER_STATE::IDLE;
         timeoutTimer_->stop();
+        stalledVideoTimer_->stop();
     }
     else if (mediaState == QMediaPlayer::StalledMedia)
     {
         currentState_ = ENUM_PLAYER_STATE::STALLED;
         timeoutTimer_->stop();
+        stalledVideoTimer_->stop();
     }
 
     UpdatePlayerState(currentState_);
@@ -565,6 +574,24 @@ void QtPlayer::ChangeUpdateTimerInterval(bool isFullScreen)
 void QtPlayer::CheckTimeout()
 {
     PRINT << "Stream timeout, buffer state: " << player_->bufferProgress() << "position: " << player_->position() << "Retry: " << retryCount_;
+
+    /*qint64 position = player_->position();
+    QThread::msleep(1000);
+    // Check if position has changed
+    if (player_->playbackState() == QMediaPlayer::PlayingState && position == player_->position())
+    {
+        PRINT << "Timeout detected position not changing, retrying...";
+        if (streamBuffer_)
+        {
+            streamBuffer_->Stop();
+            streamBuffer_->deleteLater();
+            streamBuffer_ = nullptr;
+        }
+        currentState_ = ENUM_PLAYER_STATE::STALLED;
+        UpdatePlayerState(currentState_);
+        return;
+    }*/
+
     if (player_->playbackState() == QMediaPlayer::PlayingState && player_->bufferProgress() > 0.5)
     {
         PRINT << "QtPlayer: Timeout ignored, playback active";
@@ -633,4 +660,13 @@ void QtPlayer::StartWatchdog()
     watchdogTimer_ = new QTimer(this);
     connect(watchdogTimer_, &QTimer::timeout, this, &QtPlayer::CheckPlaybackHealth);
     watchdogTimer_->start(5000);
+}
+
+void QtPlayer::StalledVideoDetected()
+{
+    if(player_->playbackState() == QMediaPlayer::PlayingState)
+    {
+        currentState_ = ENUM_PLAYER_STATE::STALLED;
+        UpdatePlayerState(currentState_);
+    }
 }

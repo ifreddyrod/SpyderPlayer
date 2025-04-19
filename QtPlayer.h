@@ -63,6 +63,7 @@ public:
     void CheckPlaybackHealth();
     void StartWatchdog();
     void HandleStreamBufferError(const QString &error);
+    void StalledVideoDetected();
 
 private:
     void SetupPlayer();
@@ -82,6 +83,7 @@ private:
     QMediaPlayer::MediaStatus mediaState_;
     int retryCount_ = 0;
     static constexpr int MAX_RETRIES = 8;
+    QTimer *stalledVideoTimer_;
 };
 
 #endif // QTMEDIA_H

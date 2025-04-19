@@ -746,8 +746,10 @@ void SpyderPlayerApp::PlayerPositionChanged(qint64 position)
 {
     videoPosition_ = position;
 
+    //PRINT << "Duration: " << videoDuration_ << " Position: " << position;  
+
     // Only start timer if video is streaming live, not fixed duration video
-    if (videoDuration_ > 0 ) stalledVideoTimer_->start();  
+    //if (videoDuration_ > 0 ) stalledVideoTimer_->start();  
 
     if (videoChangesPosition_)
     {
