@@ -1137,13 +1137,13 @@ void SpyderPlayerApp::OnPositionSliderPressed()
 
 void SpyderPlayerApp::OnPositionSliderMoved()
 {
-    videoChangesPosition_ = false;
+    //videoChangesPosition_ = false;
     QSlider *slider = dynamic_cast<QSlider *>(sender());
     qint64 position = slider->value();
 
     player_->SetPosition(position);
     videoPosition_ = position;
-    videoChangesPosition_ = true;
+    //videoChangesPosition_ = true;
 }
 
 void SpyderPlayerApp::OnPositionSliderReleased()
