@@ -102,6 +102,7 @@ void QtPlayer::Play()
 {
     try 
     {
+        
         audioOutput_->setMuted(isMuted_);
         // Paused then Resume Playback
         if (currentState_ == ENUM_PLAYER_STATE::PAUSED)
@@ -112,8 +113,10 @@ void QtPlayer::Play()
             stallretryCount_ = 0;
             return;
         }
-        else
+        else if (retryCount_ < MAX_RETRIES)
         {
+            PRINT << "Play: " << source_ << " Retry: " << retryCount_;
+            //SetVideoSource(source_);
             player_->setSource(QUrl(QString::fromStdString(source_)));
             player_->play();
             /*if (retryCount_ > 0 && duration_ > 0 && stallPosition_ > 0)
@@ -123,6 +126,8 @@ void QtPlayer::Play()
             }*/
             return;
         }
+        else
+            return;
     }
     catch (exception& e)
     {
@@ -521,6 +526,7 @@ void QtPlayer::HandleError(QMediaPlayer::Error error, const QString &errorString
     ErrorOccured(errorString.toStdString());
     if ((error == QMediaPlayer::ResourceError || error == QMediaPlayer::FormatError) && retryCount_ < MAX_RETRIES)
     {
+        PRINT << "Stream error, retry count: " << retryCount_;
         ReConnectPlayer();
         return;
 

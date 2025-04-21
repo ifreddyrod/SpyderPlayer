@@ -797,8 +797,10 @@ void SpyderPlayerApp::PlaybackStateChanged(ENUM_PLAYER_STATE state)
         ui_.Status_label->setText("Invalid Media or Source");
         screensaverInhibitor_->uninhibit(); */
         //if (retryPlaying_)
+        //PRINT << "retryPlaying_: " << retryPlaying_ << " retryCount_: " << retryCount_;
         if (retryPlaying_)
         {
+            // In the process of Resetting the player 
             // Do nothing...
         }
         else if (retryCount_ > 0)
@@ -934,7 +936,7 @@ void SpyderPlayerApp::StalledVideoDetected()
         stalledVideoTimer_->stop();
         return;*/
         PRINT << "-----------------> STALLED VIDEO DETECTED <-----------------";
-        player_->Stop();
+        //player_->Stop();
         stalledVideoTimer_->stop();
         ui_.Status_label->setText("Stalled Video - Resetting(" + QString::number(retryCount_) + ")");
         PRINT << "Stalled Video - Resetting... Retry Count: " << retryCount_;
@@ -968,6 +970,11 @@ void SpyderPlayerApp::PlaySelectedChannel(string channelName, string source)
     PRINT << "PlaySelectedChannel: " << channelName;
     PRINT << "Source: " << source;
 
+    // Reset retry count
+    retryPlaying_  = false;
+    retryCount_ = appData_->RetryCount_;
+
+    // Stop() resets player defaults and retries
     player_->Stop();
     player_->SetVideoSource(source);
     setWindowTitle("SPYDER Player - " + QSTR(channelName));
