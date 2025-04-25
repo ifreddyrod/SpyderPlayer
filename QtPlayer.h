@@ -86,7 +86,7 @@ private:
     int retryCount_ = 0;
     int stallretryCount_ = 0;
     static constexpr int MAX_RETRIES = 8;
-    static constexpr int MAX_STALL_RETRIES = 3;
+    static constexpr int MAX_STALL_RETRIES = 4;
     QTimer *stalledVideoTimer_;
     bool isPositionSeeking_ = false;
     qint64 stallPosition_ = -1;

@@ -1009,6 +1009,7 @@ void SpyderPlayerApp::StopPlayer()
 {
     stalledVideoTimer_->stop();
     player_->Stop();
+    SetCursorNormal();
     ui_.Status_label->setText("");
 }
 

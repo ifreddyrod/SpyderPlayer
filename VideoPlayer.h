@@ -50,12 +50,12 @@ public:
     virtual ENUM_PLAYER_STATE GetPlayerState() = 0;
     QWidget* GetVideoPanel() { return videoWidget_; }
 
-    // Signals
-    Q_SIGNAL void SIGNAL_UpdatePosition(qint64 position);
-    Q_SIGNAL void SIGNAL_UpdateDuration(qint64 duration);
-    Q_SIGNAL void SIGNAL_PlayerStateChanged(ENUM_PLAYER_STATE state);
-    Q_SIGNAL void SIGNAL_ErrorOccured(const std::string& error);
-    Q_SIGNAL void SIGNAL_EnableSubtitles(bool enable);
+    signals:
+    void SIGNAL_UpdatePosition(qint64 position);
+    void SIGNAL_UpdateDuration(qint64 duration);
+    void SIGNAL_PlayerStateChanged(ENUM_PLAYER_STATE state);
+    void SIGNAL_ErrorOccured(const std::string& error);
+    void SIGNAL_EnableSubtitles(bool enable);
 
 protected:
     ENUM_PLAYER_STATE currentState_;
