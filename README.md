@@ -5,18 +5,22 @@ SPYDER Player allows you to load multiple m3u files locally or remotely.  You ca
 The code for this is written in C++ and Qt 6.9 utilizing the QMediaPlayer libraries.  Originally, this project was written in pyton and pyqt6.  The repository for that is in my github.  I decided to migrate this project to C++ to make it leaner on system resources (both on disk and in RAM).
 
 Main Window:
-<img width="1199" alt="Screenshot 2024-11-15 at 5 59 08 AM" src="https://github.com/user-attachments/assets/990a0407-d298-4071-99a5-acc2cbfb8e41">
+<img width="1199" alt="Main Window" src="docs/images/Main Screen.png">
 
 
 
 Settings Windows:
-<img width="782" alt="Screenshot 2024-11-15 at 6 01 17 AM" src="https://github.com/user-attachments/assets/88afc261-89b5-486d-87a0-745055a5c9b7">
+<img width="782" alt="Settings" src="docs/images/Settings.png">
+
 
 
 Playlist Editor:
+<img width="782" alt="Settings" src="docs/images/Playlist Editor.png">
+
 
 
 About Screen:
+<img width="782" alt="About Screen" src="docs/images/About.png">
 
 
 
