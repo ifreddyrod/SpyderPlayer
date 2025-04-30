@@ -7,6 +7,8 @@ The code for this is written in C++ and Qt 6.9 utilizing the QMediaPlayer librar
 Main Window:
 <img width="1199" alt="Main Window" src="/docs/images/Main Screen.png">
 
+
+
 Settings Windows:
 <img width="782" alt="Settings" src="/docs/images/Settings.png">
 
