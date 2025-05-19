@@ -84,7 +84,7 @@ private:
     void PlayerNormalScreen();
     void PlayerFullScreen();
     void PlayerMinimized();
-    void ShowControlPanel();
+    void ShowControlPanel(bool initial = false);
     void TogglePlaylistView();
     void ChangePlayingUIStates(bool isPlaying);
     void PlaybackStateChanged(ENUM_PLAYER_STATE state);

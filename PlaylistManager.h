@@ -97,8 +97,8 @@ private:
 
     // Private Member Variables
     QSignalMapper *treeItemSelectedSignal;
-    TreeItem* currentSelectedItem_;
-    TreeItem* lastSelectedItem_;
+    TreeItem* currentSelectedItem_ = nullptr;
+    TreeItem* lastSelectedItem_ = nullptr;
     int searchResultsCount_ = 0; 
     int currentItem_ = 0;
     

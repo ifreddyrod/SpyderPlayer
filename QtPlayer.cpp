@@ -91,7 +91,7 @@ void QtPlayer::RefreshVideoSource()
 
     SetVideoSource(source_);
     int timedelay = app_->GetRetryTimeDelay();
-    PRINT << "REFRESH: Retry Time Delay: " << timedelay;
+    PRINT << "REFRESH: Retry Time Delay: " << timedelay*retryCount_;
     QThread::msleep(timedelay);
     Play();
 }

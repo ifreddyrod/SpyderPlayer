@@ -125,8 +125,8 @@ void AppData::CreateDefaultSettings()
     // Set default values
     PlayerType_ = ENUM_PLAYER_TYPE::QTMEDIA; 
     PlayListsPath_ = ""; // Set default path as needed
-    RetryCount_ = 3;
-    RetryDelay_ = 1000;
+    RetryCount_ = 5;
+    RetryDelay_ = 500;
     
     // HotKeys_ already has default values from its constructor
     

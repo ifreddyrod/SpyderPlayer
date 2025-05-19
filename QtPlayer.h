@@ -72,8 +72,8 @@ private:
     SpyderPlayerApp* app_;
     Ui::PlayerMainWindow* mainWindow_;
     QVideoWidget* videoPanel_;
-    QMediaPlayer* player_;
-    QAudioOutput* audioOutput_;
+    QMediaPlayer* player_ = nullptr;
+    QAudioOutput* audioOutput_ = nullptr;
     bool isMuted_ = false;
     int subtitleCount_;
     QList<QPair<int, QString>> subtitleList_;
@@ -86,7 +86,7 @@ private:
     int retryCount_ = 0;
     int stallretryCount_ = 0;
     static constexpr int MAX_RETRIES = 8;
-    static constexpr int MAX_STALL_RETRIES = 4;
+    static constexpr int MAX_STALL_RETRIES = 5;
     QTimer *stalledVideoTimer_;
     bool isPositionSeeking_ = false;
     qint64 stallPosition_ = -1;

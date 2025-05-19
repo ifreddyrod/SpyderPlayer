@@ -608,12 +608,12 @@ void SpyderPlayerApp::PlayerFullScreen()
     //##overlay_->show();
     //##overlay_->Resize();
     //##overlay_->setFocus();
-    ShowControlPanel();
+    ShowControlPanel(true);
     //player_->GetVideoPanel()->setFocus();
 
-    if (platform_ == "Linux")
+    //if (platform_ == "Linux")
         // Initial postion is off when going to fullscreen in linux, so just hide it initially
-        controlpanelFS_.hide();
+        //controlpanelFS_.hide();
 
     //overlay_->activateWindow();
     inactivityTimer_->start();
@@ -627,7 +627,7 @@ void SpyderPlayerApp::PlayerMinimized()
     //##overlay_->hide();
 }
 
-void SpyderPlayerApp::ShowControlPanel()
+void SpyderPlayerApp::ShowControlPanel(bool initial)
 {
     int panel_width = controlpanelFS_.width();
     int panel_height = controlpanelFS_.height();
@@ -656,7 +656,10 @@ void SpyderPlayerApp::ShowControlPanel()
     
     if (isFullScreen_)
     {
-        controlpanelFS_.show();
+        if (initial && platform_ == "Linux")
+            controlpanelFS_.hide();
+        else
+            controlpanelFS_.show();
     }
     else
     {
@@ -1213,12 +1216,14 @@ void SpyderPlayerApp::ShowCursorBlank()
 
 int SpyderPlayerApp::GetVideoPanelWidth()
 {
-    return ui_.ShowControlPanel_top_label->width();
+    //return ui_.ShowControlPanel_top_label->width();
+    return player_->GetVideoPanel()->width();
 }
 
 int SpyderPlayerApp::GetVideoPanelHeight()
 {
-    return ui_.ShowControlPanel_left_label->height();
+    //return ui_.ShowControlPanel_left_label->height();
+    return player_->GetVideoPanel()->height();
 }
 
 QWidget* SpyderPlayerApp::GetVideoPanelWidget()
