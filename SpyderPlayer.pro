@@ -8,14 +8,8 @@ CONFIG += c++17 sdk_no_version_check
 
 ICON += assets/icons/spider_dark_icon.icns
 
-# FFmpeg
-#LIBS += -L/usr/local/lib -lavformat -lavcodec -lavutil -lswscale -lswresample
-
 # macOS specific settings
 macx {
-    INCLUDEPATH += /usr/local/include #/Applications/VLC.app/Contents/MacOS/include
-    LIBS += #-L/Applications/VLC.app/Contents/MacOS/lib -lvlc -lvlccore # -lavformat -lavcodec -lavutil -lswscale -lswresample
-
 }
 
 # Linux specific settings

@@ -19,6 +19,7 @@ AppSettings::AppSettings(SettingsManager* settingsManager)
     connect(ui_.Save_button, &QPushButton::clicked, this, &AppSettings::SaveButtonClicked);
     connect(ui_.RetryCount_box, &QSpinBox::valueChanged, this, &AppSettings::RetryCountChanged);
     connect(ui_.RetryTimeDelay_box, &QSpinBox::valueChanged, this, &AppSettings::RetryDelayChanged);
+    connect(ui_.ScaleFactor_box, &QDoubleSpinBox::valueChanged, this, &AppSettings::ScaleFactorChanged);
 }
 
 void AppSettings::ShowAppSettings()
@@ -34,6 +35,7 @@ void AppSettings::ShowAppSettings()
     ui_.PlayerType_combobox->setCurrentText(QSTR(playerType));
     ui_.RetryCount_box->setValue(settingsManager_->appData_->RetryCount_);
     ui_.RetryTimeDelay_box->setValue(settingsManager_->appData_->RetryDelay_);
+    ui_.ScaleFactor_box->setValue(settingsManager_->appData_->AppScaleFactor_);
 
     modified_ = false;
     blockSignals(false);
@@ -99,6 +101,11 @@ void AppSettings::RetryDelayChanged()
     modified_ = true;
 }
 
+void AppSettings::ScaleFactorChanged()
+{
+    modified_ = true;
+}
+
 void AppSettings::SaveButtonClicked()
 {
     if (modified_)
@@ -107,6 +114,7 @@ void AppSettings::SaveButtonClicked()
         settingsManager_->appData_->PlayerType_ = StringToPlayerTypeEnum(ui_.PlayerType_combobox->currentText().toStdString());
         settingsManager_->appData_->RetryCount_ = ui_.RetryCount_box->value();
         settingsManager_->appData_->RetryDelay_ = ui_.RetryTimeDelay_box->value();
+        settingsManager_->appData_->AppScaleFactor_ = ui_.ScaleFactor_box->value();
         settingsManager_->SaveSettings(true);
         settingsManager_->ShowSettingsMainScreen();
     }

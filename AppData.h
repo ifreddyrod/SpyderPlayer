@@ -60,6 +60,7 @@ public:
 class AppData 
 {
 public:
+    double AppScaleFactor_;
     ENUM_PLAYER_TYPE PlayerType_;
     string PlayListsPath_;
     int RetryCount_;

@@ -560,7 +560,7 @@ void QtPlayer::HandleError(QMediaPlayer::Error error, const QString &errorString
         PRINT << "Format error, stopping playback.";
         player_->stop();
         SetupPlayer();
-        currentState_ = ENUM_PLAYER_STATE::STALLED;
+        currentState_ = ENUM_PLAYER_STATE::LOADING;
         UpdatePlayerState(currentState_);
     }
     else
@@ -796,7 +796,7 @@ void QtPlayer::ReConnectPlayer()
         player_->stop();
         SetupPlayer();
         SetVideoSource(source_);
-        QThread::msleep(250);
+        QThread::msleep(1000);
         //this->RefreshVideoSource();
         Play();
     }

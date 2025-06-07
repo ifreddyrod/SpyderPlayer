@@ -28,7 +28,7 @@ class SpyderPlayerApp : public QWidget
     Q_OBJECT
 
 public:
-    SpyderPlayerApp(QWidget *parent = nullptr);
+    SpyderPlayerApp(QWidget *parent = nullptr, AppData *appData = nullptr);
     ~SpyderPlayerApp();
 
     void InitializePlayLists();

@@ -152,8 +152,8 @@ background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgb
   <widget class="QComboBox" name="PlayerType_combobox">
    <property name="geometry">
     <rect>
-     <x>180</x>
-     <y>60</y>
+     <x>200</x>
+     <y>520</y>
      <width>191</width>
      <height>30</height>
     </rect>
@@ -177,7 +177,7 @@ background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgb
    <property name="geometry">
     <rect>
      <x>40</x>
-     <y>70</y>
+     <y>520</y>
      <width>131</width>
      <height>16</height>
     </rect>
@@ -203,12 +203,45 @@ background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgb
 /*
 background-color: qlineargradient(spread:pad, x1:0.506931, y1:0.295636, x2:1, y2:1, stop:0 rgba(35, 6, 77, 255), stop:1 rgba(90, 13, 90, 255));*/</string>
    </property>
+   <widget class="QDoubleSpinBox" name="ScaleFactor_box">
+    <property name="geometry">
+     <rect>
+      <x>200</x>
+      <y>210</y>
+      <width>121</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="toolTip">
+     <string>Customize the scale/zoom of the Application.  Useful for higher resolutions.  Restart to apply.</string>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">border-radius: 5px;
+color: rgb(20, 205, 255); 
+background-color: rgb(0, 0, 0);</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignmentFlag::AlignCenter</set>
+    </property>
+    <property name="minimum">
+     <double>0.100000000000000</double>
+    </property>
+    <property name="maximum">
+     <double>10.000000000000000</double>
+    </property>
+    <property name="singleStep">
+     <double>0.100000000000000</double>
+    </property>
+    <property name="value">
+     <double>1.000000000000000</double>
+    </property>
+   </widget>
   </widget>
   <widget class="QTextEdit" name="PlaylistPath_textedit">
    <property name="geometry">
     <rect>
-     <x>180</x>
-     <y>130</y>
+     <x>200</x>
+     <y>50</y>
      <width>481</width>
      <height>51</height>
     </rect>
@@ -231,8 +264,8 @@ padding-left: 40px;</string>
   <widget class="QPushButton" name="OpenPath_button">
    <property name="geometry">
     <rect>
-     <x>179</x>
-     <y>130</y>
+     <x>199</x>
+     <y>50</y>
      <width>31</width>
      <height>51</height>
     </rect>
@@ -260,8 +293,8 @@ padding-left: 40px;</string>
   <widget class="QLabel" name="Path_label">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>140</y>
+     <x>60</x>
+     <y>60</y>
      <width>131</width>
      <height>16</height>
     </rect>
@@ -300,8 +333,8 @@ padding-left: 40px;</string>
   <widget class="QSpinBox" name="RetryCount_box">
    <property name="geometry">
     <rect>
-     <x>180</x>
-     <y>220</y>
+     <x>200</x>
+     <y>140</y>
      <width>121</width>
      <height>31</height>
     </rect>
@@ -324,8 +357,8 @@ background-color: rgb(0, 0, 0);</string>
   <widget class="QSpinBox" name="RetryTimeDelay_box">
    <property name="geometry">
     <rect>
-     <x>180</x>
-     <y>270</y>
+     <x>200</x>
+     <y>190</y>
      <width>121</width>
      <height>31</height>
     </rect>
@@ -354,8 +387,8 @@ background-color: rgb(0, 0, 0);</string>
   <widget class="QLabel" name="Retry_label">
    <property name="geometry">
     <rect>
-     <x>40</x>
-     <y>230</y>
+     <x>60</x>
+     <y>150</y>
      <width>131</width>
      <height>16</height>
     </rect>
@@ -370,14 +403,30 @@ background-color: rgb(0, 0, 0);</string>
   <widget class="QLabel" name="Path_label_2">
    <property name="geometry">
     <rect>
-     <x>30</x>
-     <y>279</y>
+     <x>50</x>
+     <y>199</y>
      <width>141</width>
      <height>21</height>
     </rect>
    </property>
    <property name="text">
     <string>Stall Retry Delay (ms):</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+   </property>
+  </widget>
+  <widget class="QLabel" name="ScaleFactor_label">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>250</y>
+     <width>161</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Application Scale Factor:</string>
    </property>
    <property name="alignment">
     <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
@@ -396,6 +445,7 @@ background-color: rgb(0, 0, 0);</string>
   <zorder>RetryTimeDelay_box</zorder>
   <zorder>Retry_label</zorder>
   <zorder>Path_label_2</zorder>
+  <zorder>ScaleFactor_label</zorder>
  </widget>
  <resources>
   <include location="resources.qrc"/>

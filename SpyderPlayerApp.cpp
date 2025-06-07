@@ -6,10 +6,10 @@
 #include <QKeyEvent>
 
 // Constructor
-SpyderPlayerApp::SpyderPlayerApp(QWidget *parent): QWidget(parent)
+SpyderPlayerApp::SpyderPlayerApp(QWidget *parent, AppData *appData): QWidget(parent), appData_(appData)
 {
     version_ =  APP_VERSION;
-    const string appdataFilename = "appdata.json";
+    //const string appdataFilename = "appdata.json";
 
     mousePressPos_ =  QPoint();
     mouseMoveActive_ = false;
@@ -38,11 +38,11 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent): QWidget(parent)
     //-----------------------------
     // Load AppData from file
     //-----------------------------
-    string data_path = GetUserAppDataDirectory("SpyderPlayer") + "/" + appdataFilename; 
+    /* data_path = GetUserAppDataDirectory("SpyderPlayer") + "/" + appdataFilename; 
 
     PRINT << "AppData Path: " << data_path;
 
-    appData_ = new AppData(data_path);
+    appData_ = new AppData(data_path);*/
 
     //-----------------------------
     // Setup Playlist Manager
@@ -62,7 +62,7 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent): QWidget(parent)
     //-----------------------------
     ui_.botomverticalLayout->addWidget(&controlpanel_);
     controlpanel_.show();
-    ui_.Horizontal_splitter->setSizes({400, 1000});
+    ui_.Horizontal_splitter->setSizes({450, 1000});
     ui_.Vertical_splitter->setSizes({800, 1});
     ui_.Horizontal_splitter->installEventFilter(this);
     ui_.Vertical_splitter->installEventFilter(this);
@@ -210,7 +210,8 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent): QWidget(parent)
 
     InitializePlayLists();
 
-    ui_.Status_label->setText("Player: " + QSTR(PlayerTypeToString(appData_->PlayerType_)));
+    //ui_.Status_label->setText("Player: " + QSTR(PlayerTypeToString(appData_->PlayerType_)));
+    ui_.Status_label->setText("Player Ready ... ");
 
     installEventFilter(this);
 }
@@ -608,14 +609,18 @@ void SpyderPlayerApp::PlayerFullScreen()
     //##overlay_->show();
     //##overlay_->Resize();
     //##overlay_->setFocus();
-    ShowControlPanel(true);
+    //ShowControlPanel(true);
     //player_->GetVideoPanel()->setFocus();
+
+    // Delay showing control panel
+    QTimer::singleShot(200, this, [this]() { ShowControlPanel(true); });
 
     //if (platform_ == "Linux")
         // Initial postion is off when going to fullscreen in linux, so just hide it initially
         //controlpanelFS_.hide();
 
     //overlay_->activateWindow();
+    player_->GetVideoPanel()->activateWindow();
     inactivityTimer_->start();
     //PRINT << "PlayerFullScreen";
 }
@@ -795,6 +800,7 @@ void SpyderPlayerApp::PlaybackStateChanged(ENUM_PLAYER_STATE state)
     }
     else if (state == ENUM_PLAYER_STATE::STALLED && videoDuration_ == 0)
     {
+        ui_.Status_label->setText("Video Stream Stalled. Retrying...");
         /*stalledVideoTimer_->stop();
         ShowCursorNormal();
         ui_.Status_label->setText("Invalid Media or Source");

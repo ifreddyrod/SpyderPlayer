@@ -21,6 +21,7 @@ public:
 private:
     void BackButtonClicked();
     void PlayerTypeChanged();
+    void ScaleFactorChanged();
     void PathChanged();
     void OpenPathButtonClicked();
     void RetryCountChanged();

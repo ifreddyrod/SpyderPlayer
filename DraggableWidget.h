@@ -17,6 +17,20 @@ protected:
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
 
+    // Resizing logic
+    enum class ResizeEdge { None, Left, Right, Top, Bottom, TopLeft, TopRight, BottomLeft, BottomRight };
+    ResizeEdge resizeEdge_;
+    bool isResizing_;
+    QPoint resizeStartPos_;
+    QRect resizeStartGeometry_;
+    static constexpr int RESIZE_MARGIN = 5; // Pixels near edge for resize detection
+
+    void startResizing(QMouseEvent *event);
+    void updateResizing(QMouseEvent *event);
+    void stopResizing(QMouseEvent *event);
+    ResizeEdge getResizeEdge(const QPoint &pos);
+    void updateCursor(const QPoint &pos);
+
 private:
     QPoint mousePressPos_;
     bool mouseMoveActive_;

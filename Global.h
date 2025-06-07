@@ -28,6 +28,7 @@ using namespace std;
 // Add padding to QString
 #define PAD(str) (QString("  ") + (str))
 
+#define APPDATA_FILENAME "appdata.json"
 
 // Shorter Debug Log Macro
 #define PRINT qDebug()

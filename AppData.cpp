@@ -123,6 +123,7 @@ AppData::AppData(const string& filePath)
 void AppData::CreateDefaultSettings() 
 {
     // Set default values
+    AppScaleFactor_ = 1.0;
     PlayerType_ = ENUM_PLAYER_TYPE::QTMEDIA; 
     PlayListsPath_ = ""; // Set default path as needed
     RetryCount_ = 5;
@@ -170,6 +171,19 @@ void AppData::Load(const string& filePath)
         }
         
         QJsonObject root = doc.object();
+
+        // Parse scale factor
+        if (root.contains("AppScaleFactor")) 
+        {
+            AppScaleFactor_ = root["AppScaleFactor"].toDouble();
+        } 
+        else 
+        {
+            AppScaleFactor_ = 1.0;
+            root["AppScaleFactor"] = AppScaleFactor_;
+            needsSaving = true;
+            PRINT << "Missing AppScaleFactor, using default";
+        }
 
         // Parse basic settings with default fallbacks
         if (root.contains("PlayerType")) 
@@ -422,6 +436,7 @@ void AppData::Save()
         QJsonObject root;
         
         // Add basic settings
+        root["AppScaleFactor"] = AppScaleFactor_;
         root["PlayerType"] = QString::fromStdString(PlayerTypeToString(PlayerType_));
         root["PlayListPath"] = QString::fromStdString(PlayListsPath_);
         root["RetryCount"] = RetryCount_;
