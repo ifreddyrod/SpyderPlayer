@@ -80,6 +80,7 @@ enum class ENUM_PLAYER_STATE
     PAUSED,
     STOPPED,
     STALLED,
+    NOMEDIA,
     ENDED,
     ERROR
 };

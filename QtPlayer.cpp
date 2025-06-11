@@ -70,6 +70,13 @@ void QtPlayer::SetupPlayer()
     connect(player_, &QMediaPlayer::errorOccurred, this, &QtPlayer::HandleError);
 }
 
+void QtPlayer::ResetAudioOutput()
+{
+    audioOutput_->deleteLater();
+    audioOutput_ = new QAudioOutput(this);
+    player_->setAudioOutput(audioOutput_);
+}
+
 void QtPlayer::SetVideoSource(const std::string& videoSource)
 {
     source_ = videoSource;
@@ -100,19 +107,21 @@ void QtPlayer::Play()
 {
     try 
     {
-        
-        audioOutput_->setMuted(isMuted_);
         // Paused then Resume Playback
         if (currentState_ == ENUM_PLAYER_STATE::PAUSED)
         {
+            ResetAudioOutput();
+            audioOutput_->setMuted(false);
             player_->play();
             timeoutTimer_->start(30000);
             retryCount_ = 0;
             stallretryCount_ = 0;
+            audioOutput_->setMuted(isMuted_);
             return;
         }
         else if (retryCount_ < MAX_RETRIES)
         {
+            audioOutput_->setMuted(isMuted_);
             PRINT << "Play: " << source_ << " Retry: " << retryCount_;
             player_->setSource(QUrl(QString::fromStdString(source_)));
             player_->play();
@@ -453,7 +462,7 @@ void QtPlayer::MediaStatusChanged(QMediaPlayer::MediaStatus mediaState)
     }
     else if (mediaState == QMediaPlayer::InvalidMedia)
     {
-        currentState_ = ENUM_PLAYER_STATE::STALLED;
+        currentState_ = ENUM_PLAYER_STATE::NOMEDIA;
         timeoutTimer_->stop();
         stalledVideoTimer_->stop();
     }
@@ -692,9 +701,10 @@ void QtPlayer::CheckTimeout()
             streamBuffer_->deleteLater();
             streamBuffer_ = nullptr;
         }*/
-        SetupPlayer();
-        player_->setSource(QUrl(QString::fromStdString(source_))); 
-        QTimer::singleShot(2000 * retryCount_, this, &QtPlayer::Play);
+        ReConnectPlayer();
+        //SetupPlayer();
+        //player_->setSource(QUrl(QString::fromStdString(source_))); 
+        //QTimer::singleShot(2000 * retryCount_, this, &QtPlayer::Play);
     }
     else
     {

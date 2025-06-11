@@ -821,9 +821,26 @@ void SpyderPlayerApp::PlaybackStateChanged(ENUM_PLAYER_STATE state)
         {
             stalledVideoTimer_->stop();
             ShowCursorNormal();
-            ui_.Status_label->setText("Invalid Media or Source");
+            ui_.Status_label->setText("Video Stalled... Max Retries Reached");
             screensaverInhibitor_->uninhibit(); 
         }
+    }
+    else if (state == ENUM_PLAYER_STATE::NOMEDIA)
+    {
+        ui_.Status_label->setText("Video Source Invalid. Retrying...");
+
+        if (retryCount_ > 0)
+        {
+            ShowCursorBusy();
+            StalledVideoDetected();
+        }
+        else
+        {
+            stalledVideoTimer_->stop();
+            ShowCursorNormal();
+            ui_.Status_label->setText("Video Source Invalid.");
+            screensaverInhibitor_->uninhibit(); 
+        }      
     }
     else 
     {

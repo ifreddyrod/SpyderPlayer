@@ -108,7 +108,7 @@ void OpenMedia::OpenFileButtonClicked()
     }
     else
     {
-        filename = QFileDialog::getOpenFileName(this, "Select a Media File", QSTR(settingsManager_->appData_->PlayListsPath_), "Media Files (*.mkv *.mp4 *.avi *.mov *.mp3 *.wmv *.wav *.mpg, *.mpeg *.m4v)");
+        filename = QFileDialog::getOpenFileName(this, "Select a Media File", "", "Media Files (*.mkv *.mp4 *.avi *.mov *.mp3 *.wmv *.wav *.mpg, *.mpeg *.m4v)");
     }
 
     if (filename.length() > 0)

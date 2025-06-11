@@ -205,6 +205,8 @@ string PlayerStateToString(ENUM_PLAYER_STATE state)
             return "STOPPED";
         case ENUM_PLAYER_STATE::STALLED:
             return "STALLED";
+        case ENUM_PLAYER_STATE::NOMEDIA:
+            return "NOMEDIA";
         case ENUM_PLAYER_STATE::ENDED:
             return "ENDED";
         case ENUM_PLAYER_STATE::ERROR:

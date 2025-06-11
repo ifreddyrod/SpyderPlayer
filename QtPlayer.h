@@ -69,6 +69,7 @@ public:
 
 private:
     void SetupPlayer();
+    void ResetAudioOutput();
     SpyderPlayerApp* app_;
     Ui::PlayerMainWindow* mainWindow_;
     QVideoWidget* videoPanel_;
