@@ -211,6 +211,8 @@ string PlayerStateToString(ENUM_PLAYER_STATE state)
             return "ENDED";
         case ENUM_PLAYER_STATE::ERROR:
             return "ERROR";
+        case ENUM_PLAYER_STATE::RECOVERING:
+            return "RECOVERING";
         default:
             return "UNKNOWN";
     };

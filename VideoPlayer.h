@@ -48,6 +48,7 @@ public:
     virtual QList<QPair<int, QString>> GetSubtitleTracks() = 0;
     virtual void SetSubtitleTrack(int index) = 0;
     virtual ENUM_PLAYER_STATE GetPlayerState() = 0;
+    virtual QString GetPlayerStatus() = 0;
     QWidget* GetVideoPanel() { return videoWidget_; }
 
     signals:

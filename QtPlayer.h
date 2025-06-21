@@ -53,6 +53,7 @@ public:
     QList<QPair<int, QString>> GetSubtitleTracks() override;
     void SetSubtitleTrack(int index) override;
     QString GetVideoResolution() override;
+    QString GetPlayerStatus() override;
     void ListVideoTracks();
 
     void OnChangingPosition(bool isPlaying) override;
@@ -65,7 +66,9 @@ public:
     void HandleStreamBufferError(const QString &error);
     void StalledVideoDetected();
     void ReConnectPlayer();
+    void RetryStalledPlayer();
     void UpdateRetryParams();
+    
 
 private:
     void SetupPlayer();
@@ -86,8 +89,10 @@ private:
     QMediaPlayer::MediaStatus mediaState_;
     int retryCount_ = 0;
     int stallretryCount_ = 0;
-    static constexpr int MAX_RETRIES = 8;
+    static constexpr int MAX_RETRIES = 5;
     static constexpr int MAX_STALL_RETRIES = 5;
+    bool inRecovery_ = false;
+    QString playerStatus_;
     QTimer *stalledVideoTimer_;
     bool isPositionSeeking_ = false;
     qint64 stallPosition_ = -1;

@@ -32,7 +32,6 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent, AppData *appData): QWidget(par
     // Load and Setup the Main Window
     //---------------------------------
     ui_.setupUi(this);
-
     setWindowOpacity(0);
 
     //-----------------------------
@@ -798,59 +797,32 @@ void SpyderPlayerApp::PlaybackStateChanged(ENUM_PLAYER_STATE state)
         ShowCursorBusy();
         ui_.Status_label->setText("Buffering .....");
     }
-    else if (state == ENUM_PLAYER_STATE::STALLED && videoDuration_ == 0)
+    else if (state == ENUM_PLAYER_STATE::RECOVERING)
     {
-        ui_.Status_label->setText("Video Stream Stalled. Retrying...");
-        /*stalledVideoTimer_->stop();
-        ShowCursorNormal();
-        ui_.Status_label->setText("Invalid Media or Source");
-        screensaverInhibitor_->uninhibit(); */
-        //if (retryPlaying_)
-        //PRINT << "retryPlaying_: " << retryPlaying_ << " retryCount_: " << retryCount_;
-        if (retryPlaying_)
-        {
-            // In the process of Resetting the player 
-            // Do nothing...
-        }
-        else if (retryCount_ > 0)
-        {
-            ShowCursorBusy();
-            StalledVideoDetected();
-        }
-        else
-        {
-            stalledVideoTimer_->stop();
-            ShowCursorNormal();
-            ui_.Status_label->setText("Video Stalled... Max Retries Reached");
-            screensaverInhibitor_->uninhibit(); 
-        }
-    }
-    else if (state == ENUM_PLAYER_STATE::NOMEDIA)
+        ShowCursorBusy();
+        ui_.Status_label->setText(player_->GetPlayerStatus());
+    }    
+    else
     {
-        ui_.Status_label->setText("Video Source Invalid. Retrying...");
-
-        if (retryCount_ > 0)
-        {
-            ShowCursorBusy();
-            StalledVideoDetected();
-        }
-        else
-        {
-            stalledVideoTimer_->stop();
-            ShowCursorNormal();
-            ui_.Status_label->setText("Video Source Invalid.");
-            screensaverInhibitor_->uninhibit(); 
-        }      
-    }
-    else 
-    {
-        stalledVideoTimer_->stop();
         ShowCursorNormal();
         ChangePlayingUIStates(false);
         screensaverInhibitor_->uninhibit();
-        ui_.Status_label->setText("");
-    }
 
+        if (player_->GetPlayerState() == ENUM_PLAYER_STATE::ENDED)
+            ui_.Status_label->setText("Playback Ended");
+        else if (state == ENUM_PLAYER_STATE::ERROR)
+            ui_.Status_label->setText("Error: " + player_->GetPlayerStatus());
+        else if (state == ENUM_PLAYER_STATE::NOMEDIA)
+            ui_.Status_label->setText("Invalid Media");
+        else if (state == ENUM_PLAYER_STATE::STALLED)
+            ui_.Status_label->setText("Playback Stalled");
+        else if (state == ENUM_PLAYER_STATE::STOPPED)
+            ui_.Status_label->setText("Playback Stopped");
+        else if (state == ENUM_PLAYER_STATE::PAUSED)
+            ui_.Status_label->setText("Playback Paused");
+        else
+            ui_.Status_label->setText("");
+    }
 }
 
 void SpyderPlayerApp::UpdatePlaybackStatus()
@@ -1036,7 +1008,7 @@ void SpyderPlayerApp::StopPlayer()
     stalledVideoTimer_->stop();
     player_->Stop();
     SetCursorNormal();
-    ui_.Status_label->setText("");
+    ui_.Status_label->setText("Playback Stopped");
 }
 
 void SpyderPlayerApp::SeekForward()

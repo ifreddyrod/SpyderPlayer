@@ -82,7 +82,8 @@ enum class ENUM_PLAYER_STATE
     STALLED,
     NOMEDIA,
     ENDED,
-    ERROR
+    ERROR,
+    RECOVERING
 };
 
 extern string PlayerStateToString(ENUM_PLAYER_STATE state);
