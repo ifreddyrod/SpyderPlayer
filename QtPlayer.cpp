@@ -80,16 +80,18 @@ void QtPlayer::ResetAudioOutput()
 void QtPlayer::SetVideoSource(const std::string& videoSource)
 {
     source_ = videoSource;
-    player_->stop();
-    /*if (streamBuffer_)
+    try
     {
-        streamBuffer_->Stop();
-        streamBuffer_->deleteLater();
-        streamBuffer_ = nullptr;
-    }*/
-    player_->setSource(QUrl(""));
-    //retryCount_ = 0;
-    //PRINT << "QtPlayer: Set video source:" << QString::fromStdString(source_);
+        player_->stop();
+        player_->setSource(QUrl(""));
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        SetupPlayer();
+        SetVideoSource(source_);
+        Play();
+    }
 }
 
 void QtPlayer::RefreshVideoSource()

@@ -142,6 +142,10 @@ PlaylistManager::PlaylistManager(QTreeWidget* playlistTreefromUI, AppData* appDa
 
 void PlaylistManager::ResetAllLists()
 {
+    // Clear Current Selection
+    if (currentSelectedItem_ != nullptr)
+        currentSelectedItem_->SetItemSelected(false);
+
     // Clear the Tree
     playlistTree_->clear();
 
@@ -166,8 +170,6 @@ void PlaylistManager::ResetAllLists()
     searchResultsCount_ = 0; 
     currentItem_ = 0;
     lastSelectedItem_ = nullptr;
-    if (currentSelectedItem_ != nullptr)
-        currentSelectedItem_->SetItemSelected(false);
     currentSelectedItem_ = nullptr;
     sessionMediaList_ = nullptr;
     //ClearPlayListItems(sessionMediaList_);
@@ -987,9 +989,9 @@ void PlaylistManager::SearchChannels(QString searchText)
     // Set the last search query
     lastSearchQuery_ = searchText;
 
-    // Convert search text to lowercase and remove spaces
-    searchText = searchText.toLower();
-    searchText = searchText.replace(" ", "");
+    // Convert search text to lowercase and remove spaces at and end
+    searchText = searchText.toLower().trimmed();
+    //searchText = searchText.replace(" ", "");
     
     // Convert search text to array
     QStringList searchItems = searchText.split('+');

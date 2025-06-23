@@ -37,12 +37,15 @@ public:
     int GetVideoPanelHeight();
     QWidget* GetVideoPanelWidget();
     int GetRetryTimeDelay();
+    void ShowSplashScreenMsg(QString msg);
+    void HideSplashScreenMsg(QString msg = "");
 
 private:
     QString version_ = "";
     string platform_ = "";
     bool isFullScreen_ = false; 
     bool isPlaylistVisible_ = true;
+    bool isInitializing_ = false;
     bool mouseMoveActive_ = false;
     QPoint mousePressPos_;
     AppData *appData_;

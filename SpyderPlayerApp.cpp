@@ -230,6 +230,7 @@ SpyderPlayerApp::~SpyderPlayerApp()
 //***********************************************************************************
 void SpyderPlayerApp::InitializePlayLists()
 {
+    isInitializing_ = true;
     splashscreen_.show();
     splashscreen_.StartTimer();
     splashscreen_.UpdateStatus("Loading Playlists:", 250);
@@ -266,6 +267,7 @@ void SpyderPlayerApp::InitializePlayLists()
     // Show Main Window
     splashscreen_.hide();
     this->setWindowOpacity(1.0);
+    isInitializing_ = false;
 
     //##overlay_->show();
     OnHSplitterResized(0, 0);
@@ -297,6 +299,25 @@ void SpyderPlayerApp::InitPlayer()
         player_ = new VLCPlayer(&ui_, this);
         //player_->InitPlayer();
     }*/
+}
+
+void SpyderPlayerApp::ShowSplashScreenMsg(QString msg)
+{
+    if (!splashscreen_.isVisible() && !isInitializing_)
+    {
+        splashscreen_.show();
+        splashscreen_.StartTimer();
+        splashscreen_.UpdateStatus(msg);
+    }
+}
+
+void SpyderPlayerApp::HideSplashScreenMsg(QString msg)
+{
+    if (splashscreen_.isVisible())
+    {
+        splashscreen_.UpdateStatus(msg);
+        splashscreen_.hide();
+    }
 }
 
 //*********************************************************************************** 
@@ -1189,9 +1210,11 @@ void SpyderPlayerApp::LoadSessionMedia(PlayListEntry entry)
 
 void SpyderPlayerApp::LoadSessionPlaylist(PlayListEntry entry)
 {
+    ShowSplashScreenMsg("Loading Playlist: " + QSTR(entry.name) + " ....");
     ShowCursorBusy();
     playlistManager_->LoadPlayList(entry, false);
     ShowCursorNormal();
+    HideSplashScreenMsg(QSTR(entry.name) + " Loaded...");
 }
 
 void SpyderPlayerApp::ShowCursorNormal()
