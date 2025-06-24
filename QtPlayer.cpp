@@ -51,17 +51,23 @@ void QtPlayer::InitPlayer()
 
 void QtPlayer::SetupPlayer()
 {
-    if (player_)
+    if (player_) 
     {
+        disconnect(player_, nullptr, this, nullptr); // Disconnect all signals
         player_->deleteLater();
+        player_ = nullptr;
+    }
+    if (audioOutput_) 
+    {
+        disconnect(audioOutput_, nullptr, this, nullptr);
         audioOutput_->deleteLater();
+        audioOutput_ = nullptr;
     }
 
     player_ = new QMediaPlayer(this);
     audioOutput_ = new QAudioOutput(this);
     player_->setAudioOutput(audioOutput_);
     player_->setVideoOutput(videoPanel_);
-    //player_->setNotifyInterval(100);
     player_->setPlaybackRate(1.0);
     connect(player_, &QMediaPlayer::durationChanged, this, &QtPlayer::PlayerDurationChanged);
     connect(player_, &QMediaPlayer::positionChanged, this, &QtPlayer::PlayerPositionChanged);
@@ -101,8 +107,9 @@ void QtPlayer::RefreshVideoSource()
     SetVideoSource(source_);
     int timedelay = app_->GetRetryTimeDelay();
     PRINT << "REFRESH: Retry Time Delay: " << timedelay*stallretryCount_;
-    QThread::msleep(timedelay*stallretryCount_);
-    Play();
+    QTimer::singleShot(timedelay*stallretryCount_, this, &QtPlayer::Play);
+    //QThread::msleep(timedelay*stallretryCount_);
+    //Play();
 }
 
 void QtPlayer::Play()
@@ -839,9 +846,10 @@ void QtPlayer::ReConnectPlayer()
         player_->stop();
         SetupPlayer();
         SetVideoSource(source_);
-        QThread::msleep(500);
+        QTimer::singleShot(500, this, &QtPlayer::Play);
+        //QThread::msleep(500);
         //this->RefreshVideoSource();
-        Play();
+        //Play();
     }
     else
     {
