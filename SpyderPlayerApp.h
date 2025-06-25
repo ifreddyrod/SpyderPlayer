@@ -37,6 +37,7 @@ public:
     int GetVideoPanelHeight();
     QWidget* GetVideoPanelWidget();
     int GetRetryTimeDelay();
+    int GetMaxRetryCount();
     void ShowSplashScreenMsg(QString msg);
     void HideSplashScreenMsg(QString msg = "");
 

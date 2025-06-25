@@ -1267,3 +1267,8 @@ int SpyderPlayerApp::GetRetryTimeDelay()
 {
     return appData_->RetryDelay_;
 }
+
+int SpyderPlayerApp::GetMaxRetryCount()
+{
+    return appData_->RetryCount_;
+}
