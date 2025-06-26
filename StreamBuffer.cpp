@@ -8,6 +8,7 @@ StreamBuffer::StreamBuffer(const QUrl &url, QObject *parent)
     open(QIODevice::ReadOnly);
     buffer_ = new QBuffer(this);
     buffer_->open(QIODevice::ReadWrite);
+    buffer_->seek(0); // Ensure the buffer starts at position 0
     manager_ = new QNetworkAccessManager(this);
     retryTimer_ = new QTimer(this);
     connect(retryTimer_, &QTimer::timeout, this, &StreamBuffer::StartRequest);
@@ -81,22 +82,23 @@ void StreamBuffer::StartRequest()
     retryCount_++;
 }
 
+// In StreamBuffer.cpp
 void StreamBuffer::DataAvailable()
 {
     if (!reply_)
         return;
     QByteArray data = reply_->readAll();
-    if (buffer_->size() < 20971520 && !data.isEmpty())
+    if (!data.isEmpty())
     {
-        buffer_->write(data);
-        qDebug() << "StreamBuffer: Wrote" << data.size() << "bytes, buffer size:" << buffer_->size();
-        if (buffer_->size() >= 1048576)
+        qint64 bytesWritten = buffer_->write(data);
+        qDebug() << "StreamBuffer: Wrote" << bytesWritten << "bytes, buffer size:" << buffer_->size() << "data size:" << data.size();
+        if (buffer_->size() >= 1048576) // 1 MB
             emit BufferReady();
-        emit readyRead();
+        emit readyRead(); // Emit readyRead even for small data chunks
     }
     else
     {
-        qDebug() << "StreamBuffer: Skipped write, buffer size:" << buffer_->size() << "data size:" << data.size();
+        qDebug() << "StreamBuffer: No data available to write";
     }
 }
 
@@ -135,10 +137,25 @@ void StreamBuffer::HandleError(QNetworkReply::NetworkError code)
 {
     if (!reply_)
         return;
-    qDebug() << "StreamBuffer: Network error:" << reply_->errorString() << "Code:" << code << "URL:" << url_.toString();
+    QString errorString = reply_->errorString();
+    qint64 status = reply_->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    qDebug() << "StreamBuffer: Network error:" << errorString << "Code:" << code << "HTTP Status:" << status << "URL:" << url_.toString();
     reply_->deleteLater();
     reply_ = nullptr;
-    retryTimer_->start(2000);
+    if (status == 404 || status == 403) // Unrecoverable errors
+    {
+        emit ErrorOccurred("Unrecoverable network error: " + errorString + " (HTTP " + QString::number(status) + ")");
+        Stop();
+    }
+    else if (retryCount_ < 5)
+    {
+        retryTimer_->start(2000);
+    }
+    else
+    {
+        emit ErrorOccurred("Max retries reached in StreamBuffer: " + errorString);
+        Stop();
+    }
 }
 
 void StreamBuffer::HandleRedirect(const QUrl &redirectUrl)

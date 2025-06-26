@@ -19,7 +19,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QSslConfiguration>
-#include "StreamBuffer.h"
+//#include "StreamBuffer.h"
 
 class SpyderPlayerApp;
 
@@ -54,7 +54,6 @@ public:
     void SetSubtitleTrack(int index) override;
     QString GetVideoResolution() override;
     QString GetPlayerStatus() override;
-    void ListVideoTracks();
 
     void OnChangingPosition(bool isPlaying) override;
     void OnChangedPosition(bool isPlaying) override;
@@ -73,6 +72,8 @@ public:
 private:
     void SetupPlayer();
     void ResetAudioOutput();
+    void PlaySource();
+
     SpyderPlayerApp* app_;
     Ui::PlayerMainWindow* mainWindow_;
     QVideoWidget* videoPanel_;
@@ -82,7 +83,7 @@ private:
     int subtitleCount_;
     QList<QPair<int, QString>> subtitleList_;
     int subtitleIndex_;
-    StreamBuffer *streamBuffer_ = nullptr;
+    //StreamBuffer *streamBuffer_ = nullptr;
     QTimer *watchdogTimer_;
     QTimer *timeoutTimer_;
     qint64 lastPosition_ = -1;
@@ -96,6 +97,7 @@ private:
     QTimer *stalledVideoTimer_;
     bool isPositionSeeking_ = false;
     qint64 stallPosition_ = -1;
+    bool stopAll_ = false;
 };
 
 #endif // QTMEDIA_H
