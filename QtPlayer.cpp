@@ -109,12 +109,17 @@ void QtPlayer::RefreshVideoSource()
     PRINT << "REFRESH: Refreshing Video Source: " << source_;
 
     SetVideoSource(source_);
-    int timedelay = app_->GetRetryTimeDelay();
+    u_int64_t timedelay = app_->GetRetryTimeDelay();
     //PRINT << "REFRESH: Retry Time Delay: " << timedelay;
     //QTimer::singleShot(timedelay, this, &QtPlayer::Play);
+    timedelay = timedelay*stallretryCount_;
+    PRINT << "REFRESH: Retry Time Delay: " << timedelay;
+    QTimer::singleShot(timedelay, this, &QtPlayer::PlaySource);
 
-    PRINT << "REFRESH: Retry Time Delay: " << timedelay*stallretryCount_;
-    QTimer::singleShot(timedelay*stallretryCount_, this, &QtPlayer::PlaySource);
+    // Get timedelay string in seconds for 1 decimal place
+    playerStatus_ += " in " + QString::number(timedelay/1000.0, 'f', 1) + " secs";
+
+    //playerStatus_ = (timedelay/1000)  
     //QThread::msleep(timedelay*stallretryCount_);
     //Play();
 }
@@ -423,59 +428,74 @@ void QtPlayer::MediaStatusChanged(QMediaPlayer::MediaStatus mediaState)
         currentState_ = ENUM_PLAYER_STATE::PLAYING;
         playerStatus_ = "";
 
-        QList<QMediaMetaData> subtitle_tracks = player_->subtitleTracks();
-        PRINT << "Subtitle Count: " << subtitle_tracks.size();
-        if (subtitleCount_ != subtitle_tracks.size())
+        try
         {
-            subtitleCount_ = subtitle_tracks.size();
-            if (subtitle_tracks.size() > 0)
+            QList<QMediaMetaData> subtitle_tracks = player_->subtitleTracks();
+            PRINT << "Subtitle Count: " << subtitle_tracks.size();
+            if (subtitleCount_ != subtitle_tracks.size())
             {
-                EnableSubtitles(true);
-                subtitleList_.clear();
-                subtitleList_.push_back({-1, "Disabled"});
-                for (int index = 0; index < subtitle_tracks.size(); index++)
+                subtitleCount_ = subtitle_tracks.size();
+                if (subtitle_tracks.size() > 0)
                 {
-                    QString language = subtitle_tracks[index].value(QMediaMetaData::Language).toString();
-                    PRINT << "Language: " << language;
-                    if (language.isEmpty())
-                        language = QString("Track %1").arg(index + 1);
-                    subtitleList_.push_back({index, language});
+                    EnableSubtitles(true);
+                    subtitleList_.clear();
+                    subtitleList_.push_back({-1, "Disabled"});
+                    for (int index = 0; index < subtitle_tracks.size(); index++)
+                    {
+                        QString language = subtitle_tracks[index].value(QMediaMetaData::Language).toString();
+                        PRINT << "Language: " << language;
+                        if (language.isEmpty())
+                            language = QString("Track %1").arg(index + 1);
+                        subtitleList_.push_back({index, language});
+                    }
+                }
+                else
+                {
+                    EnableSubtitles(false);
                 }
             }
-            else
-            {
-                EnableSubtitles(false);
-            }
+        }
+        catch(const std::exception& e)
+        {
+            ErrorOccured(std::string(e.what()));
+            EnableSubtitles(false);
         }
     }
     else if (mediaState == QMediaPlayer::LoadedMedia)
     {
-        QList<QMediaMetaData> video_tracks = player_->videoTracks();
-        QPair<int, int> highest_resolution = {0, 0};
-        int highest_resolution_index = -1;
-
-        for (int index = 0; index < video_tracks.size(); index++)
+        try
         {
-            QVariant resVar = video_tracks[index].value(QMediaMetaData::Resolution);
-            if (resVar.isValid() && resVar.canConvert<QSize>())
+            QList<QMediaMetaData> video_tracks = player_->videoTracks();
+            QPair<int, int> highest_resolution = {0, 0};
+            int highest_resolution_index = -1;
+
+            for (int index = 0; index < video_tracks.size(); index++)
             {
-                QSize size = resVar.value<QSize>();
-                int width = size.width();
-                int height = size.height();
-                PRINT << "Video track " << index << " resolution: " << width << "x" << height;
-                if (width * height > highest_resolution.first * highest_resolution.second)
+                QVariant resVar = video_tracks[index].value(QMediaMetaData::Resolution);
+                if (resVar.isValid() && resVar.canConvert<QSize>())
                 {
-                    highest_resolution = {width, height};
-                    highest_resolution_index = index;
+                    QSize size = resVar.value<QSize>();
+                    int width = size.width();
+                    int height = size.height();
+                    PRINT << "Video track " << index << " resolution: " << width << "x" << height;
+                    if (width * height > highest_resolution.first * highest_resolution.second)
+                    {
+                        highest_resolution = {width, height};
+                        highest_resolution_index = index;
+                    }
                 }
             }
+
+            PRINT << "Highest resolution index: " << highest_resolution_index;
+            if (highest_resolution_index != -1 && currentState_ == ENUM_PLAYER_STATE::PLAYING)
+                player_->setActiveVideoTrack(highest_resolution_index);
         }
-
-        PRINT << "Highest resolution index: " << highest_resolution_index;
-        if (highest_resolution_index != -1 && currentState_ == ENUM_PLAYER_STATE::PLAYING)
-            player_->setActiveVideoTrack(highest_resolution_index);
-
-        if (/*inRecovery_ &&*/  duration_ > 0 && stallPosition_ > 0)
+        catch(const std::exception& e)
+        {
+            ErrorOccured(std::string(e.what()));
+        }
+        
+        if (duration_ > 0 && stallPosition_ > 0)
         {
             PRINT << "ReSetting previous position: " << stallPosition_;
             SetPosition(stallPosition_);
@@ -544,33 +564,45 @@ void QtPlayer::SetSubtitleTrack(int index)
 
 QString QtPlayer::GetVideoResolution()
 {
-    QMediaMetaData metadata = player_->metaData();
-    QVariant resolutionVar = metadata.value(QMediaMetaData::Resolution);
-    QString res_str;
-    if (resolutionVar.isValid() && resolutionVar.canConvert<QSize>())
+    try
     {
-        QSize resolution = resolutionVar.value<QSize>();
-        if (resolution.isValid())
+        if (!player_)
+            return "";
+
+        QMediaMetaData metadata = player_->metaData();
+        QVariant resolutionVar = metadata.value(QMediaMetaData::Resolution);
+        QString res_str;
+        if (resolutionVar.isValid() && resolutionVar.canConvert<QSize>())
         {
-            res_str = QString("%1x%2").arg(resolution.width()).arg(resolution.height());
+            QSize resolution = resolutionVar.value<QSize>();
+            if (resolution.isValid())
+            {
+                res_str = QString("%1x%2").arg(resolution.width()).arg(resolution.height());
+            }
+            else
+            {
+                res_str = "Unknown";
+            }
         }
         else
         {
             res_str = "Unknown";
         }
+        return res_str;
     }
-    else
+    catch(const std::exception& e)
     {
-        res_str = "Unknown";
+        PRINT << "GetVideoResolution error: " << e.what();
+
+        return "";
     }
-    return res_str;
 }
 
 void QtPlayer::HandleError(QMediaPlayer::Error error, const QString &errorString)
 {
     PRINT << "!!!!---> QtPlayer Error: " << errorString << " (" << error << ") Retry: " << retryCount_ << "Buffer: " << player_->bufferProgress();
     
-    if ((error == QMediaPlayer::ResourceError /*|| error == QMediaPlayer::FormatError*/))// && retryCount_ < MAX_RETRIES)
+    if (error == QMediaPlayer::ResourceError)
     {
         PRINT << "Stream error, retry count: " << retryCount_;
         ReConnectPlayer();
@@ -758,12 +790,12 @@ void QtPlayer::ReConnectPlayer()
         timeoutTimer_->stop();
         stalledVideoTimer_->stop();
         retryCount_++;
-        playerStatus_= "Reconnecting player... Retry(" + QString::number(retryCount_) + ")";
+        playerStatus_= "Reconnecting (" + QString::number(retryCount_) + " of " + QString::number(MAX_RETRIES) + ")";
         PRINT << playerStatus_;
         player_->stop();
         SetupPlayer();
         SetVideoSource(source_);
-        QTimer::singleShot(300, this, &QtPlayer::PlaySource);
+        QTimer::singleShot(250, this, &QtPlayer::PlaySource);
         //QThread::msleep(500);
         //this->RefreshVideoSource();
         //Play();
@@ -775,7 +807,7 @@ void QtPlayer::ReConnectPlayer()
         timeoutTimer_->stop();
         stalledVideoTimer_->stop();
         //SetupPlayer();
-        playerStatus_ = "Max reconnection attempts reached...";
+        playerStatus_ = "Max Reconnection attempts reached";
         PRINT << playerStatus_;
         //ErrorOccured("Max retries reached");
         RetryStalledPlayer();
@@ -799,7 +831,7 @@ void QtPlayer::RetryStalledPlayer()
         inRecovery_ = true;
         stallretryCount_++;
         PRINT << "-----------------> STALLED VIDEO DETECTED <-----------------";
-        playerStatus_= "Stalled Video - Resetting(" + QString::number(stallretryCount_) + ")";
+        playerStatus_= "Rocovering (" + QString::number(stallretryCount_) + " of " + QString::number(MAX_STALL_RETRIES) + ")";
         PRINT << playerStatus_;
 
         player_->stop();
@@ -811,7 +843,7 @@ void QtPlayer::RetryStalledPlayer()
     {
         // Set player state message
         //ErrorOccured("Max Stalled Video retries reached");
-        playerStatus_ = "Max Stalled Video retries reached...";
+        playerStatus_ = "Max Recovery attempts reached";
         PRINT << playerStatus_;
         currentState_ = ENUM_PLAYER_STATE::ERROR;
         inRecovery_ = false;

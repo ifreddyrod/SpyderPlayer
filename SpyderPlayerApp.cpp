@@ -803,6 +803,7 @@ void SpyderPlayerApp::PlaybackStateChanged(ENUM_PLAYER_STATE state)
 
     if (state == ENUM_PLAYER_STATE::PLAYING)
     {
+        playbackStatusTimer_->stop();
         ShowCursorNormal();
         PlayerDurationChanged(player_->GetVideoDuration());
         ChangePlayingUIStates(true);
@@ -1008,7 +1009,7 @@ void SpyderPlayerApp::PlayPausePlayer()
     if (state == ENUM_PLAYER_STATE::PLAYING)
     {
         player_->Pause();
-        stalledVideoTimer_->stop();
+        //stalledVideoTimer_->stop();
     }
     else
     {
@@ -1026,7 +1027,8 @@ void SpyderPlayerApp::PlayPausePlayer()
 
 void SpyderPlayerApp::StopPlayer()
 {
-    stalledVideoTimer_->stop();
+    //stalledVideoTimer_->stop();
+    playbackStatusTimer_->stop();
     player_->Stop();
     SetCursorNormal();
     ui_.Status_label->setText("Playback Stopped");
@@ -1151,7 +1153,7 @@ void SpyderPlayerApp::OnPositionSliderPressed()
     isVideoPlaying_ = player_->GetPlayerState() == ENUM_PLAYER_STATE::PLAYING;
     if (isVideoPlaying_)
     {
-        stalledVideoTimer_->stop();
+        ;//stalledVideoTimer_->stop();
     }
 
     player_->OnChangingPosition(isVideoPlaying_);
