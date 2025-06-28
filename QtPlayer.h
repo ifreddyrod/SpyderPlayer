@@ -62,7 +62,7 @@ public:
     void CheckTimeout();
     void CheckPlaybackHealth();
     void StartWatchdog();
-    void HandleStreamBufferError(const QString &error);
+    //void HandleStreamBufferError(const QString &error);
     void StalledVideoDetected();
     void ReConnectPlayer();
     void RetryStalledPlayer();

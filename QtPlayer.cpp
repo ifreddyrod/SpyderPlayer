@@ -51,56 +51,75 @@ void QtPlayer::InitPlayer()
 
 void QtPlayer::SetupPlayer()
 {
-    if (player_) 
+    try
     {
-        disconnect(player_, nullptr, this, nullptr); // Disconnect all signals
-        player_->deleteLater();
-        player_ = nullptr;
-    }
-    if (audioOutput_) 
-    {
-        disconnect(audioOutput_, nullptr, this, nullptr);
-        audioOutput_->deleteLater();
-        audioOutput_ = nullptr;
-    }
+        if (player_) 
+        {
+            disconnect(player_, nullptr, this, nullptr); // Disconnect all signals
+            player_->deleteLater();
+            player_ = nullptr;
+        }
+        if (audioOutput_) 
+        {
+            disconnect(audioOutput_, nullptr, this, nullptr);
+            audioOutput_->deleteLater();
+            audioOutput_ = nullptr;
+        }
 
-    MAX_STALL_RETRIES = app_->GetMaxRetryCount();
-    player_ = new QMediaPlayer(this);
-    audioOutput_ = new QAudioOutput(this);
-    player_->setAudioOutput(audioOutput_);
-    player_->setVideoOutput(videoPanel_);
-    player_->setPlaybackRate(1.0);
-    connect(player_, &QMediaPlayer::durationChanged, this, &QtPlayer::PlayerDurationChanged);
-    connect(player_, &QMediaPlayer::positionChanged, this, &QtPlayer::PlayerPositionChanged);
-    connect(player_, &QMediaPlayer::playbackStateChanged, this, &QtPlayer::PlaybackStateChanged);
-    connect(player_, &QMediaPlayer::mediaStatusChanged, this, &QtPlayer::MediaStatusChanged);
-    connect(player_, &QMediaPlayer::errorOccurred, this, &QtPlayer::HandleError);
+        MAX_STALL_RETRIES = app_->GetMaxRetryCount();
+        player_ = new QMediaPlayer(this);
+        audioOutput_ = new QAudioOutput(this);
+        player_->setAudioOutput(audioOutput_);
+        player_->setVideoOutput(videoPanel_);
+        player_->setPlaybackRate(1.0);
+        connect(player_, &QMediaPlayer::durationChanged, this, &QtPlayer::PlayerDurationChanged);
+        connect(player_, &QMediaPlayer::positionChanged, this, &QtPlayer::PlayerPositionChanged);
+        connect(player_, &QMediaPlayer::playbackStateChanged, this, &QtPlayer::PlaybackStateChanged);
+        connect(player_, &QMediaPlayer::mediaStatusChanged, this, &QtPlayer::MediaStatusChanged);
+        connect(player_, &QMediaPlayer::errorOccurred, this, &QtPlayer::HandleError);
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        ErrorOccured(std::string(e.what()));
+    }
 }
 
 void QtPlayer::ResetAudioOutput()
 {
-    audioOutput_->deleteLater();
-    audioOutput_ = new QAudioOutput(this);
-    player_->setAudioOutput(audioOutput_);
+    try
+    {
+        audioOutput_->deleteLater();
+        audioOutput_ = new QAudioOutput(this);
+        player_->setAudioOutput(audioOutput_);
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        ErrorOccured(std::string(e.what()));
+    }
 }
 
 void QtPlayer::SetVideoSource(const std::string& videoSource)
 {
-    source_ = videoSource;
-    if (player_)
+    try
     {
-        //player_->stop();
-        //player_->setSource(QUrl(""));
-        //if (player_->playbackState() == QMediaPlayer::StoppedState)
-        if (!player_->isPlaying())
-            player_->setSource(QUrl(""));
-            //player_->setSource(QUrl(QString::fromStdString(source_)));
+        source_ = videoSource;
+        if (player_)
+        {
+            if (!player_->isPlaying())
+                player_->setSource(QUrl(""));
+        }
+        else
+        {
+            SetupPlayer();
+            SetVideoSource(source_);
+        }
     }
-    else
+    catch(const std::exception& e)
     {
-        SetupPlayer();
-        SetVideoSource(source_);
-        //Play();
+        std::cerr << e.what() << '\n';
+        ErrorOccured(std::string(e.what()));
     }
 }
 
@@ -256,11 +275,13 @@ void QtPlayer::PlaySource()
     {    
         PRINT << "Play error: " << e.what();
         ErrorOccured(std::string(e.what()));
-        if (retryCount_ < MAX_RETRIES)
+        ReConnectPlayer();
+        /*if (retryCount_ < MAX_RETRIES)
         {
             //retryCount_++;
             QTimer::singleShot(2000 * retryCount_, this, &QtPlayer::ReConnectPlayer);
-        }
+        }*/
+       
     }
 }
 
@@ -398,38 +419,38 @@ void QtPlayer::PlaybackStateChanged(QMediaPlayer::PlaybackState state)
 
 void QtPlayer::MediaStatusChanged(QMediaPlayer::MediaStatus mediaState)
 {
-    PRINT << "[Player State] -- " << PlayerStateToString(currentState_);
-    QMetaEnum metaEnum = QMetaEnum::fromType<QMediaPlayer::MediaStatus>();
-    QString mediaStateStr = metaEnum.valueToKey(mediaState);
-    PRINT << "[Media Status] -- " << mediaStateStr;
-    mediaState_ = mediaState;
-
-    if (stopAll_)
+    try
     {
-        currentState_ = ENUM_PLAYER_STATE::STOPPED;
-        UpdatePlayerState(currentState_);
-        return;
-    }
+        PRINT << "[Player State] -- " << PlayerStateToString(currentState_);
+        QMetaEnum metaEnum = QMetaEnum::fromType<QMediaPlayer::MediaStatus>();
+        QString mediaStateStr = metaEnum.valueToKey(mediaState);
+        PRINT << "[Media Status] -- " << mediaStateStr;
+        mediaState_ = mediaState;
 
-    if (currentState_ == ENUM_PLAYER_STATE::PAUSED)
-        return;
-    
-    if (mediaState == QMediaPlayer::BufferingMedia && duration_ == 0)
-    {
-        currentState_ = ENUM_PLAYER_STATE::LOADING;
-    }
-    else if (mediaState == QMediaPlayer::LoadingMedia)
-    {
-        currentState_ = ENUM_PLAYER_STATE::LOADING;
-    }
-
-    else if (mediaState == QMediaPlayer::BufferedMedia)
-    {
-        currentState_ = ENUM_PLAYER_STATE::PLAYING;
-        playerStatus_ = "";
-
-        try
+        if (stopAll_)
         {
+            currentState_ = ENUM_PLAYER_STATE::STOPPED;
+            UpdatePlayerState(currentState_);
+            return;
+        }
+
+        if (currentState_ == ENUM_PLAYER_STATE::PAUSED)
+            return;
+        
+        if (mediaState == QMediaPlayer::BufferingMedia && duration_ == 0)
+        {
+            currentState_ = ENUM_PLAYER_STATE::LOADING;
+        }
+        else if (mediaState == QMediaPlayer::LoadingMedia)
+        {
+            currentState_ = ENUM_PLAYER_STATE::LOADING;
+        }
+
+        else if (mediaState == QMediaPlayer::BufferedMedia)
+        {
+            currentState_ = ENUM_PLAYER_STATE::PLAYING;
+            playerStatus_ = "";
+
             QList<QMediaMetaData> subtitle_tracks = player_->subtitleTracks();
             PRINT << "Subtitle Count: " << subtitle_tracks.size();
             if (subtitleCount_ != subtitle_tracks.size())
@@ -455,15 +476,7 @@ void QtPlayer::MediaStatusChanged(QMediaPlayer::MediaStatus mediaState)
                 }
             }
         }
-        catch(const std::exception& e)
-        {
-            ErrorOccured(std::string(e.what()));
-            EnableSubtitles(false);
-        }
-    }
-    else if (mediaState == QMediaPlayer::LoadedMedia)
-    {
-        try
+        else if (mediaState == QMediaPlayer::LoadedMedia)
         {
             QList<QMediaMetaData> video_tracks = player_->videoTracks();
             QPair<int, int> highest_resolution = {0, 0};
@@ -489,66 +502,68 @@ void QtPlayer::MediaStatusChanged(QMediaPlayer::MediaStatus mediaState)
             PRINT << "Highest resolution index: " << highest_resolution_index;
             if (highest_resolution_index != -1 && currentState_ == ENUM_PLAYER_STATE::PLAYING)
                 player_->setActiveVideoTrack(highest_resolution_index);
-        }
-        catch(const std::exception& e)
-        {
-            ErrorOccured(std::string(e.what()));
-        }
-        
-        if (duration_ > 0 && stallPosition_ > 0)
-        {
-            PRINT << "ReSetting previous position: " << stallPosition_;
-            SetPosition(stallPosition_);
-        }
+            
+            if (duration_ > 0 && stallPosition_ > 0)
+            {
+                PRINT << "ReSetting previous position: " << stallPosition_;
+                SetPosition(stallPosition_);
+            }
 
-        timeoutTimer_->start(30000);
-        retryCount_ = 0;
-        stallretryCount_ = 0;
-        inRecovery_ = false;
-        playerStatus_ = "";
-    }
-    else if (mediaState == QMediaPlayer::InvalidMedia)
-    {
-        currentState_ = ENUM_PLAYER_STATE::NOMEDIA;
-        timeoutTimer_->stop();
-        stalledVideoTimer_->stop();
-    }
-    else if (mediaState == QMediaPlayer::EndOfMedia)
-    {
-        timeoutTimer_->stop();
-        stalledVideoTimer_->stop();
-        if (duration_ > 0)
-        {
-            currentState_ = ENUM_PLAYER_STATE::ENDED;
+            timeoutTimer_->start(30000);
+            retryCount_ = 0;
+            stallretryCount_ = 0;
+            inRecovery_ = false;
+            playerStatus_ = "";
         }
-        else
+        else if (mediaState == QMediaPlayer::InvalidMedia)
+        {
+            currentState_ = ENUM_PLAYER_STATE::NOMEDIA;
+            timeoutTimer_->stop();
+            stalledVideoTimer_->stop();
+        }
+        else if (mediaState == QMediaPlayer::EndOfMedia)
+        {
+            timeoutTimer_->stop();
+            stalledVideoTimer_->stop();
+            if (duration_ > 0)
+            {
+                currentState_ = ENUM_PLAYER_STATE::ENDED;
+            }
+            else
+            {
+                currentState_ = ENUM_PLAYER_STATE::STALLED;
+                if (!inRecovery_)
+                    QTimer::singleShot(1000, this, &QtPlayer::RetryStalledPlayer);
+            }
+        }
+        else if (mediaState == QMediaPlayer::NoMedia)
+        {
+            currentState_ = ENUM_PLAYER_STATE::NOMEDIA;
+            timeoutTimer_->stop();
+            stalledVideoTimer_->stop();
+        }
+        else if (mediaState == QMediaPlayer::StalledMedia and !isPositionSeeking_)
         {
             currentState_ = ENUM_PLAYER_STATE::STALLED;
-            if (!inRecovery_)
-                 QTimer::singleShot(1000, this, &QtPlayer::RetryStalledPlayer);
+            timeoutTimer_->stop();
+            stalledVideoTimer_->start();
         }
-    }
-    else if (mediaState == QMediaPlayer::NoMedia)
-    {
-        currentState_ = ENUM_PLAYER_STATE::NOMEDIA;
-        timeoutTimer_->stop();
-        stalledVideoTimer_->stop();
-    }
-    else if (mediaState == QMediaPlayer::StalledMedia and !isPositionSeeking_)
-    {
-        currentState_ = ENUM_PLAYER_STATE::STALLED;
-        timeoutTimer_->stop();
-        stalledVideoTimer_->start();
-    }
 
-    //if (stallretryCount_ == MAX_STALL_RETRIES)
-    if (/*retryCount_ == MAX_RETRIES ||*/ stallretryCount_ == MAX_STALL_RETRIES)
-        inRecovery_ = false;
+        //if (stallretryCount_ == MAX_STALL_RETRIES)
+        if (/*retryCount_ == MAX_RETRIES ||*/ stallretryCount_ == MAX_STALL_RETRIES)
+            inRecovery_ = false;
 
-    if(inRecovery_)
-        UpdatePlayerState(ENUM_PLAYER_STATE::RECOVERING);
-    else
-        UpdatePlayerState(currentState_);
+        if(inRecovery_)
+            UpdatePlayerState(ENUM_PLAYER_STATE::RECOVERING);
+        else
+            UpdatePlayerState(currentState_);
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        PRINT << e.what();
+        ErrorOccured(std::string(e.what()));
+    }
 }
 
 QList<QPair<int, QString>> QtPlayer::GetSubtitleTracks()
@@ -627,7 +642,7 @@ void QtPlayer::HandleError(QMediaPlayer::Error error, const QString &errorString
     }
 }
 
-void QtPlayer::HandleStreamBufferError(const QString &error)
+/*void QtPlayer::HandleStreamBufferError(const QString &error)
 {
     PRINT << "StreamBuffer Error: " << error << " Retry: " << retryCount_;
     ErrorOccured(error.toStdString());
@@ -649,7 +664,7 @@ void QtPlayer::HandleStreamBufferError(const QString &error)
         playerStatus_ = "Max retries reached in StreamBuffer: " + error;
         UpdatePlayerState(currentState_);
     }
-}
+}*/
 
 
 void QtPlayer::OnChangingPosition(bool isPlaying)
@@ -685,30 +700,38 @@ void QtPlayer::CheckTimeout()
     if (duration_ > 0)
         return;
 
-    PRINT << "Stream timeout, buffer state: " << player_->bufferProgress() << "position: " << player_->position() << "Retry: " << retryCount_;
-
-
-    if (player_->playbackState() == QMediaPlayer::PlayingState && player_->bufferProgress() > 0)  //> 0.5)
+    try
     {
-        PRINT << "QtPlayer: Timeout ignored, playback active";
-        return;
+        PRINT << "Stream timeout, buffer state: " << player_->bufferProgress() << "position: " << player_->position() << "Retry: " << retryCount_;
+
+
+        if (player_->playbackState() == QMediaPlayer::PlayingState && player_->bufferProgress() > 0)  //> 0.5)
+        {
+            PRINT << "QtPlayer: Timeout ignored, playback active";
+            return;
+        }
+        if (retryCount_ < MAX_RETRIES)
+        {
+            PRINT << "Stream buffer stopped, retrying...";
+            retryCount_++;
+            player_->stop();
+
+            ReConnectPlayer();
+        }
+        else
+        {
+            PRINT << "Max retries reached, stalling.";
+
+            //SetupPlayer();
+            player_->stop();
+            currentState_ = ENUM_PLAYER_STATE::STALLED;
+            UpdatePlayerState(currentState_);
+        }
     }
-    if (retryCount_ < MAX_RETRIES)
+    catch (const std::exception& e)
     {
-        PRINT << "Stream buffer stopped, retrying...";
-        retryCount_++;
-        player_->stop();
-
-        ReConnectPlayer();
-    }
-    else
-    {
-        PRINT << "Max retries reached, stalling.";
-
-        //SetupPlayer();
-        player_->stop();
-        currentState_ = ENUM_PLAYER_STATE::STALLED;
-        UpdatePlayerState(currentState_);
+        PRINT << "Timeout error: " << e.what();
+        ErrorOccured(std::string(e.what()));
     }
 }
 
@@ -783,36 +806,45 @@ void QtPlayer::ReConnectPlayer()
         return;
     }
 
-    if (retryCount_ < MAX_RETRIES)
+    try
     {
-        inRecovery_ = true;
-        //watchdogTimer_->stop();
-        timeoutTimer_->stop();
-        stalledVideoTimer_->stop();
-        retryCount_++;
-        playerStatus_= "Reconnecting (" + QString::number(retryCount_) + " of " + QString::number(MAX_RETRIES) + ")";
-        PRINT << playerStatus_;
-        player_->stop();
-        SetupPlayer();
-        SetVideoSource(source_);
-        QTimer::singleShot(250, this, &QtPlayer::PlaySource);
-        //QThread::msleep(500);
-        //this->RefreshVideoSource();
-        //Play();
+        if (retryCount_ < MAX_RETRIES)
+        {
+            inRecovery_ = true;
+            //watchdogTimer_->stop();
+            timeoutTimer_->stop();
+            stalledVideoTimer_->stop();
+            retryCount_++;
+            playerStatus_= "Reconnecting (" + QString::number(retryCount_) + " of " + QString::number(MAX_RETRIES) + ")";
+            PRINT << playerStatus_;
+            player_->stop();
+            SetupPlayer();
+            SetVideoSource(source_);
+            QTimer::singleShot(250, this, &QtPlayer::PlaySource);
+            //QThread::msleep(500);
+            //this->RefreshVideoSource();
+            //Play();
+        }
+        else
+        {
+            player_->stop();
+            //watchdogTimer_->stop();
+            timeoutTimer_->stop();
+            stalledVideoTimer_->stop();
+            //SetupPlayer();
+            playerStatus_ = "Max Reconnection attempts reached";
+            PRINT << playerStatus_;
+            //ErrorOccured("Max retries reached");
+            RetryStalledPlayer();
+            //currentState_ = ENUM_PLAYER_STATE::STALLED;
+            //UpdatePlayerState(currentState_);
+        }
     }
-    else
+    catch(const std::exception& e)
     {
-        player_->stop();
-        //watchdogTimer_->stop();
-        timeoutTimer_->stop();
-        stalledVideoTimer_->stop();
-        //SetupPlayer();
-        playerStatus_ = "Max Reconnection attempts reached";
-        PRINT << playerStatus_;
-        //ErrorOccured("Max retries reached");
-        RetryStalledPlayer();
-        //currentState_ = ENUM_PLAYER_STATE::STALLED;
-        //UpdatePlayerState(currentState_);
+        std::cerr << e.what() << '\n';
+        PRINT << "Reconnect error: " << e.what();
+        ErrorOccured(std::string(e.what()));
     }
 }
 
@@ -826,28 +858,36 @@ void QtPlayer::RetryStalledPlayer()
         return;
     }
 
-    if (stallretryCount_ < MAX_STALL_RETRIES) 
+    try
     {
-        inRecovery_ = true;
-        stallretryCount_++;
-        PRINT << "-----------------> STALLED VIDEO DETECTED <-----------------";
-        playerStatus_= "Rocovering (" + QString::number(stallretryCount_) + " of " + QString::number(MAX_STALL_RETRIES) + ")";
-        PRINT << playerStatus_;
+        if (stallretryCount_ < MAX_STALL_RETRIES) 
+        {
+            inRecovery_ = true;
+            stallretryCount_++;
+            PRINT << "-----------------> STALLED VIDEO DETECTED <-----------------";
+            playerStatus_= "Rocovering (" + QString::number(stallretryCount_) + " of " + QString::number(MAX_STALL_RETRIES) + ")";
+            PRINT << playerStatus_;
 
-        player_->stop();
-        SetupPlayer();
-        RefreshVideoSource();
-        
+            player_->stop();
+            SetupPlayer();
+            RefreshVideoSource();
+        }
+        else
+        {
+            // Set player state message
+            //ErrorOccured("Max Stalled Video retries reached");
+            playerStatus_ = "Max Recovery attempts reached";
+            PRINT << playerStatus_;
+            currentState_ = ENUM_PLAYER_STATE::ERROR;
+            inRecovery_ = false;
+            UpdatePlayerState(currentState_);
+        }
     }
-    else
+    catch(const std::exception& e)
     {
-        // Set player state message
-        //ErrorOccured("Max Stalled Video retries reached");
-        playerStatus_ = "Max Recovery attempts reached";
-        PRINT << playerStatus_;
-        currentState_ = ENUM_PLAYER_STATE::ERROR;
-        inRecovery_ = false;
-        UpdatePlayerState(currentState_);
+        std::cerr << e.what() << '\n';
+        PRINT << "Reconnect error: " << e.what();
+        ErrorOccured(std::string(e.what()));
     }
 }
 
