@@ -355,8 +355,16 @@ void QtPlayer::SkipPosition(qint64 position)
 
 qint64 QtPlayer::GetPosition()
 {
-    position_ = player_->position();
-    return position_;
+    try
+    {
+        position_ = player_->position();
+        return position_; 
+    }
+    catch(const std::exception& e)
+    {
+        PRINT << "GetPosition error: " << e.what();
+        return 0;
+    }
 }
 
 qint64 QtPlayer::GetVideoDuration()
@@ -366,23 +374,54 @@ qint64 QtPlayer::GetVideoDuration()
 
 void QtPlayer::SetVolume(int volume)
 {
-    audioOutput_->setVolume(volume / 100.0);
+    try
+    {
+       audioOutput_->setVolume(volume / 100.0);
+    }
+    catch(const std::exception& e)
+    {
+        PRINT << "SetVolume error: " << e.what();
+    }
 }
 
 int QtPlayer::GetVolume()
 {
-    return int(audioOutput_->volume() * 100);
+    try
+    {
+       return int(audioOutput_->volume() * 100);
+    }
+    catch(const std::exception& e)
+    {
+        PRINT << "GetVolume error: " << e.what();
+        return 0;
+    }    
 }
 
 bool QtPlayer::IsMuted()
 {
-    return audioOutput_->isMuted();
+    try
+    {
+        return audioOutput_->isMuted();
+    }
+    catch(const std::exception& e)
+    {
+        PRINT << "IsMuted error: " << e.what();
+        return false;
+    }
 }
 
 void QtPlayer::Mute(bool mute)
 {
-    isMuted_ = mute;
-    audioOutput_->setMuted(isMuted_);
+    try
+    {
+        isMuted_ = mute;
+        audioOutput_->setMuted(isMuted_);
+    }
+    catch(const std::exception& e)
+    {
+        PRINT << "Muted error: " << e.what();
+        isMuted_ = false;
+    }
 }
 
 void QtPlayer::PlayerDurationChanged(int duration)
@@ -573,8 +612,15 @@ QList<QPair<int, QString>> QtPlayer::GetSubtitleTracks()
 
 void QtPlayer::SetSubtitleTrack(int index)
 {
-    subtitleIndex_ = index;
-    player_->setActiveSubtitleTrack(index);
+    try
+    {
+        subtitleIndex_ = index;
+        player_->setActiveSubtitleTrack(index);
+    }
+    catch(const std::exception& e)
+    {
+        PRINT << "SetSubtitleTrack error: " << e.what();
+    }
 }
 
 QString QtPlayer::GetVideoResolution()

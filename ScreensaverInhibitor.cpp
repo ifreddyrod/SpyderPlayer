@@ -22,22 +22,43 @@ ScreensaverInhibitor::ScreensaverInhibitor()
 
 ScreensaverInhibitor::~ScreensaverInhibitor() 
 {
-    uninhibit();
+    try
+    {
+        uninhibit();
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+    }
 }
 
 void ScreensaverInhibitor::inhibit() 
 {
-    if (inhibitor_) 
+    try 
     {
-        inhibitor_->inhibit();
+        if (inhibitor_) 
+        {
+            inhibitor_->inhibit();
+        }
+    }
+    catch(const std::exception& e) 
+    {
+        std::cerr << e.what() << '\n';
     }
 }
 
 void ScreensaverInhibitor::uninhibit() 
 {
-    if (inhibitor_) 
+    try 
     {
-        inhibitor_->uninhibit();
+        if (inhibitor_) 
+        {
+            inhibitor_->uninhibit();
+        }
+    }
+    catch(const std::exception& e) 
+    {
+        std::cerr << e.what() << '\n';
     }
 }
 
