@@ -33,6 +33,18 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent, AppData *appData): QWidget(par
     //---------------------------------
     ui_.setupUi(this);
     setWindowOpacity(0);
+    QScreen *screen = QApplication::primaryScreen();
+    QRect screenGeometry = screen->geometry();
+
+    // Resize to 80%
+    int screenWidth = screenGeometry.width() * 0.8;
+    int screenHeight = screenGeometry.height() * 0.8;
+    resize(screenWidth, screenHeight);
+
+    // Center the window
+    int x = (screenGeometry.width() - screenWidth) / 2;
+    int y = (screenGeometry.height() - screenHeight) / 3;
+    move(x, y);
 
     //-----------------------------
     // Load AppData from file
