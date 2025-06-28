@@ -37,8 +37,8 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent, AppData *appData): QWidget(par
     QRect screenGeometry = screen->geometry();
 
     // Resize to 80%
-    int screenWidth = screenGeometry.width() * 0.8;
-    int screenHeight = screenGeometry.height() * 0.8;
+    int screenWidth = screenGeometry.width() * 0.75;
+    int screenHeight = screenGeometry.height() * 0.9;
     resize(screenWidth, screenHeight);
 
     // Center the window
