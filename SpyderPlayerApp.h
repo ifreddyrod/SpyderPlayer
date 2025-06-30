@@ -40,7 +40,8 @@ public:
     int GetMaxRetryCount();
     void ShowSplashScreenMsg(QString msg);
     void HideSplashScreenMsg(QString msg = "");
-
+    void CrashHandler(int signum);
+    
 private:
     QString version_ = "";
     string platform_ = "";

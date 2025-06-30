@@ -5,6 +5,36 @@
 #include <QIcon>
 #include "Global.h"
 #include "AppData.h"
+#include <csignal>
+#include <execinfo.h>
+#include <unistd.h>
+#include <iostream>
+
+SpyderPlayerApp* spyderPlayer;
+
+void SigAbrtHandler(int signum)
+{
+    std::cerr << "Caught signal " << signum << std::endl;
+
+    if(signum == SIGABRT)
+    {
+        // Print stack trace
+        void *array[50];
+        size_t size = backtrace(array, 50);
+        backtrace_symbols_fd(array, size, STDERR_FILENO);
+
+        try
+        {
+            PRINT << "*****[ Player Crashed ]*****   Stopping player...";
+            spyderPlayer->CrashHandler(signum);
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << e.what() << '\n';
+        }
+    }
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -38,9 +68,11 @@ int main(int argc, char *argv[])
     app.setWindowIcon(QIcon(":/icons/icons/spider_dark_icon.icns"));
 
     // Create Player Instance
-    SpyderPlayerApp spyderPlayer(nullptr, appData);
-    spyderPlayer.show();
-    spyderPlayer.OnHSplitterResized(0, 0);
+    spyderPlayer = new SpyderPlayerApp(nullptr, appData);
+    spyderPlayer->show();
+    spyderPlayer->OnHSplitterResized(0, 0);
+
+    signal(SIGABRT, SigAbrtHandler);
 
     return app.exec();
 }
