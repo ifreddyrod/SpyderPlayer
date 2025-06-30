@@ -11,6 +11,7 @@
 #include <iostream>
 
 SpyderPlayerApp* spyderPlayer;
+AppData* appData;
 
 void SigAbrtHandler(int signum)
 {
@@ -25,12 +26,16 @@ void SigAbrtHandler(int signum)
 
         try
         {
-            PRINT << "*****[ Player Crashed ]*****   Stopping player...";
-            spyderPlayer->CrashHandler(signum);
+            PRINT << "*****[ Player Crashed ]*****   Resetting...";
+            //spyderPlayer->CrashHandler(signum);
+            spyderPlayer->deleteLater();
+            spyderPlayer = nullptr;
+            spyderPlayer = new SpyderPlayerApp(nullptr, appData);
         }
         catch(const std::exception& e)
         {
             std::cerr << e.what() << '\n';
+            exit(1);
         }
     }
 }
@@ -56,7 +61,7 @@ int main(int argc, char *argv[])
 
     PRINT << "AppData Path: " << data_path;
 
-    AppData* appData = new AppData(data_path);
+    appData = new AppData(data_path);
 
     // Set Qt Applicatoin Scale factor
     double appScaleFactor = appData->AppScaleFactor_;

@@ -1289,20 +1289,17 @@ int SpyderPlayerApp::GetMaxRetryCount()
 
 void SpyderPlayerApp::CrashHandler(int signum)
 {
-    if(signum == SIGABRT)
+    try
     {
-        try
-        {
-            PRINT << "*****[ Player Crashed ]*****   Stopping player...";
-            player_->deleteLater();
-            InitPlayer();
-            PlaybackStateChanged(ENUM_PLAYER_STATE::STOPPED);
-            ui_.Status_label->setText("Player Crashed...");
-        }
-        catch(const std::exception& e)
-        {
-            std::cerr << e.what() << '\n';
-            ui_.Status_label->setText("Unrecoverable Error....");
-        }
+        PRINT << "*****[ Player Crashed ]*****   Stopping player...";
+        player_->deleteLater();
+        InitPlayer();
+        PlaybackStateChanged(ENUM_PLAYER_STATE::STOPPED);
+        ui_.Status_label->setText("Player Crashed...");
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        ui_.Status_label->setText("Unrecoverable Error....");
     }
 }
