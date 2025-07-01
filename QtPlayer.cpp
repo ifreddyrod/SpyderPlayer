@@ -66,7 +66,7 @@ void QtPlayer::SetupPlayer()
             audioOutput_ = nullptr;
         }
         // Delete and recreate video widget
-        if (videoPanel_)
+        /*if (videoPanel_)
         {
             mainWindow_->gridLayout->removeWidget(videoPanel_);
             videoPanel_->deleteLater();
@@ -74,7 +74,7 @@ void QtPlayer::SetupPlayer()
         }
         videoPanel_ = new QVideoWidget(mainWindow_->VideoView_widget->parentWidget());
         mainWindow_->gridLayout->addWidget(videoPanel_, 1, 1, 1, 1);
-        videoWidget_ = static_cast<QWidget*>(videoPanel_);
+        videoWidget_ = static_cast<QWidget*>(videoPanel_);*/
         
         MAX_STALL_RETRIES = app_->GetMaxRetryCount();
         player_ = new QMediaPlayer(this);

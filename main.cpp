@@ -5,41 +5,9 @@
 #include <QIcon>
 #include "Global.h"
 #include "AppData.h"
-#include <csignal>
-#include <execinfo.h>
-#include <unistd.h>
-#include <iostream>
 
 SpyderPlayerApp* spyderPlayer;
 AppData* appData;
-
-void SigAbrtHandler(int signum)
-{
-    std::cerr << "Caught signal " << signum << std::endl;
-
-    if(signum == SIGABRT)
-    {
-        // Print stack trace
-        void *array[50];
-        size_t size = backtrace(array, 50);
-        backtrace_symbols_fd(array, size, STDERR_FILENO);
-
-        try
-        {
-            PRINT << "*****[ Player Crashed ]*****   Resetting...";
-            //spyderPlayer->CrashHandler(signum);
-            spyderPlayer->deleteLater();
-            spyderPlayer = nullptr;
-            spyderPlayer = new SpyderPlayerApp(nullptr, appData);
-        }
-        catch(const std::exception& e)
-        {
-            std::cerr << e.what() << '\n';
-            exit(1);
-        }
-    }
-}
-
 
 int main(int argc, char *argv[])
 {
@@ -49,7 +17,7 @@ int main(int argc, char *argv[])
     }
     
     qputenv("AV_LOG_LEVEL", "debug");
-    qputenv("FFMPEG_OPTS", "probesize=20000000 analyzeduration=20000000 reconnect=1 reconnect_streamed=1 reconnect_delay_max=60 max_delay=10000000 buffer_size=20971520 fflags=+ignidx+igndts+discardcorrupt err_detect=ignore_err+crccheck format_opts=scan_all_pmts=1");
+    //qputenv("FFMPEG_OPTS", "probesize=20000000 analyzeduration=20000000 reconnect=1 reconnect_streamed=1 reconnect_delay_max=60 max_delay=10000000 buffer_size=20971520 fflags=+ignidx+igndts+discardcorrupt err_detect=ignore_err+crccheck format_opts=scan_all_pmts=1");
     qputenv("AVFORMAT_FLAGS", "+genpts+igndts");
     qputenv("FFMPEG_OPTS", "... buffer_size=20971520 ...");
     qputenv("QT_LOGGING_RULES", "qt6.multimedia=true");
@@ -76,8 +44,6 @@ int main(int argc, char *argv[])
     spyderPlayer = new SpyderPlayerApp(nullptr, appData);
     spyderPlayer->show();
     spyderPlayer->OnHSplitterResized(0, 0);
-
-    signal(SIGABRT, SigAbrtHandler);
 
     return app.exec();
 }
