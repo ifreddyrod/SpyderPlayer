@@ -66,7 +66,7 @@ void QtPlayer::SetupPlayer()
             audioOutput_ = nullptr;
         }
         // Delete and recreate video widget
-        /*if (videoPanel_)
+        if (videoPanel_)
         {
             mainWindow_->gridLayout->removeWidget(videoPanel_);
             videoPanel_->deleteLater();
@@ -74,7 +74,7 @@ void QtPlayer::SetupPlayer()
         }
         videoPanel_ = new QVideoWidget(mainWindow_->VideoView_widget->parentWidget());
         mainWindow_->gridLayout->addWidget(videoPanel_, 1, 1, 1, 1);
-        videoWidget_ = static_cast<QWidget*>(videoPanel_);*/
+        videoWidget_ = static_cast<QWidget*>(videoPanel_);
         
         MAX_STALL_RETRIES = app_->GetMaxRetryCount();
         player_ = new QMediaPlayer(this);
@@ -224,62 +224,78 @@ void QtPlayer::PlaySource()
             UpdatePlayerState(currentState_);
             return;
         }
-        QNetworkAccessManager *probe = new QNetworkAccessManager(this);
-        QNetworkRequest request(QUrl(QString::fromStdString(source_)));
-        request.setRawHeader("User-Agent", "Mozilla/5.0 (QtMediaPlayer)");
-        request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::ManualRedirectPolicy);
-        QSslConfiguration sslConfig = QSslConfiguration::defaultConfiguration();
-        sslConfig.setPeerVerifyMode(QSslSocket::VerifyNone);
-        request.setSslConfiguration(sslConfig);
-        auto *reply = probe->head(request);
-        connect(reply, &QNetworkReply::finished, this, [this, reply, probe]()
+        // Attempt to play remote URL
+        else if (QSTR(source_).startsWith("http://") || QSTR(source_).startsWith("https://"))
         {
-            if (reply->error() == QNetworkReply::NoError)
+            QNetworkAccessManager *probe = new QNetworkAccessManager(this);
+            QNetworkRequest request(QUrl(QString::fromStdString(source_)));
+            request.setRawHeader("User-Agent", "Mozilla/5.0 (QtMediaPlayer)");
+            request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::ManualRedirectPolicy);
+            QSslConfiguration sslConfig = QSslConfiguration::defaultConfiguration();
+            sslConfig.setPeerVerifyMode(QSslSocket::VerifyNone);
+            request.setSslConfiguration(sslConfig);
+            auto *reply = probe->head(request);
+            connect(reply, &QNetworkReply::finished, this, [this, reply, probe]()
             {
-                QUrl resolvedUrl = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
-                if (!resolvedUrl.isEmpty())
+                if (reply->error() == QNetworkReply::NoError)
                 {
-                    PRINT << "Following redirect to: " << resolvedUrl.toString();
-                    source_ = resolvedUrl.toString().toStdString();
-                    PlaySource();
+                    QUrl resolvedUrl = reply->attribute(QNetworkRequest::RedirectionTargetAttribute).toUrl();
+                    if (!resolvedUrl.isEmpty())
+                    {
+                        PRINT << "Following redirect to: " << resolvedUrl.toString();
+                        source_ = resolvedUrl.toString().toStdString();
+                        PlaySource();
+                    }
+                    else
+                    {
+                        player_->setSource(QUrl(QSTR(source_)));
+                        if (duration_ > 0)
+                            player_->setPosition(position_);
+                            
+                        audioOutput_->setMuted(isMuted_);
+                        player_->play();
+                        //retryCount_++;
+                        PRINT << "QtPlayer: Attempting direct playback...";  
+                    }
                 }
                 else
                 {
-                    player_->setSource(QUrl(QSTR(source_)));
-                    if (duration_ > 0)
-                        player_->setPosition(position_);
-                        
-                    audioOutput_->setMuted(isMuted_);
-                    player_->play();
-                    //retryCount_++;
-                    PRINT << "QtPlayer: Attempting direct playback...";  
+                    PRINT << "Probe failed: " << reply->errorString() << " Retry: " << retryCount_;
+                    if (reply->error() == QNetworkReply::ContentNotFoundError)
+                    {
+                        playerStatus_ = "URL not found (404): Retrying(" + QString::number(stallretryCount_+1) + ")";
+                        PRINT << playerStatus_;
+                        ErrorOccured(STR(playerStatus_));
+                        RetryStalledPlayer();
+                    }
+                    else 
+                    {
+                        ReConnectPlayer();
+                    }
+                    UpdatePlayerState(ENUM_PLAYER_STATE::RECOVERING);
+                    /*else
+                    {
+                        ErrorOccured("Probe failed: " + reply->errorString().toStdString());
+                        currentState_ = ENUM_PLAYER_STATE::STALLED;
+                        UpdatePlayerState(currentState_);
+                    }*/
                 }
-            }
-            else
-            {
-                PRINT << "Probe failed: " << reply->errorString() << " Retry: " << retryCount_;
-                if (reply->error() == QNetworkReply::ContentNotFoundError)
-                {
-                    playerStatus_ = "URL not found (404): Retrying(" + QString::number(stallretryCount_+1) + ")";
-                    PRINT << playerStatus_;
-                    ErrorOccured(STR(playerStatus_));
-                    RetryStalledPlayer();
-                }
-                else 
-                {
-                    ReConnectPlayer();
-                }
-                UpdatePlayerState(ENUM_PLAYER_STATE::RECOVERING);
-                /*else
-                {
-                    ErrorOccured("Probe failed: " + reply->errorString().toStdString());
-                    currentState_ = ENUM_PLAYER_STATE::STALLED;
-                    UpdatePlayerState(currentState_);
-                }*/
-            }
-            reply->deleteLater();
-            probe->deleteLater();
-        });
+                reply->deleteLater();
+                probe->deleteLater();
+            });
+        }
+        // Attempt to play local file
+        else
+        {
+            player_->setSource(QUrl(QString::fromStdString(source_)));
+            if (duration_ > 0)
+                player_->setPosition(position_);
+                
+            audioOutput_->setMuted(isMuted_);
+            player_->play();
+            //retryCount_++;
+            PRINT << "QtPlayer: Attempting direct playback...";  
+        }
     }
     catch (const std::exception& e)
     {    
@@ -323,7 +339,7 @@ void QtPlayer::Stop()
         player_->stop();
         timeoutTimer_->stop();
         inRecovery_ = false;
-        //watchdogTimer_->stop();
+        stallPosition_ = 0;
         stalledVideoTimer_->stop();
         retryCount_ = 0;
         stallretryCount_ = 0;
@@ -675,6 +691,12 @@ void QtPlayer::HandleError(QMediaPlayer::Error error, const QString &errorString
     
     if (error == QMediaPlayer::ResourceError)
     {
+        if (errorString.indexOf("Demuxing failed") >= 0)
+        {
+            PRINT << "Demuxing failed, stopping playback.";
+            player_->stop();
+            SetupPlayer();
+        }
         PRINT << "Stream error, retry count: " << retryCount_;
         ReConnectPlayer();
         return;

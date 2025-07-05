@@ -1002,6 +1002,9 @@ void SpyderPlayerApp::PlaySelectedChannel(string channelName, string source)
     PRINT << "PlaySelectedChannel: " << channelName;
     PRINT << "Source: " << source;
 
+    currentChannelName_ = channelName;
+    currentChannelSource_ = source;
+
     // Reset retry count
     retryPlaying_  = false;
     retryCount_ = appData_->RetryCount_;
@@ -1011,6 +1014,7 @@ void SpyderPlayerApp::PlaySelectedChannel(string channelName, string source)
     player_->SetVideoSource(source);
     setWindowTitle("SPYDER Player - " + QSTR(channelName));
     player_->Play();
+    player_->GetVideoPanel()->activateWindow();
     //ChangePlayingUIStates(true);
 }
 
@@ -1028,12 +1032,19 @@ void SpyderPlayerApp::PlayPausePlayer()
         // Check if video reached end, if so stop and restart at beginning
         if (player_->GetPlayerState() == ENUM_PLAYER_STATE::ENDED)
         {
-            videoPosition_ = 0;
-            player_->Stop();
+            //videoPosition_ = 0;
+            //player_->Stop();
+            //player_->Play();
+            PlaySelectedChannel(currentChannelName_, currentChannelSource_);
+        }
+        else if (player_->GetPlayerState() == ENUM_PLAYER_STATE::STOPPED)
+        {
+            PlaySelectedChannel(currentChannelName_, currentChannelSource_);
+        }
+        else if (player_->GetPlayerState() == ENUM_PLAYER_STATE::PAUSED)
+        {
             player_->Play();
         }
-        else
-            player_->Play();
     }
 }
 

@@ -64,6 +64,8 @@ private:
     int volume_ = 100;
     bool retryPlaying_ = true;
     int retryCount_ = 3;
+    string currentChannelName_ = "";
+    string currentChannelSource_ = "";
 
     // Gui Forms
     Ui::PlayerMainWindow ui_;
