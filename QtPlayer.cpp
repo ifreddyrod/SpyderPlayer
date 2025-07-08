@@ -128,29 +128,33 @@ void QtPlayer::SetVideoSource(const std::string& videoSource)
     }
     catch(const std::exception& e)
     {
-        std::cerr << e.what() << '\n';
+        PRINT << e.what() << '\n';
         ErrorOccured(std::string(e.what()));
     }
 }
 
 void QtPlayer::RefreshVideoSource()
 {
-    PRINT << "REFRESH: Refreshing Video Source: " << source_;
+    try
+    {
+        PRINT << "REFRESH: Refreshing Video Source: " << source_;
 
-    SetVideoSource(source_);
-    u_int64_t timedelay = app_->GetRetryTimeDelay();
-    //PRINT << "REFRESH: Retry Time Delay: " << timedelay;
-    //QTimer::singleShot(timedelay, this, &QtPlayer::Play);
-    timedelay = timedelay*stallretryCount_;
-    PRINT << "REFRESH: Retry Time Delay: " << timedelay;
-    QTimer::singleShot(timedelay, this, &QtPlayer::PlaySource);
+        SetVideoSource(source_);
+        u_int64_t timedelay = app_->GetRetryTimeDelay();
+        //PRINT << "REFRESH: Retry Time Delay: " << timedelay;
+        //QTimer::singleShot(timedelay, this, &QtPlayer::Play);
+        timedelay = timedelay*stallretryCount_;
+        PRINT << "REFRESH: Retry Time Delay: " << timedelay;
+        QTimer::singleShot(timedelay, this, &QtPlayer::PlaySource);
 
-    // Get timedelay string in seconds for 1 decimal place
-    playerStatus_ += " in " + QString::number(timedelay/1000.0, 'f', 1) + " secs";
-
-    //playerStatus_ = (timedelay/1000)  
-    //QThread::msleep(timedelay*stallretryCount_);
-    //Play();
+        // Get timedelay string in seconds for 1 decimal place
+        playerStatus_ += " in " + QString::number(timedelay/1000.0, 'f', 1) + " secs";
+    }
+    catch(const std::exception& e)
+    {
+        PRINT << e.what() << '\n';
+        ErrorOccured(std::string(e.what()));
+    }
 }
 
 void QtPlayer::Play()
@@ -452,12 +456,20 @@ void QtPlayer::Mute(bool mute)
 
 void QtPlayer::PlayerDurationChanged(int duration)
 {
+    if (inRecovery_) return;
+
     duration_ = duration;
     UpdateDuration(duration);
 }
 
 void QtPlayer::PlayerPositionChanged(int position)
 {
+    if (inRecovery_) 
+    {
+        stallPosition_ = position;
+        return;
+    }
+
     position_ = position;
     UpdatePosition(position);
     if (!isPositionSeeking_) stalledVideoTimer_->start();
@@ -694,6 +706,7 @@ void QtPlayer::HandleError(QMediaPlayer::Error error, const QString &errorString
         if (errorString.indexOf("Demuxing failed") >= 0)
         {
             PRINT << "Demuxing failed, stopping playback.";
+            stallPosition_ = position_;
             player_->stop();
             SetupPlayer();
         }
@@ -799,7 +812,8 @@ void QtPlayer::CheckTimeout()
         else
         {
             PRINT << "Max retries reached, stalling.";
-
+            return;
+            
             //SetupPlayer();
             player_->stop();
             currentState_ = ENUM_PLAYER_STATE::STALLED;
@@ -857,6 +871,7 @@ void QtPlayer::StalledVideoDetected()
     if(player_->playbackState() == QMediaPlayer::PlayingState && stallretryCount_ < MAX_STALL_RETRIES) // && !isPositionSeeking_) 
     {
         PRINT << "Stalled video detected, attempting to retry...";
+        stallPosition_ = position_;
         player_->stop();
         RetryStalledPlayer();
     }
@@ -893,7 +908,7 @@ void QtPlayer::ReConnectPlayer()
             timeoutTimer_->stop();
             stalledVideoTimer_->stop();
             retryCount_++;
-            playerStatus_= "Reconnecting (" + QString::number(retryCount_) + " of " + QString::number(MAX_RETRIES) + ")";
+            playerStatus_= "Connection attempt (" + QString::number(retryCount_) + " of " + QString::number(MAX_RETRIES) + ")";
             PRINT << playerStatus_;
             player_->stop();
             SetupPlayer();

@@ -22,11 +22,22 @@ void DraggableWidget::mousePressEvent(QMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton)
     {
+        // Check if the click is on a child widget
+        QWidget *child = childAt(event->pos());
+
+        // Check for resize edge first
         resizeEdge_ = getResizeEdge(event->pos());
         if (resizeEdge_ != ResizeEdge::None)
         {
             startResizing(event);
             event->accept();
+        }
+        else if (child) 
+        {
+            mousePressPos_ = event->pos() - frameGeometry().topLeft();
+            mouseMoveActive_ = true;
+            event->accept();
+            return;
         }
         else
         {
@@ -58,7 +69,9 @@ void DraggableWidget::mouseMoveEvent(QMouseEvent *event)
     }
     else if (mouseMoveActive_ && !mousePressPos_.isNull())
     {
-        move(event->globalPosition().toPoint() - mousePressPos_);
+        // Move the top-level window
+        QWidget *target = window();
+        target->move(event->globalPosition().toPoint() - mousePressPos_);
         event->accept();
     }
     else
