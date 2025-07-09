@@ -217,6 +217,8 @@ void QtPlayer::PlaySource()
             retryCount_ = 0;
             stallretryCount_ = 0;
             audioOutput_->setMuted(isMuted_);
+            if (duration_ > 0 && position_ > 3000)
+                SkipPosition(position_ - 3000);
             return;
         }
         //else if (retryCount_ >= MAX_RETRIES)
@@ -253,11 +255,11 @@ void QtPlayer::PlaySource()
                     else
                     {
                         player_->setSource(QUrl(QSTR(source_)));
-                        if (duration_ > 0)
-                            player_->setPosition(position_);
                             
                         audioOutput_->setMuted(isMuted_);
                         player_->play();
+                        if (duration_ > 0 && position_ > 3000)
+                            SkipPosition(position_ - 3000);
                         //retryCount_++;
                         PRINT << "QtPlayer: Attempting direct playback...";  
                     }
@@ -292,11 +294,14 @@ void QtPlayer::PlaySource()
         else
         {
             player_->setSource(QUrl(QString::fromStdString(source_)));
-            if (duration_ > 0)
-                player_->setPosition(position_);
+            //if (duration_ > 0)
+                //player_->setPosition(position_);
                 
             audioOutput_->setMuted(isMuted_);
             player_->play();
+            if (duration_ > 0 && position_ > 3000)
+                SkipPosition(position_ - 3000);
+
             //retryCount_++;
             PRINT << "QtPlayer: Attempting direct playback...";  
         }
@@ -466,7 +471,7 @@ void QtPlayer::PlayerPositionChanged(int position)
 {
     if (inRecovery_) 
     {
-        stallPosition_ = position;
+        stallPosition_ = position_;
         return;
     }
 
@@ -700,13 +705,13 @@ QString QtPlayer::GetVideoResolution()
 void QtPlayer::HandleError(QMediaPlayer::Error error, const QString &errorString)
 {
     PRINT << "!!!!---> QtPlayer Error: " << errorString << " (" << error << ") Retry: " << retryCount_ << "Buffer: " << player_->bufferProgress();
-    
+    stallPosition_ = position_;
+
     if (error == QMediaPlayer::ResourceError)
     {
         if (errorString.indexOf("Demuxing failed") >= 0)
         {
             PRINT << "Demuxing failed, stopping playback.";
-            stallPosition_ = position_;
             player_->stop();
             SetupPlayer();
         }
@@ -805,6 +810,7 @@ void QtPlayer::CheckTimeout()
         {
             PRINT << "Stream buffer stopped, retrying...";
             retryCount_++;
+            stallPosition_ = position_;
             player_->stop();
 
             ReConnectPlayer();
@@ -815,6 +821,7 @@ void QtPlayer::CheckTimeout()
             return;
             
             //SetupPlayer();
+            stallPosition_ = position_;
             player_->stop();
             currentState_ = ENUM_PLAYER_STATE::STALLED;
             UpdatePlayerState(currentState_);
@@ -891,7 +898,7 @@ void QtPlayer::ReConnectPlayer()
 {
     //RetryStalledPlayer();
     //return;
-    stallPosition_ = position_;
+    //stallPosition_ = position_;
 
     if (stopAll_) 
     {
@@ -943,7 +950,7 @@ void QtPlayer::ReConnectPlayer()
 
 void QtPlayer::RetryStalledPlayer()
 {
-    stallPosition_ = position_;
+    //stallPosition_ = position_;
 
     if (stopAll_) 
     {
