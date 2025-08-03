@@ -680,9 +680,18 @@ void SpyderPlayerApp::ShowControlPanel(bool initial)
     }
     else if (isFullScreen_ and isPlaylistVisible_)
     {
-        int new_x = (GetVideoPanelWidth() - panel_width) / 2; 
-        int new_y = GetVideoPanelHeight() - panel_height - 20;
-        global_pos = player_->GetVideoPanel()->mapToGlobal(QPoint(new_x, new_y));
+        try
+        {
+            int new_x = (GetVideoPanelWidth() - panel_width) / 2; 
+            int new_y = GetVideoPanelHeight() - panel_height - 20;
+            global_pos = player_->GetVideoPanel()->mapToGlobal(QPoint(new_x, new_y));
+        }
+        catch(const std::exception& e)
+        {
+            PRINT << e.what();
+            return;
+        }
+
     }
     
     if (controlpanelPosition_ != global_pos)
@@ -861,9 +870,16 @@ void SpyderPlayerApp::PlaybackStateChanged(ENUM_PLAYER_STATE state)
 
 void SpyderPlayerApp::UpdatePlaybackStatus()
 {
-    if (player_->GetPlayerState() == ENUM_PLAYER_STATE::PLAYING)
+    try 
     {
-        ShowVideoResolution();
+        if (player_->GetPlayerState() == ENUM_PLAYER_STATE::PLAYING)
+        {
+            ShowVideoResolution();
+        }
+    }
+    catch (std::exception& e)
+    {
+        PRINT << "UpdatePlaybackStatus error: " << e.what();
     }
     playbackStatusTimer_->stop();
 }

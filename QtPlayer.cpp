@@ -72,6 +72,12 @@ void QtPlayer::SetupPlayer()
             videoPanel_->deleteLater();
             videoPanel_ = nullptr;
         }
+        if (videoWidget_)
+        {
+            videoWidget_->deleteLater();
+            videoWidget_ = nullptr;
+        }
+        
         videoPanel_ = new QVideoWidget(mainWindow_->VideoView_widget->parentWidget());
         mainWindow_->gridLayout->addWidget(videoPanel_, 1, 1, 1, 1);
         videoWidget_ = static_cast<QWidget*>(videoPanel_);
@@ -90,7 +96,7 @@ void QtPlayer::SetupPlayer()
     }
     catch(const std::exception& e)
     {
-        std::cerr << e.what() << '\n';
+        PRINT << e.what() << '\n';
         ErrorOccured(std::string(e.what()));
     }
 }
@@ -105,7 +111,7 @@ void QtPlayer::ResetAudioOutput()
     }
     catch(const std::exception& e)
     {
-        std::cerr << e.what() << '\n';
+        PRINT << e.what() << '\n';
         ErrorOccured(std::string(e.what()));
     }
 }
@@ -128,8 +134,7 @@ void QtPlayer::SetVideoSource(const std::string& videoSource)
     }
     catch(const std::exception& e)
     {
-        PRINT << e.what() << '\n';
-        ErrorOccured(std::string(e.what()));
+        PRINT << "SetVideoSource: " << e.what();
     }
 }
 
@@ -152,7 +157,7 @@ void QtPlayer::RefreshVideoSource()
     }
     catch(const std::exception& e)
     {
-        PRINT << e.what() << '\n';
+        PRINT << "RefreshVideoSource: " << e.what();
         ErrorOccured(std::string(e.what()));
     }
 }
@@ -217,8 +222,8 @@ void QtPlayer::PlaySource()
             retryCount_ = 0;
             stallretryCount_ = 0;
             audioOutput_->setMuted(isMuted_);
-            if (duration_ > 0 && position_ > 3000)
-                SkipPosition(position_ - 3000);
+            if (duration_ > 0 && position_ > skipBackLength_)
+                SkipPosition(position_ - skipBackLength_);
             return;
         }
         //else if (retryCount_ >= MAX_RETRIES)
@@ -258,8 +263,8 @@ void QtPlayer::PlaySource()
                             
                         audioOutput_->setMuted(isMuted_);
                         player_->play();
-                        if (duration_ > 0 && position_ > 3000)
-                            SkipPosition(position_ - 3000);
+                        if (duration_ > 0 && position_ > skipBackLength_)
+                            SkipPosition(position_ - skipBackLength_);
                         //retryCount_++;
                         PRINT << "QtPlayer: Attempting direct playback...";  
                     }
@@ -299,8 +304,8 @@ void QtPlayer::PlaySource()
                 
             audioOutput_->setMuted(isMuted_);
             player_->play();
-            if (duration_ > 0 && position_ > 3000)
-                SkipPosition(position_ - 3000);
+            if (duration_ > 0 && position_ > skipBackLength_)
+                SkipPosition(position_ - skipBackLength_);
 
             //retryCount_++;
             PRINT << "QtPlayer: Attempting direct playback...";  
@@ -642,8 +647,7 @@ void QtPlayer::MediaStatusChanged(QMediaPlayer::MediaStatus mediaState)
     }
     catch(const std::exception& e)
     {
-        std::cerr << e.what() << '\n';
-        PRINT << e.what();
+        PRINT << "MediaStatusChanged error: " << e.what();
         ErrorOccured(std::string(e.what()));
     }
 }
@@ -942,7 +946,6 @@ void QtPlayer::ReConnectPlayer()
     }
     catch(const std::exception& e)
     {
-        std::cerr << e.what() << '\n';
         PRINT << "Reconnect error: " << e.what();
         ErrorOccured(std::string(e.what()));
     }
@@ -985,7 +988,6 @@ void QtPlayer::RetryStalledPlayer()
     }
     catch(const std::exception& e)
     {
-        std::cerr << e.what() << '\n';
         PRINT << "Reconnect error: " << e.what();
         ErrorOccured(std::string(e.what()));
     }

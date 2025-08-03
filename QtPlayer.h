@@ -98,6 +98,7 @@ private:
     bool isPositionSeeking_ = false;
     qint64 stallPosition_ = -1;
     bool stopAll_ = false;
+    int skipBackLength_ = 15000;
 };
 
 #endif // QTMEDIA_H
