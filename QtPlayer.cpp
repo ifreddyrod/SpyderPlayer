@@ -166,6 +166,9 @@ void QtPlayer::Play()
 {
     stopAll_ = false;
     inRecovery_ = false;
+    stallretryCount_ = 0;
+    retryCount_ = 0;
+
     PlaySource();
 }
 
