@@ -89,8 +89,9 @@ private:
     qint64 lastPosition_ = -1;
     QMediaPlayer::MediaStatus mediaState_;
     int retryCount_ = 0;
+    u_int64_t retryTimeDelayMs_ = 500;
     int stallretryCount_ = 0;
-    static constexpr int MAX_RETRIES = 8;
+    static constexpr int MAX_RETRIES = 3;
     int MAX_STALL_RETRIES = 5;
     bool inRecovery_ = false;
     QString playerStatus_;

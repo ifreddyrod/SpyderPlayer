@@ -145,10 +145,10 @@ void QtPlayer::RefreshVideoSource()
         PRINT << "REFRESH: Refreshing Video Source: " << source_;
 
         SetVideoSource(source_);
-        u_int64_t timedelay = app_->GetRetryTimeDelay();
+        retryTimeDelayMs_ = app_->GetRetryTimeDelay();
         //PRINT << "REFRESH: Retry Time Delay: " << timedelay;
         //QTimer::singleShot(timedelay, this, &QtPlayer::Play);
-        timedelay = timedelay*stallretryCount_;
+        u_int64_t timedelay = retryTimeDelayMs_*stallretryCount_;
         PRINT << "REFRESH: Retry Time Delay: " << timedelay;
         QTimer::singleShot(timedelay, this, &QtPlayer::PlaySource);
 
@@ -927,7 +927,7 @@ void QtPlayer::ReConnectPlayer()
             player_->stop();
             SetupPlayer();
             SetVideoSource(source_);
-            QTimer::singleShot(250, this, &QtPlayer::PlaySource);
+            QTimer::singleShot(retryTimeDelayMs_, this, &QtPlayer::PlaySource);
             //QThread::msleep(500);
             //this->RefreshVideoSource();
             //Play();
