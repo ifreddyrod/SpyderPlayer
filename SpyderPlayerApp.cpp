@@ -294,23 +294,23 @@ void SpyderPlayerApp::InitializePlayLists()
 void SpyderPlayerApp::InitPlayer()
 {
     // Only 1 Player Type available at this time
-    player_ = new QtPlayer(&ui_, this);
+    //player_ = new QtPlayer(&ui_, this);
 
     
-    /*if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::QTMEDIA)
+    if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::QTMEDIA)
     {
         player_ = new QtPlayer(&ui_, this);
-    }*/
+    }
     /*else if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::FFMPEG)
     {
         //player_ = new FFmpegPlayer(&ui_, this);
         player_ = new QtAvPlayer(&ui_, this);
     }*/
-    /*else if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::VLC)
+    else if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::VLC)
     {
         player_ = new VLCPlayer(&ui_, this);
         //player_->InitPlayer();
-    }*/
+    }
 }
 
 void SpyderPlayerApp::ShowSplashScreenMsg(QString msg)
@@ -965,7 +965,7 @@ void SpyderPlayerApp::UserActivityDetected()
 }
 void SpyderPlayerApp::InactivityDetected()
 {
-    if (isFullScreen_ and !controlpanelFS_.hasFocus() and !subtitlesMenu_->isVisible() and !isPlaylistVisible_)
+    if (isFullScreen_ && !controlpanelFS_.hasFocus() && !subtitlesMenu_->isVisible())
     {
         controlpanelFS_.hide();
         //##overlay_->activateWindow();

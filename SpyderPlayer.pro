@@ -10,12 +10,14 @@ ICON += assets/icons/spider_dark_icon.icns
 
 # macOS specific settings
 macx {
+    INCLUDEPATH += /Applications/VLC.app/Contents/MacOS/include
+    LIBS += -L/Applications/VLC.app/Contents/MacOS/lib -lvlc -lvlccore
 }
 
 # Linux specific settings
 unix:!macx {
-    INCLUDEPATH += /usr/local/include
-    LIBS +=
+    INCLUDEPATH += /usr/include
+    LIBS += -L/usr/lib/x86_64-linux-gnu -lvlc -lvlccore
 }
 
 # Windows specific settings
@@ -45,6 +47,7 @@ SOURCES += \
     SettingsManager.cpp \
     SplashScreen.cpp \
     StreamBuffer.cpp \
+    VLCPlayer.cpp \
     VideoControlPanel.cpp \
     VideoOverlay.cpp \
     VideoPlayer.cpp \
@@ -70,6 +73,7 @@ HEADERS += \
     SplashScreen.h \
     SpyderPlayerApp.h \
     StreamBuffer.h \
+    VLCPlayer.h \
     VideoControlPanel.h \
     VideoOverlay.h \
     VideoPlayer.h \

@@ -15,7 +15,7 @@
 #include "PlaylistManager.h"
 #include "VideoPlayer.h"
 #include "QtPlayer.h"
-//#include "VLCPlayer.h"
+#include "VLCPlayer.h"
 //#include "FFmpegPlayer.h"
 //#include "QtAV.h"
 #include "ScreensaverInhibitor.h"

@@ -542,11 +542,12 @@ void PlaylistManager::ItemDoubleClicked(QTreeWidgetItem* item)
 
     // Check if item is in searchlist
 
-    lastSelectedItem_ = currentSelectedItem_;
+    if (lastSelectedItem_ != currentSelectedItem_)
+        lastSelectedItem_ = currentSelectedItem_;
     currentSelectedItem_ = treeItem;
 
     currentSelectedItem_->SetItemSelected(true);
-    if (lastSelectedItem_ != nullptr)
+    if (lastSelectedItem_ != nullptr && lastSelectedItem_ != currentSelectedItem_)
         lastSelectedItem_->SetItemSelected(false);
 
     playlistTree_->setFocus();
