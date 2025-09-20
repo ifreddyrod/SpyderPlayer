@@ -22,17 +22,12 @@ int main(int argc, char *argv[])
     if (GetPlatform() == "Darwin")
     {
         qputenv("VLC_PLUGIN_PATH", "/Applications/VLC.app/Contents/MacOS/plugins");
+        //qputenv("VLC_PLUGIN_PATH", "/Applications/SpyderPlayer.app/Contents/Frameworks");
     }
     else if (GetPlatform() == "Linux")
     {
         qputenv("VLC_PLUGIN_PATH", "/usr/lib/x86_64-linux-gnu/vlc/plugins");
     }
-
-    qputenv("AV_LOG_LEVEL", "warning");
-    qputenv("QT_MULTIMEDIA_PREFERRED_DECODERS", "software");
-    qputenv("FFMPEG_OPTS", "probesize=20000000 analyzeduration=20000000 reconnect=1 reconnect_streamed=1 reconnect_delay_max=60 max_delay=10000000 buffer_size=20971520 err_detect=ignore_err+crccheck format_opts=scan_all_pmts=1 -hwaccel none");
-    qputenv("AVFORMAT_FLAGS", "+genpts+igndts");
-    qputenv("QT_LOGGING_RULES", "qt6.multimedia=true");
 
     //-----------------------------
     // Load AppData from file

@@ -71,7 +71,7 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent, AppData *appData): QWidget(par
     //-----------------------------
     // Setup Layout
     //-----------------------------
-    ui_.botomverticalLayout->addWidget(&controlpanel_);
+    ui_.bottomverticalLayout->addWidget(&controlpanel_);
     controlpanel_.show();
     ui_.Horizontal_splitter->setSizes({450, 1000});
     ui_.Vertical_splitter->setSizes({800, 1});
@@ -79,14 +79,14 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent, AppData *appData): QWidget(par
     ui_.Vertical_splitter->installEventFilter(this);
     isPlaylistVisible_ = true;
 
-    ui_.ShowControlPanel_top_label->installEventFilter(this);
+    /*ui_.ShowControlPanel_top_label->installEventFilter(this);
     ui_.ShowControlPanel_top_label->setMouseTracking(true);
     ui_.ShowControlPanel_bottom_label->installEventFilter(this);
     ui_.ShowControlPanel_bottom_label->setMouseTracking(true);
     ui_.ShowControlPanel_right_label->installEventFilter(this);
     ui_.ShowControlPanel_right_label->setMouseTracking(true);
     ui_.ShowControlPanel_left_label->installEventFilter(this);
-    ui_.ShowControlPanel_left_label->setMouseTracking(true);
+    ui_.ShowControlPanel_left_label->setMouseTracking(true);*/
 
     //-----------------------------
     // Init Video Player
@@ -112,7 +112,7 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent, AppData *appData): QWidget(par
     
     connect(ui_.Search_button, &QPushButton::clicked, this, &SpyderPlayerApp::SearchChannels);
 
-    connect(ui_.Horizontal_splitter, &QSplitter::splitterMoved, this, &SpyderPlayerApp::OnHSplitterResized);
+    //connect(ui_.Horizontal_splitter, &QSplitter::splitterMoved, this, &SpyderPlayerApp::OnHSplitterResized);
 
     connect(ui_.Settings_button, &QPushButton::clicked, this, &SpyderPlayerApp::ShowSettings);
 
@@ -720,10 +720,26 @@ void SpyderPlayerApp::TogglePlaylistView()
     {
         PRINT << "TogglePlaylistView - HIDE";
         ui_.Horizontal_splitter->setSizes({0, 1000});  // Hide left side
-        ui_.Horizontal_splitter->setHandleWidth(1);
+        ui_.Horizontal_splitter->setHandleWidth(0);
         isPlaylistVisible_ = false;
         //##overlay_->Resize(true);
         //##overlay_->setFocus();
+        // Simulate a resize event
+
+        if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::VLC)
+        {
+            QSize currentSize = size();
+            resize(currentSize.width() + 1, currentSize.height());  // Temporary increase
+            QTimer::singleShot(100, this, [this, currentSize]() {  // Restore original size after event loop
+                resize(currentSize);
+                if (isFullScreen_) PlayerFullScreen();
+            });
+        }
+
+        //ui_.Horizontal_splitter->update();
+        //player_->ChangeUpdateTimerInterval(isFullScreen_);
+        
+        //QApplication::processEvents(); 
     }
     else
     {
@@ -731,6 +747,8 @@ void SpyderPlayerApp::TogglePlaylistView()
         ui_.Horizontal_splitter->setSizes({400, 1000});  // Show left side
         ui_.Horizontal_splitter->setHandleWidth(4);
         isPlaylistVisible_ = true;
+        ui_.Query_input->show();
+        ui_.Search_button->show();
         //##overlay_->Resize();
         //##overlay_->setFocus();
     }

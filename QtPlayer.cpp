@@ -9,6 +9,12 @@
 QtPlayer::QtPlayer(Ui::PlayerMainWindow* mainWindow, QWidget* parent)
     : VideoPlayer(parent)
 {
+    qputenv("AV_LOG_LEVEL", "warning");
+    qputenv("QT_MULTIMEDIA_PREFERRED_DECODERS", "software");
+    qputenv("FFMPEG_OPTS", "probesize=20000000 analyzeduration=20000000 reconnect=1 reconnect_streamed=1 reconnect_delay_max=60 max_delay=10000000 buffer_size=20971520 err_detect=ignore_err+crccheck format_opts=scan_all_pmts=1 -hwaccel none");
+    qputenv("AVFORMAT_FLAGS", "+genpts+igndts");
+    qputenv("QT_LOGGING_RULES", "qt6.multimedia=true");
+        
     mainWindow_ = mainWindow;
     app_ = static_cast<SpyderPlayerApp*>(parent);
     videoPanel_ = new QVideoWidget(mainWindow->VideoView_widget);
@@ -16,8 +22,10 @@ QtPlayer::QtPlayer(Ui::PlayerMainWindow* mainWindow, QWidget* parent)
     subtitleCount_ = -1;
     subtitleIndex_ = -1;
 
-    mainWindow->gridLayout->removeWidget(mainWindow->VideoView_widget);
-    mainWindow->gridLayout->addWidget(videoPanel_, 1, 1, 1, 1);
+    //mainWindow->gridLayout->removeWidget(mainWindow->VideoView_widget);
+    //mainWindow->gridLayout->addWidget(videoPanel_, 1, 1, 1, 1);
+    mainWindow->topverticalLayout->removeWidget(mainWindow->VideoView_widget);
+    mainWindow->topverticalLayout->addWidget(videoPanel_);
 
     InitPlayer();
 
@@ -68,7 +76,7 @@ void QtPlayer::SetupPlayer()
         // Delete and recreate video widget
         if (videoPanel_)
         {
-            mainWindow_->gridLayout->removeWidget(videoPanel_);
+            mainWindow_->topverticalLayout->removeWidget(videoPanel_);
             videoPanel_->deleteLater();
             videoPanel_ = nullptr;
         }
@@ -79,7 +87,7 @@ void QtPlayer::SetupPlayer()
         }
         
         videoPanel_ = new QVideoWidget(mainWindow_->VideoView_widget->parentWidget());
-        mainWindow_->gridLayout->addWidget(videoPanel_, 1, 1, 1, 1);
+        mainWindow_->topverticalLayout->addWidget(videoPanel_);
         videoWidget_ = static_cast<QWidget*>(videoPanel_);
         
         MAX_STALL_RETRIES = app_->GetMaxRetryCount();

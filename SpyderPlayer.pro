@@ -12,6 +12,8 @@ ICON += assets/icons/spider_dark_icon.icns
 macx {
     INCLUDEPATH += /Applications/VLC.app/Contents/MacOS/include
     LIBS += -L/Applications/VLC.app/Contents/MacOS/lib -lvlc -lvlccore
+    QMAKE_RPATHDIR += /Users/freddy/Qt/6.9.0/macos/lib
+    QMAKE_RPATHDIR += /Applications/VLC.app/Contents/MacOS/lib
 }
 
 # Linux specific settings

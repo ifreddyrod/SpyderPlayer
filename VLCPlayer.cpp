@@ -15,8 +15,13 @@ VLCPlayer::VLCPlayer(Ui::PlayerMainWindow* mainWindow, QWidget* parent)
     subtitleCount_ = -1;
     subtitleIndex_ = -1;
 
-    mainWindow->gridLayout->removeWidget(mainWindow->VideoView_widget);
-    mainWindow->gridLayout->addWidget(videoPanel_, 1, 1, 1, 1);
+    //mainWindow->gridLayout->removeWidget(mainWindow->VideoView_widget);
+    //mainWindow->gridLayout->addWidget(videoPanel_, 1, 1, 1, 1);
+    //videoPanel_->setStyleSheet("background-color: transparent;");
+    mainWindow->topverticalLayout->removeWidget(mainWindow->VideoView_widget);
+    mainWindow->topverticalLayout->addWidget(videoPanel_);
+    
+    //videoPanel_->setStyleSheet("background-color: rgba(0, 0, 0, 2);");
 
     InitPlayer();
 
@@ -57,6 +62,12 @@ void VLCPlayer::InitPlayer()
     positionTimer_ = new QTimer(this);
     connect(positionTimer_, &QTimer::timeout, this, &VLCPlayer::UpdatePositionSlot);
     positionTimer_->start(250);  // Update position every 250ms
+
+    videoPanel_->setAttribute(Qt::WA_OpaquePaintEvent, true);
+    //videoPanel_->setStyleSheet("color: black;");
+    videoPanel_->setAttribute(Qt::WA_NoSystemBackground, true);
+    //videoPanel_->setUpdatesEnabled(false);
+
 }
 
 void VLCPlayer::SetupPlayer()
@@ -65,13 +76,15 @@ void VLCPlayer::SetupPlayer()
         // VLC initialization arguments
         const char* const vlc_args[] = 
         {
-            "--verbose=2",  // For debugging, adjust as needed
-            "--no-xlib",    // Disable Xlib for better compatibility
-            "--network-caching=1000",  // Cache for streaming
+            "--verbose=2",  
+            //"--no-xlib",    // Disable Xlib for better compatibility
+            "--network-caching=1000",  
             "--file-caching=1000",
             "--live-caching=1000",
             "--drop-late-frames",
-            "--skip-frames"
+            "--skip-frames",
+            "--sout-keep",
+            "--aout=alsa"
         };
 
         vlcInstance_ = libvlc_new(sizeof(vlc_args) / sizeof(vlc_args[0]), vlc_args);
@@ -85,6 +98,8 @@ void VLCPlayer::SetupPlayer()
         {
             throw std::runtime_error("Failed to create VLC media player");
         }
+
+        videoPanel_->show();
 
 #if defined(Q_OS_WIN)
         libvlc_media_player_set_hwnd(mediaPlayer_, reinterpret_cast<void*>(videoPanel_->winId()));
@@ -223,12 +238,27 @@ void VLCPlayer::PlaySource()
             retryCount_ = 0;
             stallretryCount_ = 0;
             Mute(isMuted_);
+            unsigned width, height;
+            if (libvlc_video_get_size(mediaPlayer_, 0, &width, &height) == 0) {
+                videoPanel_->resize(width, height);
+                videoPanel_->updateGeometry(); // Force layout update
+                qDebug() << "Video size:" << width << "x" << height;
+            }
             return;
         } 
         else if (retryCount_ <= MAX_RETRIES) 
         {
             Mute(isMuted_);
             libvlc_media_player_play(mediaPlayer_);
+            videoPanel_->parentWidget()->layout()->activate(); // Force layout recalculation
+            videoPanel_->updateGeometry();
+            unsigned width, height;
+            if (libvlc_video_get_size(mediaPlayer_, 0, &width, &height) == 0) {
+                videoPanel_->resize(width, height);
+                videoPanel_->updateGeometry(); // Force layout update
+                qDebug() << "Video size:" << width << "x" << height;
+                videoPanel_->lower();
+            }
             return;
         }
     } 
@@ -358,7 +388,6 @@ void VLCPlayer::OnChangedPosition(bool isPlaying)
 
 void VLCPlayer::ChangeUpdateTimerInterval(bool isFullScreen)
 {
-    // Adjust positionTimer_ interval if needed, e.g., for fullscreen
     positionTimer_->setInterval(isFullScreen ? 100 : 250);
 }
 
