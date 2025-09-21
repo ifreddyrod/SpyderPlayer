@@ -30,10 +30,10 @@
     <normaloff>:/icons/icons/spider.png</normaloff>:/icons/icons/spider.png</iconset>
   </property>
   <property name="styleSheet">
-   <string notr="true">color: white;
-background-color: black;</string>
+   <string notr="true">color:  white;
+background-color: transparent;</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_3">
+  <layout class="QVBoxLayout" name="verticalLayout" stretch="0">
    <property name="spacing">
     <number>0</number>
    </property>
@@ -51,32 +51,29 @@ background-color: black;</string>
    </property>
    <item>
     <widget class="QSplitter" name="Horizontal_splitter">
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>0</height>
-      </size>
-     </property>
      <property name="styleSheet">
-      <string notr="true">background-color: rgb(0, 0, 0);
-
-QSplitter::handle
-{
-    background-color: transparent;
-}
-</string>
+      <string notr="true"/>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::Shape::NoFrame</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Shadow::Plain</enum>
      </property>
      <property name="lineWidth">
-      <number>4</number>
+      <number>0</number>
      </property>
      <property name="orientation">
       <enum>Qt::Orientation::Horizontal</enum>
      </property>
+     <property name="opaqueResize">
+      <bool>true</bool>
+     </property>
      <property name="handleWidth">
-      <number>4</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="horizontalLayoutWidget">
-      <layout class="QHBoxLayout" name="horizontalLayout">
+      <layout class="QHBoxLayout" name="PlaylistlLayout">
        <property name="spacing">
         <number>0</number>
        </property>
@@ -89,84 +86,100 @@ QSplitter::handle
           <number>0</number>
          </property>
          <item>
-          <layout class="QVBoxLayout" name="verticalLayout_2" stretch="1,100,0">
+          <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,100,0">
            <property name="spacing">
             <number>0</number>
            </property>
            <item>
-            <layout class="QHBoxLayout" name="searchLayout" stretch="0,0">
-             <property name="spacing">
-              <number>0</number>
+            <widget class="QWidget" name="SearchBar" native="true">
+             <property name="styleSheet">
+              <string notr="true">background-color: black;</string>
              </property>
-             <item>
-              <widget class="QPushButton" name="Search_button">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>32</width>
-                 <height>30</height>
-                </size>
-               </property>
-               <property name="toolTip">
-                <string>Search All Lists</string>
-               </property>
-               <property name="styleSheet">
-                <string notr="true">QPushButton:pressed
+             <layout class="QHBoxLayout" name="searchLayout" stretch="0,30">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QPushButton" name="Search_button">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>32</width>
+                  <height>30</height>
+                 </size>
+                </property>
+                <property name="toolTip">
+                 <string>Search All Lists</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton:pressed
 {
 	background-color: rgb(50, 50, 50);
 }</string>
-               </property>
-               <property name="text">
-                <string/>
-               </property>
-               <property name="icon">
-                <iconset resource="resources.qrc">
-                 <normaloff>:/icons/icons/search.png</normaloff>:/icons/icons/search.png</iconset>
-               </property>
-               <property name="iconSize">
-                <size>
-                 <width>22</width>
-                 <height>22</height>
-                </size>
-               </property>
-               <property name="flat">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLineEdit" name="Query_input">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="minimumSize">
-                <size>
-                 <width>0</width>
-                 <height>0</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>16777215</width>
-                 <height>30</height>
-                </size>
-               </property>
-               <property name="focusPolicy">
-                <enum>Qt::FocusPolicy::ClickFocus</enum>
-               </property>
-               <property name="toolTip">
-                <string>Enter Search Query (multiple phrases can be searched with + separator.  Example search: sports + 4K)</string>
-               </property>
-               <property name="styleSheet">
-                <string notr="true">/*background-color: rgb(30, 30, 30);
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="icon">
+                 <iconset resource="resources.qrc">
+                  <normaloff>:/icons/icons/search.png</normaloff>:/icons/icons/search.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>22</width>
+                  <height>22</height>
+                 </size>
+                </property>
+                <property name="flat">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLineEdit" name="Query_input">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>0</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>30</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::ClickFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Enter Search Query (multiple phrases can be searched with + separator.  Example search: sports + 4K)</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">/*background-color: rgb(30, 30, 30);
 color: rgb(20, 205, 255); */
 
 
@@ -175,22 +188,23 @@ QLineEdit
 	border: 1px solid rgb(30, 30, 30);
 	background-color: black;
 	border-radius: 10px;
-	padding-left: 25px;
+	padding-left: 0px;
 	color: rgb(20, 205, 255); 
 }</string>
-               </property>
-               <property name="maxLength">
-                <number>300</number>
-               </property>
-               <property name="frame">
-                <bool>false</bool>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
-               </property>
-              </widget>
-             </item>
-            </layout>
+                </property>
+                <property name="maxLength">
+                 <number>300</number>
+                </property>
+                <property name="frame">
+                 <bool>false</bool>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
            </item>
            <item>
             <widget class="QTreeWidget" name="PlayList_tree">
@@ -232,61 +246,65 @@ QLineEdit
             </widget>
            </item>
            <item>
-            <layout class="QHBoxLayout" name="bottomhorizontalLayout">
-             <property name="spacing">
-              <number>0</number>
+            <widget class="QWidget" name="OptionsStatusBar" native="true">
+             <property name="styleSheet">
+              <string notr="true">background-color: black;</string>
              </property>
-             <item>
-              <widget class="QPushButton" name="Settings_button">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>32</width>
-                 <height>30</height>
-                </size>
-               </property>
-               <property name="toolTip">
-                <string>Settings</string>
-               </property>
-               <property name="styleSheet">
-                <string notr="true">QPushButton:pressed
+             <layout class="QHBoxLayout" name="OptionsStatusLayout">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <item>
+               <widget class="QPushButton" name="Settings_button">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>32</width>
+                  <height>30</height>
+                 </size>
+                </property>
+                <property name="toolTip">
+                 <string>Settings</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton:pressed
 {
 	background-color: rgb(50, 50, 50);
 }</string>
-               </property>
-               <property name="text">
-                <string/>
-               </property>
-               <property name="icon">
-                <iconset resource="resources.qrc">
-                 <normaloff>:/icons/icons/settings-sliders.png</normaloff>:/icons/icons/settings-sliders.png</iconset>
-               </property>
-               <property name="iconSize">
-                <size>
-                 <width>22</width>
-                 <height>22</height>
-                </size>
-               </property>
-               <property name="flat">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QLabel" name="Status_label">
-               <property name="maximumSize">
-                <size>
-                 <width>16777215</width>
-                 <height>30</height>
-                </size>
-               </property>
-               <property name="styleSheet">
-                <string notr="true">/*background-color: rgb(30, 30, 30);
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="icon">
+                 <iconset resource="resources.qrc">
+                  <normaloff>:/icons/icons/settings-sliders.png</normaloff>:/icons/icons/settings-sliders.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>22</width>
+                  <height>22</height>
+                 </size>
+                </property>
+                <property name="flat">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="Status_label">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>30</height>
+                 </size>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">/*background-color: rgb(30, 30, 30);
 color: rgb(20, 205, 255);  */
 
 QLabel
@@ -297,16 +315,17 @@ QLabel
 	padding-left: 0px;
 	color: rgb(20, 205, 255); 
 }</string>
-               </property>
-               <property name="text">
-                <string>TextLabel</string>
-               </property>
-               <property name="indent">
-                <number>30</number>
-               </property>
-              </widget>
-             </item>
-            </layout>
+                </property>
+                <property name="text">
+                 <string>TextLabel</string>
+                </property>
+                <property name="indent">
+                 <number>30</number>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
            </item>
           </layout>
          </item>
@@ -315,17 +334,23 @@ QLabel
       </layout>
      </widget>
      <widget class="QWidget" name="horizontalLayoutWidget_2">
-      <layout class="QVBoxLayout" name="verticalLayout" stretch="0">
+      <layout class="QVBoxLayout" name="VideoPlayerLayout" stretch="0">
        <property name="spacing">
         <number>0</number>
        </property>
        <item>
         <widget class="QSplitter" name="Vertical_splitter">
+         <property name="frameShape">
+          <enum>QFrame::Shape::NoFrame</enum>
+         </property>
+         <property name="lineWidth">
+          <number>0</number>
+         </property>
          <property name="orientation">
           <enum>Qt::Orientation::Vertical</enum>
          </property>
          <property name="handleWidth">
-          <number>4</number>
+          <number>2</number>
          </property>
          <widget class="QWidget" name="verticalLayoutWidget_3">
           <layout class="QVBoxLayout" name="topverticalLayout">
@@ -343,18 +368,25 @@ QLabel
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
-             <property name="styleSheet">
-              <string notr="true"/>
-             </property>
             </widget>
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="verticalLayoutWidget">
+         <widget class="QWidget" name="ControlPanelWidget" native="true">
+          <property name="styleSheet">
+           <string notr="true">background-color: black;</string>
+          </property>
           <layout class="QVBoxLayout" name="bottomverticalLayout">
            <property name="spacing">
             <number>0</number>
            </property>
+           <item>
+            <layout class="QVBoxLayout" name="bottomverticalLayout_2">
+             <property name="spacing">
+              <number>0</number>
+             </property>
+            </layout>
+           </item>
           </layout>
          </widget>
         </widget>
@@ -364,6 +396,8 @@ QLabel
     </widget>
    </item>
   </layout>
+  <zorder>Horizontal_splitter</zorder>
+  <zorder>Horizontal_splitter</zorder>
  </widget>
  <resources>
   <include location="resources.qrc"/>

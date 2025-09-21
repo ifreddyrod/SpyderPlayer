@@ -10,16 +10,18 @@ VLCPlayer::VLCPlayer(Ui::PlayerMainWindow* mainWindow, QWidget* parent)
 {
     mainWindow_ = mainWindow;
     app_ = static_cast<SpyderPlayerApp*>(parent);
-    videoPanel_ = new QWidget(mainWindow->VideoView_widget->parentWidget());
+    videoPanel_ = mainWindow->VideoView_widget; //new QWidget(mainWindow->VideoView_widget->parentWidget());
 
     subtitleCount_ = -1;
     subtitleIndex_ = -1;
+    //videoPanel_->setWindowFlags(Qt::FramelessWindowHint);
+    //videoPanel_->setAttribute(Qt::WA_TranslucentBackground);
 
     //mainWindow->gridLayout->removeWidget(mainWindow->VideoView_widget);
     //mainWindow->gridLayout->addWidget(videoPanel_, 1, 1, 1, 1);
     //videoPanel_->setStyleSheet("background-color: transparent;");
-    mainWindow->topverticalLayout->removeWidget(mainWindow->VideoView_widget);
-    mainWindow->topverticalLayout->addWidget(videoPanel_);
+    //mainWindow->topverticalLayout->removeWidget(mainWindow->VideoView_widget);
+    //mainWindow->topverticalLayout->addWidget(videoPanel_);
     
     //videoPanel_->setStyleSheet("background-color: rgba(0, 0, 0, 2);");
 
@@ -63,9 +65,9 @@ void VLCPlayer::InitPlayer()
     connect(positionTimer_, &QTimer::timeout, this, &VLCPlayer::UpdatePositionSlot);
     positionTimer_->start(250);  // Update position every 250ms
 
-    videoPanel_->setAttribute(Qt::WA_OpaquePaintEvent, true);
+    //videoPanel_->setAttribute(Qt::WA_OpaquePaintEvent, true);
     //videoPanel_->setStyleSheet("color: black;");
-    videoPanel_->setAttribute(Qt::WA_NoSystemBackground, true);
+    //videoPanel_->setAttribute(Qt::WA_NoSystemBackground, true);
     //videoPanel_->setUpdatesEnabled(false);
 
 }
@@ -74,6 +76,7 @@ void VLCPlayer::SetupPlayer()
 {
     try {
         // VLC initialization arguments
+    #if defined(Q_OS_LINUX)
         const char* const vlc_args[] = 
         {
             "--verbose=2",  
@@ -84,8 +87,21 @@ void VLCPlayer::SetupPlayer()
             "--drop-late-frames",
             "--skip-frames",
             "--sout-keep",
-            "--aout=alsa"
+            "--aout=pulse"
         };
+    #else
+        const char* const vlc_args[] = 
+        {
+            "--verbose=2",  
+            //"--no-xlib",    // Disable Xlib for better compatibility
+            "--network-caching=1000",  
+            "--file-caching=1000",
+            "--live-caching=1000",
+            "--drop-late-frames",
+            "--skip-frames",
+            "--sout-keep",
+        };
+    #endif
 
         vlcInstance_ = libvlc_new(sizeof(vlc_args) / sizeof(vlc_args[0]), vlc_args);
         if (!vlcInstance_) 
