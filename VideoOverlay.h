@@ -17,14 +17,23 @@ public:
     VideoOverlay(QWidget *parent = nullptr);
     ~VideoOverlay();
 
+    void SetOverlayVisible(bool visible) { showOverlay_ = visible; }
+    void Show();
+    void Hide();
+    void Minimize();
+    void Restore();
     void SetAppObject(QObject *app) { app_ = app; }
     void Resize(bool forceFullscreen = false);
     bool event(QEvent *event) override;
 
+    QWidget *videoPanel_;
+
 private:
     Ui::Overlay ui_;
-    QLabel *overlayLabel_;
+    //QLabel *overlayLabel_;
+    //QWidget *videoPanel_;
     QObject *app_;
+    bool showOverlay_ = false;
 };
 
 

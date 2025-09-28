@@ -31,7 +31,7 @@
   </property>
   <property name="styleSheet">
    <string notr="true">color:  white;
-background-color: transparent;</string>
+background-color: black;</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout" stretch="0">
    <property name="spacing">
@@ -254,6 +254,18 @@ QLineEdit
               <property name="spacing">
                <number>0</number>
               </property>
+              <property name="leftMargin">
+               <number>0</number>
+              </property>
+              <property name="topMargin">
+               <number>0</number>
+              </property>
+              <property name="rightMargin">
+               <number>0</number>
+              </property>
+              <property name="bottomMargin">
+               <number>0</number>
+              </property>
               <item>
                <widget class="QPushButton" name="Settings_button">
                 <property name="sizePolicy">
@@ -396,8 +408,6 @@ QLabel
     </widget>
    </item>
   </layout>
-  <zorder>Horizontal_splitter</zorder>
-  <zorder>Horizontal_splitter</zorder>
  </widget>
  <resources>
   <include location="resources.qrc"/>

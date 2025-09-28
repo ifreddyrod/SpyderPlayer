@@ -27,7 +27,7 @@ QtPlayer::QtPlayer(Ui::PlayerMainWindow* mainWindow, QWidget* parent)
     mainWindow->topverticalLayout->removeWidget(mainWindow->VideoView_widget);
     mainWindow->topverticalLayout->addWidget(videoPanel_);
 
-    InitPlayer();
+    InitPlayer(nullptr);
 
     stalledVideoTimer_ = new QTimer(this);
     stalledVideoTimer_->setInterval(3000);
@@ -48,7 +48,7 @@ QtPlayer::~QtPlayer()
     delete timeoutTimer_;
 }
 
-void QtPlayer::InitPlayer()
+void QtPlayer::InitPlayer(void *args)
 {
     SetupPlayer();
     videoWidget_ = static_cast<QWidget*>(videoPanel_);

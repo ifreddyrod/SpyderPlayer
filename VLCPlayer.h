@@ -20,7 +20,7 @@ public:
     VLCPlayer(Ui::PlayerMainWindow* mainWindow, QWidget* parent = nullptr);
     ~VLCPlayer();
 
-    void InitPlayer() override;
+    void InitPlayer(void *args) override;
     void SetVideoSource(const std::string& videoSource) override;
     void RefreshVideoSource() override;
     void Play() override;
@@ -59,11 +59,11 @@ private:
     static void HandleVLCEvent(const libvlc_event_t* event, void* data);
 
     SpyderPlayerApp* app_;
-    Ui::PlayerMainWindow* mainWindow_;
+    Ui::PlayerMainWindow* mainWindow_ = nullptr;
     QWidget* videoPanel_;
-    libvlc_instance_t* vlcInstance_;
-    libvlc_media_player_t* mediaPlayer_;
-    libvlc_media_t* media_;
+    libvlc_instance_t* vlcInstance_ = nullptr;
+    libvlc_media_player_t* mediaPlayer_ = nullptr;
+    libvlc_media_t* media_ = nullptr;
     libvlc_event_manager_t* eventManager_;
     QTimer* positionTimer_;
     QTimer* watchdogTimer_;

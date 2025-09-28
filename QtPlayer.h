@@ -31,7 +31,7 @@ public:
     QtPlayer(Ui::PlayerMainWindow* mainWindow, QWidget* parent = nullptr);
     ~QtPlayer();
 
-    void InitPlayer() override;
+    void InitPlayer(void *args) override;
     void SetVideoSource(const std::string& videoSource) override;
     void RefreshVideoSource() override;
     void Play() override;

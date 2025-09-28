@@ -10,7 +10,7 @@ VLCPlayer::VLCPlayer(Ui::PlayerMainWindow* mainWindow, QWidget* parent)
 {
     mainWindow_ = mainWindow;
     app_ = static_cast<SpyderPlayerApp*>(parent);
-    videoPanel_ = mainWindow->VideoView_widget; //new QWidget(mainWindow->VideoView_widget->parentWidget());
+    //videoPanel_ = mainWindow->VideoView_widget; //new QWidget(mainWindow->VideoView_widget->parentWidget());
 
     subtitleCount_ = -1;
     subtitleIndex_ = -1;
@@ -25,7 +25,7 @@ VLCPlayer::VLCPlayer(Ui::PlayerMainWindow* mainWindow, QWidget* parent)
     
     //videoPanel_->setStyleSheet("background-color: rgba(0, 0, 0, 2);");
 
-    InitPlayer();
+    //InitPlayer(nullptr);
 
     stalledVideoTimer_ = new QTimer(this);
     stalledVideoTimer_->setInterval(3000);
@@ -54,8 +54,10 @@ VLCPlayer::~VLCPlayer()
     delete stalledVideoTimer_;
 }
 
-void VLCPlayer::InitPlayer()
+void VLCPlayer::InitPlayer(void *args)
 {
+    videoPanel_ = static_cast<QWidget*>(args);
+    
     SetupPlayer();
     videoWidget_ = videoPanel_;
     timeoutTimer_ = new QTimer(this);

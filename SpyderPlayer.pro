@@ -18,8 +18,8 @@ macx {
 
 # Linux specific settings
 unix:!macx {
-    INCLUDEPATH += /usr/include
-    LIBS += -L/usr/lib/x86_64-linux-gnu -lvlc -lvlccore
+    INCLUDEPATH += link_pkgconfig
+    PKGCONFIG += libvlc
 }
 
 # Windows specific settings

@@ -27,7 +27,7 @@ public:
     void UpdatePlayerState(ENUM_PLAYER_STATE state);
     void ErrorOccured(const std::string& error);
     void EnableSubtitles(bool enable);
-    virtual void InitPlayer() = 0;
+    virtual void InitPlayer(void *args) = 0;
     virtual void Play() = 0;
     virtual void Pause() = 0;
     virtual void Stop() = 0;

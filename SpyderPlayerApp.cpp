@@ -91,15 +91,16 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent, AppData *appData): QWidget(par
     ui_.ShowControlPanel_left_label->setMouseTracking(true);*/
 
     //-----------------------------
-    // Init Video Player
-    //-----------------------------
-    InitPlayer();
-
-    //-----------------------------
     // Setup Video Overlay
     //-----------------------------
-    //##overlay_ = new VideoOverlay(this);
-    //##overlay_->SetAppObject(this);
+    overlay_ = new VideoOverlay(this);
+    overlay_->SetAppObject(this);
+    overlay_->SetOverlayVisible(appData_->PlayerType_ == ENUM_PLAYER_TYPE::VLC);
+
+    //-----------------------------
+    // Init Video Player
+    //-----------------------------
+    //InitPlayer();
 
     //-----------------------------
     // Setup Settings Manager
@@ -114,7 +115,7 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent, AppData *appData): QWidget(par
     
     connect(ui_.Search_button, &QPushButton::clicked, this, &SpyderPlayerApp::SearchChannels);
 
-    //connect(ui_.Horizontal_splitter, &QSplitter::splitterMoved, this, &SpyderPlayerApp::OnHSplitterResized);
+    connect(ui_.Horizontal_splitter, &QSplitter::splitterMoved, this, &SpyderPlayerApp::OnHSplitterResized);
 
     connect(ui_.Settings_button, &QPushButton::clicked, this, &SpyderPlayerApp::ShowSettings);
 
@@ -155,9 +156,9 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent, AppData *appData): QWidget(par
     connect(controlpanel_.ui_.CloseCaption_button, &QPushButton::clicked, this, &SpyderPlayerApp::ShowSubtitleTracks);
     connect(controlpanelFS_.ui_.CloseCaption_button, &QPushButton::clicked, this, &SpyderPlayerApp::ShowSubtitleTracks);
 
-    controlpanel_.ui_.Volume_slider->setValue(100);
-    controlpanelFS_.ui_.Volume_slider->setValue(100); 
-    player_->SetVolume(100);
+    //controlpanel_.ui_.Volume_slider->setValue(100);
+    //controlpanelFS_.ui_.Volume_slider->setValue(100); 
+    //player_->SetVolume(100);
 
     connect(controlpanel_.ui_.VideoPosition_slider, &QSlider::sliderPressed, this, &SpyderPlayerApp::OnPositionSliderPressed);
     connect(controlpanelFS_.ui_.VideoPosition_slider, &QSlider::sliderPressed, this, &SpyderPlayerApp::OnPositionSliderPressed);
@@ -172,10 +173,11 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent, AppData *appData): QWidget(par
     controlpanelFS_.ui_.CloseCaption_button->setEnabled(false);
 
     // Connect Player Signals
-    connect(player_, &VideoPlayer::SIGNAL_UpdatePosition, this, &SpyderPlayerApp::PlayerPositionChanged);
+    /*connect(player_, &VideoPlayer::SIGNAL_UpdatePosition, this, &SpyderPlayerApp::PlayerPositionChanged);
     connect(player_, &VideoPlayer::SIGNAL_ErrorOccured, this, &SpyderPlayerApp::PlayerErrorOccured);
     connect(player_, &VideoPlayer::SIGNAL_PlayerStateChanged, this, &SpyderPlayerApp::PlaybackStateChanged);
     connect(player_, &VideoPlayer::SIGNAL_EnableSubtitles, this, &SpyderPlayerApp::EnableSubtitles);
+    player_->SetVolume(100);*/
 
     // Connect Settings Signals
     connect(settingsManager_, &SettingsManager::SIGNAL_ReLoadAllPlayLists, this, &SpyderPlayerApp::InitializePlayLists);
@@ -283,12 +285,16 @@ void SpyderPlayerApp::InitializePlayLists()
     this->setWindowOpacity(1.0);
     isInitializing_ = false;
 
-    //##overlay_->show();
+    overlay_->Show();
+
+    if (player_ == nullptr)
+        InitPlayer();
+
     OnHSplitterResized(0, 0);
 
-    //##overlay_->Resize();
-    //##overlay_->activateWindow();
-    //##if(!isFullScreen_)
+    overlay_->Resize();
+    overlay_->activateWindow();
+    //if(!isFullScreen_)
         //##overlay_->hide();
     //PRINT << "Initial Windowstate = " << windowState();
 }
@@ -311,8 +317,23 @@ void SpyderPlayerApp::InitPlayer()
     else if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::VLC)
     {
         player_ = new VLCPlayer(&ui_, this);
-        //player_->InitPlayer();
+        overlay_->Show();
+        overlay_->videoPanel_->show();
+        overlay_->Resize();        
+        player_->InitPlayer(overlay_->videoPanel_);
+
     }
+
+    // Connect Playback Signals
+    connect(player_, &VideoPlayer::SIGNAL_UpdatePosition, this, &SpyderPlayerApp::PlayerPositionChanged);
+    connect(player_, &VideoPlayer::SIGNAL_ErrorOccured, this, &SpyderPlayerApp::PlayerErrorOccured);
+    connect(player_, &VideoPlayer::SIGNAL_PlayerStateChanged, this, &SpyderPlayerApp::PlaybackStateChanged);
+    connect(player_, &VideoPlayer::SIGNAL_EnableSubtitles, this, &SpyderPlayerApp::EnableSubtitles);  
+
+    // Connect Volume Signals
+    controlpanel_.ui_.Volume_slider->setValue(100);
+    controlpanelFS_.ui_.Volume_slider->setValue(100); 
+    player_->SetVolume(100);
 }
 
 void SpyderPlayerApp::ShowSplashScreenMsg(QString msg)
@@ -347,7 +368,8 @@ bool SpyderPlayerApp::eventFilter(QObject *object, QEvent *event)
     if(event->type() == QEvent::WindowStateChange)
     {
         ///Qt::WindowStates state = windowState();
-        //PRINT << "--------> Windowstate = " << GetWindowStateString(); 
+        //QString stateStr = GetWindowStateString();
+        //PRINT << "--------> Windowstate = " << stateStr;
         //PRINT <<"Windowstate Attribute = " << this->window;
         
         //if (state & Qt::WindowMaximized || state & Qt::WindowFullScreen)
@@ -364,6 +386,7 @@ bool SpyderPlayerApp::eventFilter(QObject *object, QEvent *event)
         }
         else if (windowState() == Qt::WindowMinimized)
         {
+            overlay_->Hide();  
             PlayerMinimized();
             return true;
         }
@@ -373,6 +396,8 @@ bool SpyderPlayerApp::eventFilter(QObject *object, QEvent *event)
             {
                 if (isFullScreen_)
                     PlayerNormalScreen();
+
+                overlay_->Show();
                 return true;
             }
         }
@@ -521,7 +546,7 @@ void SpyderPlayerApp::moveEvent(QMoveEvent *event)
 {
     //##if (overlay_)
         //##overlay_->Resize();
-
+    overlay_->Resize();
     //UserActivityDetected();
     QWidget::moveEvent(event);
     //overlay_->activateWindow();
@@ -576,13 +601,13 @@ void SpyderPlayerApp::mouseReleaseEvent(QMouseEvent *event)
         mousePressPos_ = QPoint();
         mouseMoveActive_ = false;
         //overlay_->show();
-        //overlay_->Resize();
+        overlay_->Resize();
         //overlay_->activateWindow();
     }
     if (isFullScreen_)
     {   
         //##overlay_->show();
-        //##overlay_->Resize();
+        overlay_->Resize();
         controlpanelFS_.raise();
     }
     else
@@ -595,7 +620,7 @@ void SpyderPlayerApp::mouseReleaseEvent(QMouseEvent *event)
 void SpyderPlayerApp::resizeEvent(QResizeEvent *event)
 {
     UserActivityDetected();
-    //##overlay_->Resize();
+    overlay_->Resize();
     //overlay_->activateWindow();
     setFocus();
 
@@ -609,7 +634,7 @@ void SpyderPlayerApp::PlayerNormalScreen()
 {
     controlpanelFS_.hide();
     setWindowState(Qt::WindowState::WindowNoState);
-    ui_.Horizontal_splitter->setSizes({400, 1000});  // Restore left side
+    ui_.Horizontal_splitter->setSizes({450, 1000});  // Restore left side
     ui_.Vertical_splitter->setSizes({800, 1});
     ui_.Horizontal_splitter->setHandleWidth(2);
     player_->GetVideoPanel()->showNormal();  
@@ -621,7 +646,7 @@ void SpyderPlayerApp::PlayerNormalScreen()
     ShowControlPanel();
     //overlay_->show();
     //##overlay_->hide();
-    //##overlay_->Resize();
+    overlay_->Resize();
     //##overlay_->setFocus();
     //player_->GetVideoPanel()->activateWindow();
     //playlistManager_->setFocus();
@@ -642,7 +667,7 @@ void SpyderPlayerApp::PlayerFullScreen()
     ui_.Vertical_splitter->setHandleWidth(0);
     //ui_.Vertical_splitter->setFocus();
     //##overlay_->show();
-    //##overlay_->Resize();
+    overlay_->Resize();
     //##overlay_->setFocus();
     //ShowControlPanel(true);
     //player_->GetVideoPanel()->setFocus();
@@ -724,8 +749,13 @@ void SpyderPlayerApp::TogglePlaylistView()
         PRINT << "TogglePlaylistView - HIDE";
         ui_.Horizontal_splitter->setSizes({0, 1000});  // Hide left side
         ui_.Horizontal_splitter->setHandleWidth(0);
-        ui_.Vertical_splitter->setHandleWidth(0);
+        ui_.Vertical_splitter->setHandleWidth(0);  // Keep if needed; otherwise remove
         isPlaylistVisible_ = false;
+
+        // Force relayout
+        overlay_->Resize();
+
+        //##overlay_->hide();
         //##overlay_->Resize(true);
         //##overlay_->setFocus();
         // Simulate a resize event
@@ -752,18 +782,21 @@ void SpyderPlayerApp::TogglePlaylistView()
         PRINT << "TogglePlaylistView - SHOW";
         ui_.Horizontal_splitter->setSizes({400, 1000});  // Show left side
         ui_.Horizontal_splitter->setHandleWidth(2);
+
         isPlaylistVisible_ = true;
-        ui_.Query_input->show();
-        ui_.Search_button->show();
+
+        //updateGeometry();
+        //ui_.Query_input->show();
+        //ui_.Search_button->show();
         //setStyleSheet("background-color: black;");
-        //##overlay_->Resize();
+        overlay_->Resize();
         //##overlay_->setFocus();
         
     }
 
     if (isFullScreen_)
     {
-        //##overlay_->Resize();
+        //overlay_->Resize(true);
         ShowControlPanel();
     }
 }
@@ -920,7 +953,7 @@ void SpyderPlayerApp::PlayerErrorOccured(const std::string& error)
 
 void SpyderPlayerApp::OnHSplitterResized(int pos, int index)
 {
-    //##overlay_->Resize();
+    overlay_->Resize();
     if (isFullScreen_)
         ShowControlPanel();
 }
@@ -1301,19 +1334,26 @@ void SpyderPlayerApp::ShowCursorBlank()
 
 int SpyderPlayerApp::GetVideoPanelWidth()
 {
-    //return ui_.ShowControlPanel_top_label->width();
-    return player_->GetVideoPanel()->width();
+    if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::VLC)
+        return ui_.VideoView_widget->width(); 
+    else
+        return player_->GetVideoPanel()->width();
 }
 
 int SpyderPlayerApp::GetVideoPanelHeight()
 {
-    //return ui_.ShowControlPanel_left_label->height();
-    return player_->GetVideoPanel()->height();
+    if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::VLC)
+        return ui_.VideoView_widget->height(); 
+    else
+        return player_->GetVideoPanel()->height();
 }
 
 QWidget* SpyderPlayerApp::GetVideoPanelWidget()
 {
-    return player_->GetVideoPanel();
+    if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::VLC)
+        return ui_.VideoView_widget;
+    else
+        return player_->GetVideoPanel();
 }
 
 QString SpyderPlayerApp::GetWindowStateString() 
