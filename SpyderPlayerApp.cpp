@@ -293,7 +293,7 @@ void SpyderPlayerApp::InitializePlayLists()
     OnHSplitterResized(0, 0);
 
     overlay_->Resize();
-    overlay_->activateWindow();
+    //overlay_->activateWindow();
     //if(!isFullScreen_)
         //##overlay_->hide();
     //PRINT << "Initial Windowstate = " << windowState();
@@ -386,7 +386,6 @@ bool SpyderPlayerApp::eventFilter(QObject *object, QEvent *event)
         }
         else if (windowState() == Qt::WindowMinimized)
         {
-            overlay_->Hide();  
             PlayerMinimized();
             return true;
         }
@@ -397,9 +396,9 @@ bool SpyderPlayerApp::eventFilter(QObject *object, QEvent *event)
                 if (isFullScreen_)
                     PlayerNormalScreen();
 
-                overlay_->Show();
                 return true;
             }
+            overlay_->Show();
         }
     }
     //-----------------------------
@@ -689,6 +688,7 @@ void SpyderPlayerApp::PlayerMinimized()
 {
     setWindowState(Qt::WindowState::WindowMinimized);
     player_->ChangeUpdateTimerInterval(true);
+    overlay_->Hide();
     //##overlay_->hide();
 }
 
@@ -1089,7 +1089,7 @@ void SpyderPlayerApp::PlaySelectedChannel(string channelName, string source)
     player_->SetVideoSource(source);
     setWindowTitle("SPYDER Player - " + QSTR(channelName));
     player_->Play();
-    player_->GetVideoPanel()->activateWindow();
+    player_->GetVideoPanel()->setFocus();
     //ChangePlayingUIStates(true);
 }
 

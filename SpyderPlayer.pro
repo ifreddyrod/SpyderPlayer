@@ -18,7 +18,7 @@ macx {
 
 # Linux specific settings
 unix:!macx {
-    INCLUDEPATH += link_pkgconfig
+    CONFIG += link_pkgconfig
     PKGCONFIG += libvlc
 }
 
