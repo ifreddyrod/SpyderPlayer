@@ -27,9 +27,14 @@ VLCPlayer::VLCPlayer(Ui::PlayerMainWindow* mainWindow, QWidget* parent)
 
     //InitPlayer(nullptr);
 
+    updateTimer_ = new QTimer(this);
+    updateTimer_->setInterval(250);
+    connect(updateTimer_, &QTimer::timeout, this, &VLCPlayer::UpdatePlayerStatus);
+
     stalledVideoTimer_ = new QTimer(this);
     stalledVideoTimer_->setInterval(3000);
     connect(stalledVideoTimer_, &QTimer::timeout, this, &VLCPlayer::StalledVideoDetected);
+
 }
 
 VLCPlayer::~VLCPlayer()
@@ -48,9 +53,10 @@ VLCPlayer::~VLCPlayer()
         libvlc_release(vlcInstance_);
     }
     delete videoPanel_;
-    delete positionTimer_;
-    delete watchdogTimer_;
-    delete timeoutTimer_;
+    delete updateTimer_;
+    //delete positionTimer_;
+    //delete watchdogTimer_;
+    //delete timeoutTimer_;
     delete stalledVideoTimer_;
 }
 
@@ -60,12 +66,12 @@ void VLCPlayer::InitPlayer(void *args)
     
     SetupPlayer();
     videoWidget_ = videoPanel_;
-    timeoutTimer_ = new QTimer(this);
-    connect(timeoutTimer_, &QTimer::timeout, this, &VLCPlayer::CheckTimeout);
+    //timeoutTimer_ = new QTimer(this);
+    //connect(timeoutTimer_, &QTimer::timeout, this, &VLCPlayer::CheckTimeout);
 
-    positionTimer_ = new QTimer(this);
-    connect(positionTimer_, &QTimer::timeout, this, &VLCPlayer::UpdatePositionSlot);
-    positionTimer_->start(250);  // Update position every 250ms
+    //positionTimer_ = new QTimer(this);
+    //connect(positionTimer_, &QTimer::timeout, this, &VLCPlayer::UpdatePositionSlot);
+    //positionTimer_->start(250);  // Update position every 250ms
 
     //videoPanel_->setAttribute(Qt::WA_OpaquePaintEvent, true);
     //videoPanel_->setStyleSheet("color: black;");
@@ -94,7 +100,7 @@ void VLCPlayer::SetupPlayer()
     #else
         const char* const vlc_args[] = 
         {
-            "--verbose=2",  
+            //"--verbose=2",  
             //"--no-xlib",    // Disable Xlib for better compatibility
             "--network-caching=1000",  
             "--file-caching=1000",
@@ -132,7 +138,7 @@ void VLCPlayer::SetupPlayer()
     } 
     catch (const std::exception& e) 
     {
-        qDebug() << e.what();
+        PRINT << e.what();
         ErrorOccured(std::string(e.what()));
     }
 }
@@ -153,36 +159,121 @@ void VLCPlayer::AttachEvents()
 void VLCPlayer::HandleVLCEvent(const libvlc_event_t* event, void* data)
 {
     VLCPlayer* self = static_cast<VLCPlayer*>(data);
-    switch (event->type) {
+    //PRINT << "VLC Event: " << event->type;
+    
+    switch (event->type) 
+    {
     case libvlc_MediaPlayerPlaying:
-        self->UpdatePlayerState(ENUM_PLAYER_STATE::PLAYING);
+        self->currentState_ = ENUM_PLAYER_STATE::PLAYING;
         break;
     case libvlc_MediaPlayerPaused:
-        self->UpdatePlayerState(ENUM_PLAYER_STATE::PAUSED);
+        self->currentState_ = ENUM_PLAYER_STATE::PAUSED;
         break;
     case libvlc_MediaPlayerStopped:
-        self->UpdatePlayerState(ENUM_PLAYER_STATE::STOPPED);
+        self->currentState_ = ENUM_PLAYER_STATE::STOPPED;
         break;
     case libvlc_MediaPlayerEndReached:
-        self->UpdatePlayerState(ENUM_PLAYER_STATE::STOPPED);
+        self->currentState_ = ENUM_PLAYER_STATE::ENDED;
         break;
     case libvlc_MediaPlayerEncounteredError:
-        self->UpdatePlayerState(ENUM_PLAYER_STATE::ERROR);
-        self->ErrorOccured("VLC encountered an error");
+        self->currentState_ = ENUM_PLAYER_STATE::ERROR;
+        //self->ErrorOccured("VLC encountered an error: ");
         break;
     case libvlc_MediaPlayerBuffering:
-        self->playerStatus_ = "Buffering: " + QString::number(event->u.media_player_buffering.new_cache) + "%";
+    case libvlc_MediaPlayerOpening:
+        self->currentState_ = ENUM_PLAYER_STATE::LOADING;
+        //self->playerStatus_ = "Buffering: " + QString::number(event->u.media_player_buffering.new_cache) + "%";
         break;
     case libvlc_MediaPlayerLengthChanged:
-        self->UpdateDuration(libvlc_media_player_get_length(self->mediaPlayer_));
+        self->duration_ = libvlc_media_player_get_length(self->mediaPlayer_);
+        self->UpdateDuration(self->duration_);
+        //self->currentState_ = ENUM_PLAYER_STATE::PLAYING;
         break;
     case libvlc_MediaPlayerTimeChanged:
-        self->UpdatePosition(libvlc_media_player_get_time(self->mediaPlayer_));
+        self->lastPosition_= libvlc_media_player_get_time(self->mediaPlayer_);
+        self->currentState_ = ENUM_PLAYER_STATE::PLAYING;
         break;
     default:
+        self->currentState_ = ENUM_PLAYER_STATE::IDLE;
         break;
     }
-    QApplication::processEvents();  // Ensure Qt processes events
+
+    /*if (self->stallretryCount_ == self->MAX_STALL_RETRIES)
+        self->inRecovery_ = false;*/
+
+    /*if(self->inRecovery_)
+        self->UpdatePlayerState(ENUM_PLAYER_STATE::RECOVERING);
+    else
+        self->UpdatePlayerState(self->currentState_);*/
+
+    //QApplication::processEvents();  // Ensure Qt processes events
+}
+
+void VLCPlayer::UpdatePlayerStatus()
+{
+    ENUM_PLAYER_STATE currentState = GetPlayerState();
+    //PRINT << "UpdatePlayerStatus: " << QSTR(PlayerStateToString(currentState));
+    switch (currentState)
+    {
+    case ENUM_PLAYER_STATE::PLAYING:
+        inRecovery_ = false;
+        stallretryCount_ = 0;
+        position_ = libvlc_media_player_get_time(mediaPlayer_);
+        //if (position_ != lastPosition_)
+            //stalledVideoTimer_->start();
+
+        //position_ = libvlc_media_player_get_time(mediaPlayer_);
+        UpdatePosition(position_);
+        break;
+    case ENUM_PLAYER_STATE::PAUSED:
+    //case ENUM_PLAYER_STATE::ENDED:
+    case ENUM_PLAYER_STATE::STALLED:
+        updateTimer_->stop();
+        videoWidget_->setStyleSheet("background-color: black;");
+        break;
+    case ENUM_PLAYER_STATE::ERROR:
+        //inRecovery_ = true;
+        RetryStalledPlayer();
+        break;
+    case ENUM_PLAYER_STATE::ENDED:
+        if (duration_ > 0)
+        {
+            updateTimer_->stop();  
+            videoWidget_->setStyleSheet("background-color: black;");
+        }
+        else 
+        {
+            RetryStalledPlayer();
+        }
+        break;
+    case ENUM_PLAYER_STATE::STOPPED:
+        if (stopAll_)
+        {
+            updateTimer_->stop();
+            videoWidget_->setStyleSheet("background-color: black;");
+        }
+        else
+        {
+            //inRecovery_ = true;
+            RetryStalledPlayer();
+        }
+        break;
+    default:
+        //playerStatus_ = "Unknown";
+        break;
+    }
+
+    // Emit State to Main app
+    if(inRecovery_)
+    {
+        ;//previousState_ = ENUM_PLAYER_STATE::RECOVERING;
+        //UpdatePlayerState(ENUM_PLAYER_STATE::RECOVERING);
+    }
+    else if (currentState != previousState_)
+    {
+        UpdatePlayerState(currentState);
+        previousState_ = currentState;
+    }
 }
 
 void VLCPlayer::SetVideoSource(const std::string& videoSource)
@@ -204,7 +295,7 @@ void VLCPlayer::SetVideoSource(const std::string& videoSource)
     } 
     catch (const std::exception& e) 
     {
-        qDebug() << "SetVideoSource: " << e.what();
+        PRINT << "SetVideoSource: " << e.what();
     }
 }
 
@@ -212,19 +303,20 @@ void VLCPlayer::RefreshVideoSource()
 {
     try 
     {
-        qDebug() << "REFRESH: Refreshing Video Source: " << QString::fromStdString(source_);
+        PRINT << "REFRESH: Refreshing Video Source: " << QString::fromStdString(source_);
 
+        //std::string source = source_;
+        //SetVideoSource("blank.mp4");
         SetVideoSource(source_);
-        uint64_t timedelay = app_->GetRetryTimeDelay();
-        timedelay = timedelay * stallretryCount_;
-        qDebug() << "REFRESH: Retry Time Delay: " << timedelay;
+        u_int64_t timedelay = retryTimeDelayMs_;  //*stallretryCount_;
+        PRINT << "REFRESH: Retry Time Delay: " << timedelay;
         QTimer::singleShot(timedelay, this, &VLCPlayer::PlaySource);
 
         playerStatus_ += " in " + QString::number(timedelay / 1000.0, 'f', 1) + " secs";
     } 
     catch (const std::exception& e) 
     {
-        qDebug() << "RefreshVideoSource: " << e.what();
+        PRINT << "RefreshVideoSource: " << e.what();
         ErrorOccured(std::string(e.what()));
     }
 }
@@ -235,12 +327,25 @@ void VLCPlayer::Play()
     inRecovery_ = false;
     stallretryCount_ = 0;
     retryCount_ = 0;
+    duration_ = 0;
+    position_ = 0;
+    previousState_ = ENUM_PLAYER_STATE::IDLE;
+    stalledVideoTimer_->stop();
 
+    MAX_STALL_RETRIES = app_->GetMaxRetryCount();
+    retryTimeDelayMs_ = app_->GetRetryTimeDelay();
+
+    PRINT << "MAX_STALL_RETRIES: " << MAX_STALL_RETRIES;
+    PRINT << "retryTimeDelayMs_: " << retryTimeDelayMs_;
+
+    updateTimer_->start();
     PlaySource();
 }
 
 void VLCPlayer::PlaySource()
 {
+    PRINT << "PlaySource";
+
     if (stopAll_) 
     {
         inRecovery_ = false;
@@ -252,64 +357,108 @@ void VLCPlayer::PlaySource()
         if (currentState_ == ENUM_PLAYER_STATE::PAUSED) 
         {
             libvlc_media_player_play(mediaPlayer_);
-            timeoutTimer_->start(30000);
+            //timeoutTimer_->start(30000);
             retryCount_ = 0;
             stallretryCount_ = 0;
             Mute(isMuted_);
-            unsigned width, height;
+            if (duration_ > 0 && position_ > skipBackLength_)
+                SkipPosition(position_ - skipBackLength_);
+
+            videoPanel_->parentWidget()->layout()->activate(); // Force layout recalculation
+            videoPanel_->updateGeometry();
+            /*unsigned width, height;
             if (libvlc_video_get_size(mediaPlayer_, 0, &width, &height) == 0) {
                 videoPanel_->resize(width, height);
                 videoPanel_->updateGeometry(); // Force layout update
-                qDebug() << "Video size:" << width << "x" << height;
-            }
+                PRINT << "Video size:" << width << "x" << height;
+            }*/
             return;
         } 
-        else if (retryCount_ <= MAX_RETRIES) 
+        //else if (retryCount_ <= MAX_RETRIES) 
+        else if (stallretryCount_ <= MAX_STALL_RETRIES)
         {
             Mute(isMuted_);
             libvlc_media_player_play(mediaPlayer_);
             videoPanel_->parentWidget()->layout()->activate(); // Force layout recalculation
             videoPanel_->updateGeometry();
-            unsigned width, height;
+            /*unsigned width, height;
             if (libvlc_video_get_size(mediaPlayer_, 0, &width, &height) == 0) {
                 videoPanel_->resize(width, height);
                 videoPanel_->updateGeometry(); // Force layout update
-                qDebug() << "Video size:" << width << "x" << height;
+                PRINT << "Video size:" << width << "x" << height;
                 videoPanel_->lower();
-            }
+            }*/
+            inRecovery_ = false;
+            return;
+        }
+        else if (stallretryCount_ > MAX_STALL_RETRIES)
+        {
+            PRINT << "Max retries reached, aborting play.";
+            ErrorOccured("Max retries reached");
+            currentState_ = ENUM_PLAYER_STATE::STALLED;
+            UpdatePlayerState(currentState_);
+            inRecovery_ = false;
             return;
         }
     } 
     catch (const std::exception& e) 
     {
-        qDebug() << "Play error: " << e.what();
+        PRINT << "Play error: " << e.what();
         ErrorOccured(std::string(e.what()));
+        RetryStalledPlayer();
     }
 }
 
 void VLCPlayer::Pause()
 {
+    stalledVideoTimer_->stop();
     if (libvlc_media_player_is_playing(mediaPlayer_)) 
     {
         libvlc_media_player_pause(mediaPlayer_);
+    }
+    stallPosition_ = position_;
+    inRecovery_ = false;
+    updateTimer_->stop();
+    currentState_ = ENUM_PLAYER_STATE::PAUSED;
+    UpdatePlayerState(currentState_);
+}
+
+void VLCPlayer::StopPlayback()
+{
+    stalledVideoTimer_->stop();
+    try
+    {
+        if (libvlc_media_player_is_playing(mediaPlayer_)) 
+            libvlc_media_player_stop(mediaPlayer_);
+    }
+    catch (const std::exception& e)
+    {
+        PRINT << "StopPlayback error: " << e.what();
+        ErrorOccured(std::string(e.what()));
     }
 }
 
 void VLCPlayer::Stop()
 {
-    libvlc_media_player_stop(mediaPlayer_);
+    StopPlayback();
+    inRecovery_ = false;
     stopAll_ = true;
+    updateTimer_->stop();
+    currentState_ = ENUM_PLAYER_STATE::STOPPED;
+    UpdatePlayerState(currentState_);
 }
 
 void VLCPlayer::SetPosition(qint64 position)
 {
+    stalledVideoTimer_->stop();
     libvlc_media_player_set_time(mediaPlayer_, position);
+    position_ = position;
 }
 
 void VLCPlayer::SkipPosition(qint64 position)
 {
-    qint64 newPos = GetPosition() + position;
-    SetPosition(newPos);
+    //qint64 newPos = GetPosition() + position;
+    SetPosition(position);
 }
 
 qint64 VLCPlayer::GetPosition()
@@ -392,25 +541,29 @@ void VLCPlayer::OnChangingPosition(bool isPlaying)
         stalledVideoTimer_->stop();
     }
     isPositionSeeking_ = true;
+    Pause();
 }
 
 void VLCPlayer::OnChangedPosition(bool isPlaying)
 {
     if (isPlaying) 
     {
-        timeoutTimer_->start();
+        //timeoutTimer_->start();
         stalledVideoTimer_->start();
         isPositionSeeking_ = false;
+        Play();
     }
 }
 
 void VLCPlayer::ChangeUpdateTimerInterval(bool isFullScreen)
 {
-    positionTimer_->setInterval(isFullScreen ? 100 : 250);
+    ; //positionTimer_->setInterval(isFullScreen ? 100 : 250);
 }
 
 void VLCPlayer::UpdatePositionSlot()
 {
+    return;
+
     if (currentState_ == ENUM_PLAYER_STATE::PLAYING) 
     {
         qint64 pos = GetPosition();
@@ -418,122 +571,15 @@ void VLCPlayer::UpdatePositionSlot()
     }
 }
 
-void VLCPlayer::CheckTimeout()
-{
-    if (duration_ > 0) return;
-
-    qDebug() << "Stream timeout, position: " << GetPosition() << "Retry: " << retryCount_;
-
-    if (libvlc_media_player_is_playing(mediaPlayer_)) 
-    {
-        qDebug() << "VLCPlayer: Timeout ignored, playback active";
-        return;
-    }
-    if (retryCount_ < MAX_RETRIES) 
-    {
-        qDebug() << "Stream stopped, retrying...";
-        retryCount_++;
-        stallPosition_ = position_;
-        Stop();
-        ReConnectPlayer();
-    } 
-    else 
-    {
-        qDebug() << "Max retries reached, stalling.";
-        currentState_ = ENUM_PLAYER_STATE::STALLED;
-        UpdatePlayerState(currentState_);
-    }
-}
-
-void VLCPlayer::CheckPlaybackHealth()
-{
-    static int stallCount = 0;
-    qint64 currentPos = GetPosition();
-    if (currentState_ == ENUM_PLAYER_STATE::PLAYING && currentPos == lastPosition_) 
-    {
-        stallCount++;
-        qDebug() << "Playback stalled, count: " << stallCount << "position: " << currentPos << "Retry: " << retryCount_;
-
-        if (stallCount >= 3 && retryCount_ < MAX_RETRIES) 
-        {
-            qDebug() << "Playback stalled too long, restarting...";
-            retryCount_++;
-            Stop();
-            SetupPlayer();
-            QTimer::singleShot(2000, this, &VLCPlayer::PlaySource);
-            stallCount = 0;
-        }
-    } 
-    else 
-    {
-        stallCount = 0;
-    }
-    lastPosition_ = currentPos;
-}
-
 void VLCPlayer::StalledVideoDetected()
 {
-    if (duration_ > 0) return;
-
-    if (libvlc_media_player_is_playing(mediaPlayer_) && stallretryCount_ < MAX_STALL_RETRIES) 
+    //while(inRecovery_)
+    if(inRecovery_ == false)
     {
-        qDebug() << "Stalled video detected, attempting to retry...";
-        stallPosition_ = position_;
-        Stop();
-        RetryStalledPlayer();
-    } 
-    else if (isPositionSeeking_) 
-    {
-        stallretryCount_ = 0;
-        inRecovery_ = false;
-        return;
-    } 
-    else 
-    {
+        PRINT << ">>>>>> Stalled video detected, attempting to retry... Attempt " << stallretryCount_+1;
         RetryStalledPlayer();
     }
 }
-
-void VLCPlayer::ReConnectPlayer()
-{
-    if (stopAll_) 
-    {
-        inRecovery_ = false;
-        return;
-    }
-
-    try 
-    {
-        if (retryCount_ < MAX_RETRIES) 
-        {
-            inRecovery_ = true;
-            timeoutTimer_->stop();
-            stalledVideoTimer_->stop();
-            retryCount_++;
-            playerStatus_ = "Connection attempt (" + QString::number(retryCount_) + " of " + QString::number(MAX_RETRIES) + ")";
-            qDebug() << playerStatus_;
-            Stop();
-            SetupPlayer();
-            SetVideoSource(source_);
-            QTimer::singleShot(250, this, &VLCPlayer::PlaySource);
-        } 
-        else 
-        {
-            Stop();
-            timeoutTimer_->stop();
-            stalledVideoTimer_->stop();
-            playerStatus_ = "Max Reconnection attempts reached";
-            qDebug() << playerStatus_;
-            RetryStalledPlayer();
-        }
-    } 
-    catch (const std::exception& e) 
-    {
-        qDebug() << "Reconnect error: " << e.what();
-        ErrorOccured(std::string(e.what()));
-    }
-}
-
 void VLCPlayer::RetryStalledPlayer()
 {
     if (stopAll_) 
@@ -544,30 +590,39 @@ void VLCPlayer::RetryStalledPlayer()
 
     try 
     {
-        if (stallretryCount_ < MAX_STALL_RETRIES) 
+        if (stallretryCount_ < MAX_STALL_RETRIES && inRecovery_ == false) 
         {
             inRecovery_ = true;
             stallretryCount_++;
-            qDebug() << "-----------------> STALLED VIDEO DETECTED <-----------------";
+            PRINT << "-----------------> STALLED VIDEO DETECTED <-----------------";
             playerStatus_ = "Recovering (" + QString::number(stallretryCount_) + " of " + QString::number(MAX_STALL_RETRIES) + ")";
-            qDebug() << playerStatus_;
+            PRINT << playerStatus_;
 
-            Stop();
-            SetupPlayer();
+            StopPlayback();
+            //SetupPlayer();
             RefreshVideoSource();
+            previousState_ = ENUM_PLAYER_STATE::RECOVERING;
+            UpdatePlayerState(ENUM_PLAYER_STATE::RECOVERING);
         } 
+        else if (stallretryCount_ < MAX_STALL_RETRIES && inRecovery_ == true) 
+            return;
         else 
         {
-            playerStatus_ = "Max Recovery attempts reached";
-            qDebug() << playerStatus_;
-            currentState_ = ENUM_PLAYER_STATE::ERROR;
             inRecovery_ = false;
+            playerStatus_ = "Max Recovery attempts reached";
+            PRINT << playerStatus_;
+            currentState_ = ENUM_PLAYER_STATE::STALLED;
+            //libvlc_event_t* event = new libvlc_event_t;
+            //event->type = libvlc_MediaPlayerEncounteredError;
+            //HandleVLCEvent(event, this);
+
             UpdatePlayerState(currentState_);
+            //QTimer::singleShot(1000, this, [=]() { inRecovery_ = false; UpdatePlayerState(currentState_); });
         }
     } 
     catch (const std::exception& e) 
     {
-        qDebug() << "Retry error: " << e.what();
+        PRINT << "Retry error: " << e.what();
         ErrorOccured(std::string(e.what()));
     }
 }

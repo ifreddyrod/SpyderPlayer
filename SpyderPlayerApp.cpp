@@ -396,9 +396,12 @@ bool SpyderPlayerApp::eventFilter(QObject *object, QEvent *event)
                 if (isFullScreen_)
                     PlayerNormalScreen();
 
+                //overlay_->Restore();
+                overlay_->Show();
                 return true;
             }
             overlay_->Show();
+            return true;
         }
     }
     //-----------------------------
@@ -1130,6 +1133,11 @@ void SpyderPlayerApp::StopPlayer()
     player_->Stop();
     SetCursorNormal();
     ui_.Status_label->setText("Playback Stopped");
+    controlpanelFS_.ui_.VideoPosition_slider->setValue(0);
+    controlpanel_.ui_.VideoPosition_slider->setValue(0);
+    controlpanelFS_.ui_.CurrentTime_label->setText("00:00:00");
+    controlpanel_.ui_.CurrentTime_label->setText("00:00:00");
+    
 }
 
 void SpyderPlayerApp::SeekForward()
@@ -1270,6 +1278,14 @@ void SpyderPlayerApp::OnPositionSliderMoved()
 
     player_->SetPosition(position);
     videoPosition_ = position;
+
+    if(appData_->PlayerType_ == ENUM_PLAYER_TYPE::VLC)
+    {
+        QString videoTime = Format_ms_to_Time(position);
+        controlpanelFS_.ui_.CurrentTime_label->setText(videoTime);
+        controlpanel_.ui_.CurrentTime_label->setText(videoTime);
+    }
+
     //videoChangesPosition_ = true;
 }
 

@@ -46,17 +46,19 @@ public:
 
 private slots:
     void UpdatePositionSlot();
-    void CheckTimeout();
-    void CheckPlaybackHealth();
+    //void CheckTimeout();
+    //void CheckPlaybackHealth();
     void StalledVideoDetected();
 
 private:
     void SetupPlayer();
-    void ReConnectPlayer();
+    //void ReConnectPlayer();
     void RetryStalledPlayer();
     void PlaySource();
     void AttachEvents();
     static void HandleVLCEvent(const libvlc_event_t* event, void* data);
+    void StopPlayback();
+    void UpdatePlayerStatus();
 
     SpyderPlayerApp* app_;
     Ui::PlayerMainWindow* mainWindow_ = nullptr;
@@ -65,9 +67,10 @@ private:
     libvlc_media_player_t* mediaPlayer_ = nullptr;
     libvlc_media_t* media_ = nullptr;
     libvlc_event_manager_t* eventManager_;
-    QTimer* positionTimer_;
-    QTimer* watchdogTimer_;
-    QTimer* timeoutTimer_;
+    ENUM_PLAYER_STATE previousState_;
+    //QTimer* positionTimer_;
+    //QTimer* watchdogTimer_;
+    QTimer* updateTimer_;
     QTimer* stalledVideoTimer_;
     bool isMuted_ = false;
     int subtitleCount_;
@@ -78,6 +81,7 @@ private:
     int stallretryCount_ = 0;
     static constexpr int MAX_RETRIES = 8;
     int MAX_STALL_RETRIES = 5;
+    u_int64_t retryTimeDelayMs_ = 500;
     bool inRecovery_ = false;
     QString playerStatus_;
     bool isPositionSeeking_ = false;
