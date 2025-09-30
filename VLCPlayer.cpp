@@ -66,6 +66,7 @@ void VLCPlayer::InitPlayer(void *args)
     
     SetupPlayer();
     videoWidget_ = videoPanel_;
+    BlackOutVideoPanel();
     //timeoutTimer_ = new QTimer(this);
     //connect(timeoutTimer_, &QTimer::timeout, this, &VLCPlayer::CheckTimeout);
 
@@ -229,7 +230,8 @@ void VLCPlayer::UpdatePlayerStatus()
     //case ENUM_PLAYER_STATE::ENDED:
     case ENUM_PLAYER_STATE::STALLED:
         updateTimer_->stop();
-        videoWidget_->setStyleSheet("background-color: black;");
+        //videoWidget_->setStyleSheet("background-color: black;");
+        BlackOutVideoPanel();
         break;
     case ENUM_PLAYER_STATE::ERROR:
         //inRecovery_ = true;
@@ -239,7 +241,8 @@ void VLCPlayer::UpdatePlayerStatus()
         if (duration_ > 0)
         {
             updateTimer_->stop();  
-            videoWidget_->setStyleSheet("background-color: black;");
+            //videoWidget_->setStyleSheet("background-color: black;");
+            BlackOutVideoPanel();
         }
         else 
         {
@@ -250,7 +253,8 @@ void VLCPlayer::UpdatePlayerStatus()
         if (stopAll_)
         {
             updateTimer_->stop();
-            videoWidget_->setStyleSheet("background-color: black;");
+            //videoWidget_->setStyleSheet("background-color: black;");
+            BlackOutVideoPanel();
         }
         else
         {
@@ -319,6 +323,16 @@ void VLCPlayer::RefreshVideoSource()
         PRINT << "RefreshVideoSource: " << e.what();
         ErrorOccured(std::string(e.what()));
     }
+}
+
+void VLCPlayer::BlackOutVideoPanel()
+{
+    source_ = ":/icons/icons/BlankScreenLogo.png";
+    SetVideoSource(source_);
+
+    libvlc_media_player_play(mediaPlayer_);
+    QThread::msleep(1000); // Brief delay to ensure rendering
+    libvlc_media_player_stop(mediaPlayer_);  
 }
 
 void VLCPlayer::Play()

@@ -59,6 +59,7 @@ private:
     static void HandleVLCEvent(const libvlc_event_t* event, void* data);
     void StopPlayback();
     void UpdatePlayerStatus();
+    void BlackOutVideoPanel();
 
     SpyderPlayerApp* app_;
     Ui::PlayerMainWindow* mainWindow_ = nullptr;
