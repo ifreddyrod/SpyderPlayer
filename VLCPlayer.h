@@ -25,6 +25,7 @@ public:
     void RefreshVideoSource() override;
     void Play() override;
     void Pause() override;
+    void Resume();
     void Stop() override;
     void SetPosition(qint64 position) override;
     void SkipPosition(qint64 position) override;
@@ -59,7 +60,6 @@ private:
     static void HandleVLCEvent(const libvlc_event_t* event, void* data);
     void StopPlayback();
     void UpdatePlayerStatus();
-    void BlackOutVideoPanel();
 
     SpyderPlayerApp* app_;
     Ui::PlayerMainWindow* mainWindow_ = nullptr;

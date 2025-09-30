@@ -4,6 +4,10 @@
 #include <QDebug>
 #include <QThread>
 #include <QApplication>
+#include <string>
+#include <stdexcept>
+#include <filesystem>
+#include <algorithm>
 
 VLCPlayer::VLCPlayer(Ui::PlayerMainWindow* mainWindow, QWidget* parent)
     : VideoPlayer(parent)
@@ -66,7 +70,6 @@ void VLCPlayer::InitPlayer(void *args)
     
     SetupPlayer();
     videoWidget_ = videoPanel_;
-    BlackOutVideoPanel();
     //timeoutTimer_ = new QTimer(this);
     //connect(timeoutTimer_, &QTimer::timeout, this, &VLCPlayer::CheckTimeout);
 
@@ -101,7 +104,7 @@ void VLCPlayer::SetupPlayer()
     #else
         const char* const vlc_args[] = 
         {
-            //"--verbose=2",  
+            "--verbose=2",  
             //"--no-xlib",    // Disable Xlib for better compatibility
             "--network-caching=1000",  
             "--file-caching=1000",
@@ -198,22 +201,21 @@ void VLCPlayer::HandleVLCEvent(const libvlc_event_t* event, void* data)
         self->currentState_ = ENUM_PLAYER_STATE::IDLE;
         break;
     }
-
-    /*if (self->stallretryCount_ == self->MAX_STALL_RETRIES)
-        self->inRecovery_ = false;*/
-
-    /*if(self->inRecovery_)
-        self->UpdatePlayerState(ENUM_PLAYER_STATE::RECOVERING);
-    else
-        self->UpdatePlayerState(self->currentState_);*/
-
     //QApplication::processEvents();  // Ensure Qt processes events
 }
 
 void VLCPlayer::UpdatePlayerStatus()
 {
     ENUM_PLAYER_STATE currentState = GetPlayerState();
-    //PRINT << "UpdatePlayerStatus: " << QSTR(PlayerStateToString(currentState));
+    //PRINT << "--->UpdatePlayerStatus: " << QSTR(PlayerStateToString(currentState));
+
+    if (isPositionSeeking_)
+    {
+        lastPosition_ = position_ = libvlc_media_player_get_time(mediaPlayer_);
+        UpdatePosition(position_);
+        return;
+    }
+
     switch (currentState)
     {
     case ENUM_PLAYER_STATE::PLAYING:
@@ -227,11 +229,10 @@ void VLCPlayer::UpdatePlayerStatus()
         UpdatePosition(position_);
         break;
     case ENUM_PLAYER_STATE::PAUSED:
+        break;
     //case ENUM_PLAYER_STATE::ENDED:
     case ENUM_PLAYER_STATE::STALLED:
         updateTimer_->stop();
-        //videoWidget_->setStyleSheet("background-color: black;");
-        BlackOutVideoPanel();
         break;
     case ENUM_PLAYER_STATE::ERROR:
         //inRecovery_ = true;
@@ -241,8 +242,6 @@ void VLCPlayer::UpdatePlayerStatus()
         if (duration_ > 0)
         {
             updateTimer_->stop();  
-            //videoWidget_->setStyleSheet("background-color: black;");
-            BlackOutVideoPanel();
         }
         else 
         {
@@ -250,11 +249,19 @@ void VLCPlayer::UpdatePlayerStatus()
         }
         break;
     case ENUM_PLAYER_STATE::STOPPED:
+        //position_ = libvlc_media_player_get_time(mediaPlayer_);
+        //duration_ = libvlc_media_player_get_length(mediaPlayer_);
         if (stopAll_)
         {
             updateTimer_->stop();
-            //videoWidget_->setStyleSheet("background-color: black;");
-            BlackOutVideoPanel();
+        }
+        else if (duration_ > 0)
+        {
+            if (position_ >= duration_ - 1000)
+            {
+                updateTimer_->stop();
+                UpdatePosition(duration_);
+            }
         }
         else
         {
@@ -280,21 +287,51 @@ void VLCPlayer::UpdatePlayerStatus()
     }
 }
 
+
 void VLCPlayer::SetVideoSource(const std::string& videoSource)
 {
     try 
     {
         source_ = videoSource;
+        
+        // Release existing media if any
         if (media_) 
         {
             libvlc_media_release(media_);
             media_ = nullptr;
         }
-        media_ = libvlc_media_new_location(vlcInstance_, videoSource.c_str());
+
+        // Check if the source is a URL (remote link)
+        std::string lowerSource = videoSource;
+        std::transform(lowerSource.begin(), lowerSource.end(), lowerSource.begin(), ::tolower);
+        bool isRemote = lowerSource.find("http://") == 0 || 
+                        lowerSource.find("https://") == 0 || 
+                        lowerSource.find("rtsp://") == 0 || 
+                        lowerSource.find("rtp://") == 0 ||
+                        lowerSource.find("file://") == 0;
+
+        if (isRemote)
+        {
+            // Handle remote link
+            media_ = libvlc_media_new_location(vlcInstance_, videoSource.c_str());
+        }
+        else
+        {
+            // Handle local file
+            // Check if file exists
+            if (!std::filesystem::exists(videoSource))
+            {
+                throw std::runtime_error("Local file does not exist: " + videoSource);
+            }
+            media_ = libvlc_media_new_path(vlcInstance_, videoSource.c_str());
+        }
+
         if (!media_) 
         {
-            throw std::runtime_error("Failed to create VLC media");
+            throw std::runtime_error("Failed to create VLC media: " + std::string(libvlc_errmsg() ? libvlc_errmsg() : "Unknown error"));
         }
+
+        // Set the media to the player
         libvlc_media_player_set_media(mediaPlayer_, media_);
     } 
     catch (const std::exception& e) 
@@ -325,16 +362,6 @@ void VLCPlayer::RefreshVideoSource()
     }
 }
 
-void VLCPlayer::BlackOutVideoPanel()
-{
-    source_ = ":/icons/icons/BlankScreenLogo.png";
-    SetVideoSource(source_);
-
-    libvlc_media_player_play(mediaPlayer_);
-    QThread::msleep(1000); // Brief delay to ensure rendering
-    libvlc_media_player_stop(mediaPlayer_);  
-}
-
 void VLCPlayer::Play()
 {
     stopAll_ = false;
@@ -344,6 +371,7 @@ void VLCPlayer::Play()
     duration_ = 0;
     position_ = 0;
     previousState_ = ENUM_PLAYER_STATE::IDLE;
+    currentState_ = ENUM_PLAYER_STATE::LOADING;
     stalledVideoTimer_->stop();
 
     MAX_STALL_RETRIES = app_->GetMaxRetryCount();
@@ -351,6 +379,21 @@ void VLCPlayer::Play()
 
     PRINT << "MAX_STALL_RETRIES: " << MAX_STALL_RETRIES;
     PRINT << "retryTimeDelayMs_: " << retryTimeDelayMs_;
+
+    updateTimer_->start();
+    PlaySource();
+}
+
+void VLCPlayer::Resume()
+{
+    stopAll_ = false;
+    inRecovery_ = false;
+    stallretryCount_ = 0;
+    retryCount_ = 0;
+
+    previousState_ = ENUM_PLAYER_STATE::PAUSED;
+    currentState_ = ENUM_PLAYER_STATE::PLAYING;
+    stalledVideoTimer_->stop();
 
     updateTimer_->start();
     PlaySource();
@@ -375,8 +418,9 @@ void VLCPlayer::PlaySource()
             retryCount_ = 0;
             stallretryCount_ = 0;
             Mute(isMuted_);
-            if (duration_ > 0 && position_ > skipBackLength_)
-                SkipPosition(position_ - skipBackLength_);
+            SetPosition(lastPosition_);
+            //if (duration_ > 0 && position_ > skipBackLength_)
+                //SkipPosition(position_ - skipBackLength_);
 
             videoPanel_->parentWidget()->layout()->activate(); // Force layout recalculation
             videoPanel_->updateGeometry();
@@ -431,8 +475,9 @@ void VLCPlayer::Pause()
         libvlc_media_player_pause(mediaPlayer_);
     }
     stallPosition_ = position_;
+    lastPosition_ = position_;
     inRecovery_ = false;
-    updateTimer_->stop();
+    //updateTimer_->stop();
     currentState_ = ENUM_PLAYER_STATE::PAUSED;
     UpdatePlayerState(currentState_);
 }
@@ -457,6 +502,7 @@ void VLCPlayer::Stop()
     StopPlayback();
     inRecovery_ = false;
     stopAll_ = true;
+    lastPosition_ = position_ = 0;
     updateTimer_->stop();
     currentState_ = ENUM_PLAYER_STATE::STOPPED;
     UpdatePlayerState(currentState_);
@@ -550,22 +596,23 @@ QString VLCPlayer::GetPlayerStatus()
 
 void VLCPlayer::OnChangingPosition(bool isPlaying)
 {
+    isPositionSeeking_ = true;
     if (isPlaying) 
     {
         stalledVideoTimer_->stop();
+        Pause();
     }
-    isPositionSeeking_ = true;
-    Pause();
+    
 }
 
 void VLCPlayer::OnChangedPosition(bool isPlaying)
 {
+    isPositionSeeking_ = false;
     if (isPlaying) 
     {
         //timeoutTimer_->start();
-        stalledVideoTimer_->start();
-        isPositionSeeking_ = false;
-        Play();
+        //stalledVideoTimer_->start();
+        Resume();
     }
 }
 

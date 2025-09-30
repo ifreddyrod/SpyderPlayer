@@ -1,32 +1,50 @@
 #include "VideoOverlay.h"
 #include "SpyderPlayerApp.h"
+#include <QPixmap>
+
+
+#include "VideoOverlay.h"
+#include "SpyderPlayerApp.h"
+#include <QVBoxLayout> // Add this include for QVBoxLayout
+#include <QPixmap>
 
 VideoOverlay::VideoOverlay(QWidget *parent) : QWidget(parent)
 {
-    ui_.setupUi(this);
+    setStyleSheet("background-color: black; border: none;");
 
-    videoPanel_ = ui_.Overlay_widget;
+    // Create a layout for the VideoOverlay widget
+    QVBoxLayout *layout = new QVBoxLayout(this);
+    layout->setContentsMargins(0, 0, 0, 0); // No margins
+    layout->setSpacing(0); // No spacing
+
+    videoPanel_ = new QWidget(this);
+    videoPanel_->setStyleSheet("background-color: black; border: none;"); // Optional: ensure consistent styling
+
+    blankOverlay_ = new QLabel(this);
+    blankOverlay_->setStyleSheet("background-color: black; border: none;");
+    blankOverlay_->setPixmap(QPixmap(":/icons/icons/BlankScreenLogo.png"));
+    blankOverlay_->setAlignment(Qt::AlignCenter); // Center the pixmap
+    blankOverlay_->setScaledContents(false); // Prevent stretching
+
+    overlayStack_ = new QStackedWidget(this);
+    overlayStack_->addWidget(videoPanel_);
+    overlayStack_->addWidget(blankOverlay_);
+
+    // Add the stacked widget to the layout
+    layout->addWidget(overlayStack_);
 
     setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
-    //setAttribute(Qt::WA_TranslucentBackground, true);
 
-    // Debug  - This will make the overlay much more visible // 100
-    //videoPanel_->setStyleSheet("background-color: rgba(255, 255, 255, 0); border: none;"); //rgba(0, 0, 0, 2)
-    //setStyleSheet("background-color: black; border: none;");
-
-    // Normal
-    //overlayLabel_->setStyleSheet("color: white; background-color: rgba(0, 0, 0, 2); font:30pt; border: none;"); //rgba(0, 0, 0, 2)
-
-    //QString overlayTxt = "";
-    //ui_.Overlay_label->setText(overlayTxt);
-    videoPanel_->setMouseTracking(true);
+    setMouseTracking(true);
     installEventFilter(this);
-    //show();
+    overlayStack_->setCurrentIndex(0); 
 }
 
 VideoOverlay::~VideoOverlay()
 {
     delete videoPanel_;
+    delete blankOverlay_;
+    delete overlayStack_;
 }
 
 void VideoOverlay::Show()
@@ -96,3 +114,12 @@ void VideoOverlay::Resize(bool forceFullscreen)
     move(global_pos);
 }
 
+void VideoOverlay::ShowVideoPanel()
+{
+    overlayStack_->setCurrentIndex(0);
+}
+
+void VideoOverlay::ShowBlankOverlay()
+{
+    overlayStack_->setCurrentIndex(1);
+}

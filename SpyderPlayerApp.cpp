@@ -286,9 +286,12 @@ void SpyderPlayerApp::InitializePlayLists()
     isInitializing_ = false;
 
     overlay_->Show();
+    overlay_->Resize();
+    OnHSplitterResized(0, 0);
 
     if (player_ == nullptr)
-        InitPlayer();
+        //InitPlayer();
+        QTimer::singleShot(500, this, &SpyderPlayerApp::InitPlayer);
 
     OnHSplitterResized(0, 0);
 
@@ -317,10 +320,15 @@ void SpyderPlayerApp::InitPlayer()
     else if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::VLC)
     {
         player_ = new VLCPlayer(&ui_, this);
+        while(overlay_->isHidden())
+        {
+            QThread::msleep(50);
+        }
         overlay_->Show();
         overlay_->videoPanel_->show();
         overlay_->Resize();        
         player_->InitPlayer(overlay_->videoPanel_);
+        overlay_->ShowBlankOverlay();
 
     }
 
@@ -914,7 +922,10 @@ void SpyderPlayerApp::PlaybackStateChanged(ENUM_PLAYER_STATE state)
         screensaverInhibitor_->uninhibit();
 
         if (player_->GetPlayerState() == ENUM_PLAYER_STATE::ENDED)
+        {
             ui_.Status_label->setText("Playback Ended");
+            overlay_->ShowBlankOverlay();
+        }
         else if (state == ENUM_PLAYER_STATE::ERROR)
             ui_.Status_label->setText("Error: " + player_->GetPlayerStatus());
         else if (state == ENUM_PLAYER_STATE::NOMEDIA)
@@ -922,7 +933,10 @@ void SpyderPlayerApp::PlaybackStateChanged(ENUM_PLAYER_STATE state)
         else if (state == ENUM_PLAYER_STATE::STALLED)
             ui_.Status_label->setText("Playback Stalled");
         else if (state == ENUM_PLAYER_STATE::STOPPED)
+        {
             ui_.Status_label->setText("Playback Stopped");
+            overlay_->ShowBlankOverlay();
+        }
         else if (state == ENUM_PLAYER_STATE::PAUSED)
             ui_.Status_label->setText("Playback Paused");
         else
@@ -1089,6 +1103,7 @@ void SpyderPlayerApp::PlaySelectedChannel(string channelName, string source)
 
     // Stop() resets player defaults and retries
     player_->Stop();
+    overlay_->ShowVideoPanel();
     player_->SetVideoSource(source);
     setWindowTitle("SPYDER Player - " + QSTR(channelName));
     player_->Play();
@@ -1100,6 +1115,8 @@ void SpyderPlayerApp::PlayPausePlayer()
 {
     ENUM_PLAYER_STATE state = player_->GetPlayerState();
 
+    PRINT << "PlayPausePlayer: " << QSTR(PlayerStateToString(state));
+
     if (state == ENUM_PLAYER_STATE::PLAYING)
     {
         player_->Pause();
@@ -1108,18 +1125,18 @@ void SpyderPlayerApp::PlayPausePlayer()
     else
     {
         // Check if video reached end, if so stop and restart at beginning
-        if (player_->GetPlayerState() == ENUM_PLAYER_STATE::ENDED)
+        if (state == ENUM_PLAYER_STATE::ENDED)
         {
             //videoPosition_ = 0;
             //player_->Stop();
             //player_->Play();
             PlaySelectedChannel(currentChannelName_, currentChannelSource_);
         }
-        else if (player_->GetPlayerState() == ENUM_PLAYER_STATE::STOPPED)
+        else if (state == ENUM_PLAYER_STATE::STOPPED)
         {
             PlaySelectedChannel(currentChannelName_, currentChannelSource_);
         }
-        else if (player_->GetPlayerState() == ENUM_PLAYER_STATE::PAUSED)
+        else if (state == ENUM_PLAYER_STATE::PAUSED || state == ENUM_PLAYER_STATE::LOADING)
         {
             player_->Play();
         }
@@ -1137,7 +1154,7 @@ void SpyderPlayerApp::StopPlayer()
     controlpanel_.ui_.VideoPosition_slider->setValue(0);
     controlpanelFS_.ui_.CurrentTime_label->setText("00:00:00");
     controlpanel_.ui_.CurrentTime_label->setText("00:00:00");
-    
+    overlay_->ShowBlankOverlay();
 }
 
 void SpyderPlayerApp::SeekForward()

@@ -25,13 +25,13 @@ public:
     void SetAppObject(QObject *app) { app_ = app; }
     void Resize(bool forceFullscreen = false);
     bool event(QEvent *event) override;
+    void ShowVideoPanel();
+    void ShowBlankOverlay();
 
+
+    QStackedWidget *overlayStack_;
     QWidget *videoPanel_;
-
-private:
-    Ui::Overlay ui_;
-    //QLabel *overlayLabel_;
-    //QWidget *videoPanel_;
+    QLabel *blankOverlay_;
     QObject *app_;
     bool showOverlay_ = false;
 };
