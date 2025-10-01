@@ -28,13 +28,20 @@ public:
     void ShowVideoPanel();
     void ShowBlankOverlay();
 
+    // New functions
+    void SetTitleText(const QString &text);
+    void SetTitleVisible(bool visible);
 
     QStackedWidget *overlayStack_;
     QWidget *videoPanel_;
     QLabel *blankOverlay_;
     QObject *app_;
     bool showOverlay_ = false;
-};
+    QLabel *titleLabel_;
+    bool titleVisible_ = false;
 
+//protected:
+    //void resizeEvent(QResizeEvent *event) override;
+};
 
 #endif

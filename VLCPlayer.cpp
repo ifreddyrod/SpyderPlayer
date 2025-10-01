@@ -207,6 +207,7 @@ void VLCPlayer::HandleVLCEvent(const libvlc_event_t* event, void* data)
 void VLCPlayer::UpdatePlayerStatus()
 {
     ENUM_PLAYER_STATE currentState = GetPlayerState();
+    int subtitleCount = 0;
     //PRINT << "--->UpdatePlayerStatus: " << QSTR(PlayerStateToString(currentState));
 
     if (isPositionSeeking_)
@@ -222,11 +223,14 @@ void VLCPlayer::UpdatePlayerStatus()
         inRecovery_ = false;
         stallretryCount_ = 0;
         position_ = libvlc_media_player_get_time(mediaPlayer_);
-        //if (position_ != lastPosition_)
-            //stalledVideoTimer_->start();
-
-        //position_ = libvlc_media_player_get_time(mediaPlayer_);
         UpdatePosition(position_);
+
+        subtitleCount = libvlc_video_get_spu_count(mediaPlayer_);
+        if (subtitleCount != subtitleCount_)
+        {
+            subtitleCount_ = subtitleCount;
+            EnableSubtitles(subtitleCount_ > 0);
+        }
         break;
     case ENUM_PLAYER_STATE::PAUSED:
         break;
@@ -370,6 +374,7 @@ void VLCPlayer::Play()
     retryCount_ = 0;
     duration_ = 0;
     position_ = 0;
+    subtitleCount_ = -1;
     previousState_ = ENUM_PLAYER_STATE::IDLE;
     currentState_ = ENUM_PLAYER_STATE::LOADING;
     stalledVideoTimer_->stop();
@@ -621,14 +626,27 @@ void VLCPlayer::ChangeUpdateTimerInterval(bool isFullScreen)
     ; //positionTimer_->setInterval(isFullScreen ? 100 : 250);
 }
 
-void VLCPlayer::UpdatePositionSlot()
+void VLCPlayer::SetVideoTitle(const QString& text)
 {
-    return;
-
-    if (currentState_ == ENUM_PLAYER_STATE::PLAYING) 
+    if (mediaPlayer_) 
     {
-        qint64 pos = GetPosition();
-        UpdatePosition(pos);
+        libvlc_video_set_marquee_string(mediaPlayer_, libvlc_marquee_Text, text.toUtf8().constData());
+        // Configure marquee appearance (only needed once or when changed)
+        libvlc_video_set_marquee_int(mediaPlayer_, libvlc_marquee_Enable, 0);
+        libvlc_video_set_marquee_int(mediaPlayer_, libvlc_marquee_Color, 0xFFFFFF); // White text
+        libvlc_video_set_marquee_int(mediaPlayer_, libvlc_marquee_Opacity, 255); // Fully opaque
+        libvlc_video_set_marquee_int(mediaPlayer_, libvlc_marquee_Position, 5); // Top-center (5 = top)
+        libvlc_video_set_marquee_int(mediaPlayer_, libvlc_marquee_Size, 24); // Font size
+        libvlc_video_set_marquee_int(mediaPlayer_, libvlc_marquee_X, videoPanel_->width()/2); // -1 means auto-center
+        libvlc_video_set_marquee_int(mediaPlayer_, libvlc_marquee_Y, 20); // Small offset from top (adjust as needed)
+    }
+}
+
+void VLCPlayer::SetVideoTitleVisible(bool visible)
+{
+    if (mediaPlayer_)
+    {
+        libvlc_video_set_marquee_int(mediaPlayer_, libvlc_marquee_Enable, visible ? 1 : 0);
     }
 }
 

@@ -40,13 +40,15 @@ public:
     void SetSubtitleTrack(int index) override;
     ENUM_PLAYER_STATE GetPlayerState() override;
     QString GetPlayerStatus() override;
+    void SetVideoTitle(const QString& text) override;
+    void SetVideoTitleVisible(bool visible) override;
 
     void OnChangingPosition(bool isPlaying) override;
     void OnChangedPosition(bool isPlaying) override;
     void ChangeUpdateTimerInterval(bool isFullScreen) override;
 
 private slots:
-    void UpdatePositionSlot();
+    //void UpdatePositionSlot();
     //void CheckTimeout();
     //void CheckPlaybackHealth();
     void StalledVideoDetected();

@@ -1,12 +1,7 @@
 #include "VideoOverlay.h"
 #include "SpyderPlayerApp.h"
 #include <QPixmap>
-
-
-#include "VideoOverlay.h"
-#include "SpyderPlayerApp.h"
-#include <QVBoxLayout> // Add this include for QVBoxLayout
-#include <QPixmap>
+#include <QVBoxLayout> // Already included
 
 VideoOverlay::VideoOverlay(QWidget *parent) : QWidget(parent)
 {
@@ -18,7 +13,7 @@ VideoOverlay::VideoOverlay(QWidget *parent) : QWidget(parent)
     layout->setSpacing(0); // No spacing
 
     videoPanel_ = new QWidget(this);
-    videoPanel_->setStyleSheet("background-color: black; border: none;"); // Optional: ensure consistent styling
+    videoPanel_->setStyleSheet("background-color: black; border: none;"); 
 
     blankOverlay_ = new QLabel(this);
     blankOverlay_->setStyleSheet("background-color: black; border: none;");
@@ -37,11 +32,24 @@ VideoOverlay::VideoOverlay(QWidget *parent) : QWidget(parent)
 
     setMouseTracking(true);
     installEventFilter(this);
-    overlayStack_->setCurrentIndex(0); 
+    overlayStack_->setCurrentIndex(0);
+
+    QScreen *screen = QApplication::primaryScreen();
+    QRect screenGeometry = screen->geometry();
+
+    titleLabel_ = new QLabel(this);
+    titleLabel_->setFixedSize(screenGeometry.width() , 70);
+    titleLabel_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    titleLabel_->setStyleSheet("background-color: transparent; color: white; font-size: 18px;"); 
+    titleLabel_->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter); 
+    titleLabel_->setAttribute(Qt::WA_TransparentForMouseEvents, true);
+    titleLabel_->raise(); 
+    titleLabel_->hide(); 
 }
 
 VideoOverlay::~VideoOverlay()
 {
+    delete titleLabel_; // New: Clean up the label
     delete videoPanel_;
     delete blankOverlay_;
     delete overlayStack_;
@@ -107,11 +115,13 @@ void VideoOverlay::Resize(bool forceFullscreen)
     //PRINT << "Coordinates: " << new_x << ", " << new_y;
     //PRINT << "Width: " << panelWidth << ", Height: " << panelHeight;
 
-    setFixedWidth(panelWidth);
-    setFixedHeight(panelHeight);  
-    
+    setFixedSize(panelWidth, panelHeight);  
+    titleLabel_->setFixedWidth(panelWidth-new_x);
+
     QPoint global_pos = panel->mapToGlobal(QPoint(new_x, new_y));
     move(global_pos);
+
+    //overlayStack_->setGeometry(0, 0, this->width(), this->height());
 }
 
 void VideoOverlay::ShowVideoPanel()
@@ -122,4 +132,22 @@ void VideoOverlay::ShowVideoPanel()
 void VideoOverlay::ShowBlankOverlay()
 {
     overlayStack_->setCurrentIndex(1);
+    // New: Always hide the title when showing blank
+    SetTitleVisible(false);
+}
+
+// New function: Set the title text
+void VideoOverlay::SetTitleText(const QString &text)
+{
+    titleLabel_->setText(text);
+}
+
+// New function: Toggle title visibility (only applies if video panel is shown)
+void VideoOverlay::SetTitleVisible(bool visible)
+{
+    titleVisible_ = visible;
+    if (overlayStack_->currentIndex() == 0) 
+    {
+        titleLabel_->setVisible(visible);
+    }
 }

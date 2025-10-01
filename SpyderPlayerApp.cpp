@@ -656,6 +656,8 @@ void SpyderPlayerApp::PlayerNormalScreen()
     ShowControlPanel();
     //overlay_->show();
     //##overlay_->hide();
+    overlay_->SetTitleVisible(false);
+    //player_->SetVideoTitleVisible(false);
     overlay_->Resize();
     //##overlay_->setFocus();
     //player_->GetVideoPanel()->activateWindow();
@@ -678,6 +680,8 @@ void SpyderPlayerApp::PlayerFullScreen()
     //ui_.Vertical_splitter->setFocus();
     //##overlay_->show();
     overlay_->Resize();
+    overlay_->SetTitleVisible(true);
+    //player_->SetVideoTitleVisible(true);
     //##overlay_->setFocus();
     //ShowControlPanel(true);
     //player_->GetVideoPanel()->setFocus();
@@ -765,28 +769,6 @@ void SpyderPlayerApp::TogglePlaylistView()
 
         // Force relayout
         overlay_->Resize();
-
-        //##overlay_->hide();
-        //##overlay_->Resize(true);
-        //##overlay_->setFocus();
-        // Simulate a resize event
-
-        /*if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::VLC)
-        {
-            QSize currentSize = size();
-            resize(currentSize.width() + 1, currentSize.height());  // Temporary increase
-            QTimer::singleShot(100, this, [this, currentSize]() {  // Restore original size after event loop
-                resize(currentSize);
-                if (isFullScreen_) PlayerFullScreen();
-            });
-        }*/
-
-        //setStyleSheet("background-color: transparent;");
-
-        //ui_.Horizontal_splitter->lower();
-        //player_->ChangeUpdateTimerInterval(isFullScreen_);
-        
-        //QApplication::processEvents(); 
     }
     else
     {
@@ -795,19 +777,13 @@ void SpyderPlayerApp::TogglePlaylistView()
         ui_.Horizontal_splitter->setHandleWidth(2);
 
         isPlaylistVisible_ = true;
-
-        //updateGeometry();
-        //ui_.Query_input->show();
-        //ui_.Search_button->show();
-        //setStyleSheet("background-color: black;");
         overlay_->Resize();
-        //##overlay_->setFocus();
-        
     }
 
     if (isFullScreen_)
     {
-        //overlay_->Resize(true);
+        overlay_->SetTitleVisible(true);
+        //player_->SetVideoTitleVisible(true);
         ShowControlPanel();
     }
 }
@@ -1023,7 +999,6 @@ void SpyderPlayerApp::SelectSubtitleTrack(QAction* menuItem)
 
 void SpyderPlayerApp::UserActivityDetected()
 {
-    // Add the implementation of this function here
     if (isFullScreen_ )
     {
         ShowCursorNormal();
@@ -1032,6 +1007,9 @@ void SpyderPlayerApp::UserActivityDetected()
             ShowControlPanel();
         else
             controlpanelFS_.show();
+
+        overlay_->SetTitleVisible(true);
+        //player_->SetVideoTitleVisible(true);
 
         //controlpanelFS_.activateWindow();
         //overlay_->activateWindow();
@@ -1044,10 +1022,13 @@ void SpyderPlayerApp::InactivityDetected()
     if (isFullScreen_ && !controlpanelFS_.hasFocus() && !subtitlesMenu_->isVisible())
     {
         controlpanelFS_.hide();
-        //##overlay_->activateWindow();
+        overlay_->SetTitleVisible(false);
+        //player_->SetVideoTitleVisible(false);
 
         if (!isPlaylistVisible_ && !settingsManager_->IsVisible())
+        {
             ShowCursorBlank();
+        }
     }
 }
 
@@ -1104,6 +1085,10 @@ void SpyderPlayerApp::PlaySelectedChannel(string channelName, string source)
     // Stop() resets player defaults and retries
     player_->Stop();
     overlay_->ShowVideoPanel();
+    overlay_->SetTitleText(QSTR(channelName));
+    overlay_->SetTitleVisible(isFullScreen_);
+    //player_->SetVideoTitle(QSTR(channelName));
+    //player_->SetVideoTitleVisible(isFullScreen_);    
     player_->SetVideoSource(source);
     setWindowTitle("SPYDER Player - " + QSTR(channelName));
     player_->Play();

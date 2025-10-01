@@ -50,6 +50,8 @@ public:
     virtual ENUM_PLAYER_STATE GetPlayerState() = 0;
     virtual QString GetPlayerStatus() = 0;
     QWidget* GetVideoPanel() { return videoWidget_; }
+    virtual void SetVideoTitle(const QString& text) = 0;
+    virtual void SetVideoTitleVisible(bool visible) = 0;
 
     signals:
     void SIGNAL_UpdatePosition(qint64 position);
