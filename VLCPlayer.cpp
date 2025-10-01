@@ -635,9 +635,11 @@ void VLCPlayer::SetVideoTitle(const QString& text)
         libvlc_video_set_marquee_int(mediaPlayer_, libvlc_marquee_Enable, 0);
         libvlc_video_set_marquee_int(mediaPlayer_, libvlc_marquee_Color, 0xFFFFFF); // White text
         libvlc_video_set_marquee_int(mediaPlayer_, libvlc_marquee_Opacity, 255); // Fully opaque
-        libvlc_video_set_marquee_int(mediaPlayer_, libvlc_marquee_Position, 5); // Top-center (5 = top)
-        libvlc_video_set_marquee_int(mediaPlayer_, libvlc_marquee_Size, 24); // Font size
-        libvlc_video_set_marquee_int(mediaPlayer_, libvlc_marquee_X, videoPanel_->width()/2); // -1 means auto-center
+        libvlc_video_set_marquee_int(mediaPlayer_, libvlc_marquee_Position, 4); // Top-center (5 = top)
+        int fontSize = videoPanel_->height() * 0.05; 
+        fontSize = qBound(12, fontSize, 36);
+        libvlc_video_set_marquee_int(mediaPlayer_, libvlc_marquee_Size, fontSize); 
+        //libvlc_video_set_marquee_int(mediaPlayer_, libvlc_marquee_X, videoPanel_->width()/2); // -1 means auto-center
         libvlc_video_set_marquee_int(mediaPlayer_, libvlc_marquee_Y, 20); // Small offset from top (adjust as needed)
     }
 }
@@ -646,6 +648,13 @@ void VLCPlayer::SetVideoTitleVisible(bool visible)
 {
     if (mediaPlayer_)
     {
+        int fontSize = videoPanel_->height() * 0.05; 
+        fontSize = qBound(12, fontSize, 36);
+        if (titleFontSize_ != fontSize)
+        {
+            libvlc_video_set_marquee_int(mediaPlayer_, libvlc_marquee_Size, fontSize); 
+            titleFontSize_ = fontSize;
+        }
         libvlc_video_set_marquee_int(mediaPlayer_, libvlc_marquee_Enable, visible ? 1 : 0);
     }
 }

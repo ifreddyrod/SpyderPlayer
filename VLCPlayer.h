@@ -91,6 +91,7 @@ private:
     qint64 stallPosition_ = -1;
     bool stopAll_ = false;
     int skipBackLength_ = 15000;
+    int titleFontSize_ = 18;
 };
 
 #endif // VLCPLAYER_H

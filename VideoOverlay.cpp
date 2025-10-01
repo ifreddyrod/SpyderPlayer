@@ -37,14 +37,14 @@ VideoOverlay::VideoOverlay(QWidget *parent) : QWidget(parent)
     QScreen *screen = QApplication::primaryScreen();
     QRect screenGeometry = screen->geometry();
 
-    titleLabel_ = new QLabel(this);
+    /*titleLabel_ = new QLabel(this);
     titleLabel_->setFixedSize(screenGeometry.width() , 70);
     titleLabel_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     titleLabel_->setStyleSheet("background-color: transparent; color: white; font-size: 18px;"); 
     titleLabel_->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter); 
     titleLabel_->setAttribute(Qt::WA_TransparentForMouseEvents, true);
     titleLabel_->raise(); 
-    titleLabel_->hide(); 
+    titleLabel_->hide(); */
 }
 
 VideoOverlay::~VideoOverlay()
@@ -116,7 +116,7 @@ void VideoOverlay::Resize(bool forceFullscreen)
     //PRINT << "Width: " << panelWidth << ", Height: " << panelHeight;
 
     setFixedSize(panelWidth, panelHeight);  
-    titleLabel_->setFixedWidth(panelWidth-new_x);
+    //titleLabel_->setFixedWidth(panelWidth-new_x);
 
     QPoint global_pos = panel->mapToGlobal(QPoint(new_x, new_y));
     move(global_pos);
@@ -133,18 +133,19 @@ void VideoOverlay::ShowBlankOverlay()
 {
     overlayStack_->setCurrentIndex(1);
     // New: Always hide the title when showing blank
-    SetTitleVisible(false);
+    //SetTitleVisible(false);
 }
 
 // New function: Set the title text
 void VideoOverlay::SetTitleText(const QString &text)
 {
-    titleLabel_->setText(text);
+    //titleLabel_->setText(text);
 }
 
 // New function: Toggle title visibility (only applies if video panel is shown)
 void VideoOverlay::SetTitleVisible(bool visible)
 {
+    return;
     titleVisible_ = visible;
     if (overlayStack_->currentIndex() == 0) 
     {
