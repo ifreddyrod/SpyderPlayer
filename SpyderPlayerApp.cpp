@@ -83,15 +83,6 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent, AppData *appData): QWidget(par
     ui_.Vertical_splitter->installEventFilter(this);
     isPlaylistVisible_ = true;
 
-    /*ui_.ShowControlPanel_top_label->installEventFilter(this);
-    ui_.ShowControlPanel_top_label->setMouseTracking(true);
-    ui_.ShowControlPanel_bottom_label->installEventFilter(this);
-    ui_.ShowControlPanel_bottom_label->setMouseTracking(true);
-    ui_.ShowControlPanel_right_label->installEventFilter(this);
-    ui_.ShowControlPanel_right_label->setMouseTracking(true);
-    ui_.ShowControlPanel_left_label->installEventFilter(this);
-    ui_.ShowControlPanel_left_label->setMouseTracking(true);*/
-
     //-----------------------------
     // Setup Video Overlay
     //-----------------------------
@@ -244,8 +235,15 @@ SpyderPlayerApp::~SpyderPlayerApp()
     delete playbackStatusTimer_;
     delete stalledVideoTimer_;
     delete appData_;
-    delete overlay_;
     delete player_;
+    delete overlay_;
+}
+
+void SpyderPlayerApp::closeEvent(QCloseEvent *event) 
+{
+    PRINT << "SpyderPlayerApp closeEvent received";
+    player_->Stop(); // Ensure VLC playback is stopped
+    event->accept(); // Allow closing
 }
 
 //***********************************************************************************
@@ -694,7 +692,7 @@ void SpyderPlayerApp::PlayerFullScreen()
     //player_->GetVideoPanel()->setFocus();
 
     // Delay showing control panel
-    QTimer::singleShot(200, this, [this]() { ShowControlPanel(true); });
+    QTimer::singleShot(200, this, [this]() { ShowControlPanel(); });
 
     //if (platform_ == "Linux")
         // Initial postion is off when going to fullscreen in linux, so just hide it initially
@@ -716,6 +714,8 @@ void SpyderPlayerApp::PlayerMinimized()
 
 void SpyderPlayerApp::ShowControlPanel(bool initial)
 {
+    Q_UNUSED(initial);
+    
     int panel_width = controlpanelFS_.width();
     int panel_height = controlpanelFS_.height();
     
@@ -752,9 +752,9 @@ void SpyderPlayerApp::ShowControlPanel(bool initial)
     
     if (isFullScreen_)
     {
-        if (initial && platform_ == "Linux")
+        /*if (initial && platform_ == "Linux")
             controlpanelFS_.hide();
-        else
+        else*/
             controlpanelFS_.show();
     }
     else

@@ -137,6 +137,8 @@ private:
     void ShowCursorBusy();
     void ShowCursorBlank();
 
+protected:
+    void closeEvent(QCloseEvent *event) override;
 };
 
 

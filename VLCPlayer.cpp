@@ -43,24 +43,68 @@ VLCPlayer::VLCPlayer(Ui::PlayerMainWindow* mainWindow, QWidget* parent)
 
 VLCPlayer::~VLCPlayer()
 {
+    qDebug() << "VLCPlayer destructor called";
+
+    // Stop timers first to prevent pending events
+    if (updateTimer_) 
+    {
+        updateTimer_->stop();
+        delete updateTimer_;
+        updateTimer_ = nullptr;
+    }
+    if (stalledVideoTimer_) 
+    {
+        stalledVideoTimer_->stop();
+        delete stalledVideoTimer_;
+        stalledVideoTimer_ = nullptr;
+    }
+
+    // Stop playback and release VLC resources
     if (mediaPlayer_) 
     {
-        libvlc_media_player_stop(mediaPlayer_);
+        // Detach all events to prevent callbacks
+        if (eventManager_) 
+        {
+            libvlc_event_detach(eventManager_, libvlc_MediaPlayerPlaying, HandleVLCEvent, this);
+            libvlc_event_detach(eventManager_, libvlc_MediaPlayerPaused, HandleVLCEvent, this);
+            libvlc_event_detach(eventManager_, libvlc_MediaPlayerStopped, HandleVLCEvent, this);
+            libvlc_event_detach(eventManager_, libvlc_MediaPlayerEndReached, HandleVLCEvent, this);
+            libvlc_event_detach(eventManager_, libvlc_MediaPlayerEncounteredError, HandleVLCEvent, this);
+            libvlc_event_detach(eventManager_, libvlc_MediaPlayerBuffering, HandleVLCEvent, this);
+            libvlc_event_detach(eventManager_, libvlc_MediaPlayerLengthChanged, HandleVLCEvent, this);
+            libvlc_event_detach(eventManager_, libvlc_MediaPlayerTimeChanged, HandleVLCEvent, this);
+            eventManager_ = nullptr;
+        }
+
+        // Stop playback if not already stopped
+        try 
+        {
+            if (libvlc_media_player_is_playing(mediaPlayer_)) {
+                libvlc_media_player_stop(mediaPlayer_);
+        }
+        } catch (const std::exception& e)
+        {
+            qDebug() << "Error stopping media player in destructor: " << e.what();
+        }
+
+        // Release media player
         libvlc_media_player_release(mediaPlayer_);
+        mediaPlayer_ = nullptr;
     }
+
+    // Release media
     if (media_) 
     {
         libvlc_media_release(media_);
+        media_ = nullptr;
     }
+
+    // Release VLC instance
     if (vlcInstance_) 
     {
         libvlc_release(vlcInstance_);
+        vlcInstance_ = nullptr;
     }
-    delete updateTimer_;
-    //delete positionTimer_;
-    //delete watchdogTimer_;
-    //delete timeoutTimer_;
-    delete stalledVideoTimer_;
 }
 
 void VLCPlayer::InitPlayer(void *args)
