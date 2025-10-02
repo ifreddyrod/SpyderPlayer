@@ -93,6 +93,7 @@ private:
 
     // Event Overrides
     //bool eventFilter(QObject *object, QEvent *event) override;
+    //void mouseMoveEvent(QMouseEvent *event) override;
 
 
     // Private Member Variables

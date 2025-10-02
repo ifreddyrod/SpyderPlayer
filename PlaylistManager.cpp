@@ -116,8 +116,6 @@ void TreeItem::SetItemSelected(bool isSelected)
 //************************************************************************************************
 PlaylistManager::PlaylistManager(QTreeWidget* playlistTreefromUI, AppData* appData, QWidget *parent)
 {
-    Q_UNUSED(parent);
-
     playlistTree_ = playlistTreefromUI;
     appData_ = appData;
     networkManager_ = new QNetworkAccessManager(this);
@@ -127,6 +125,11 @@ PlaylistManager::PlaylistManager(QTreeWidget* playlistTreefromUI, AppData* appDa
     //--------------------------------
     playlistTree_->setColumnCount(1);
     playlistTree_->setStyleSheet(LoadStyleSheet());
+    playlistTree_->setMouseTracking(true);
+    playlistTree_->viewport()->setMouseTracking(true);  
+    playlistTree_->viewport()->installEventFilter(parent);
+    playlistTree_->installEventFilter(this);
+
     setMouseTracking(true);
     lower();
 
@@ -135,7 +138,6 @@ PlaylistManager::PlaylistManager(QTreeWidget* playlistTreefromUI, AppData* appDa
     //--------------------------------
     // Connect Event Handlers
     //--------------------------------
-    playlistTree_->installEventFilter(this);
     connect(playlistTree_, &QTreeWidget::itemClicked, this, &PlaylistManager::ItemClicked);
     connect(playlistTree_, &QTreeWidget::itemDoubleClicked, this, &PlaylistManager::ItemDoubleClicked);
     connect(playlistTree_, &QTreeWidget::itemChanged, this, &PlaylistManager::AddRemoveFavorites);
@@ -746,7 +748,6 @@ void PlaylistManager::AddRemoveFavorites(QTreeWidgetItem* item) // Triggered whe
 
         playlistTree_->blockSignals(false);
         EmitTreeLayoutChanged();
-
     }
 }
 

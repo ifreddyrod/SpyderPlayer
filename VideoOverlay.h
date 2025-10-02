@@ -8,6 +8,18 @@
 #include <QLabel>
 #include <QApplication>
 #include <QScreen>
+#include <QStackedWidget>
+
+class TitleBar: public QWidget
+{
+    Q_OBJECT
+
+public:
+    TitleBar(QWidget *parent = nullptr);
+
+    Ui::Overlay ui_;
+};
+
 
 class VideoOverlay : public QWidget
 {
@@ -22,7 +34,7 @@ public:
     void Hide();
     void Minimize();
     void Restore();
-    void SetAppObject(QObject *app) { app_ = app; }
+    void SetAppObject(QObject *app);
     void Resize(bool forceFullscreen = false);
     bool event(QEvent *event) override;
     void ShowVideoPanel();
@@ -37,6 +49,7 @@ public:
     QLabel *blankOverlay_;
     QObject *app_;
     bool showOverlay_ = false;
+    TitleBar *titleBar_;
     QLabel *titleLabel_;
     bool titleVisible_ = false;
 };
