@@ -116,6 +116,8 @@ void TreeItem::SetItemSelected(bool isSelected)
 //************************************************************************************************
 PlaylistManager::PlaylistManager(QTreeWidget* playlistTreefromUI, AppData* appData, QWidget *parent)
 {
+    Q_UNUSED(parent);
+
     playlistTree_ = playlistTreefromUI;
     appData_ = appData;
     networkManager_ = new QNetworkAccessManager(this);

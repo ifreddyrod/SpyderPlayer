@@ -2,10 +2,10 @@
 
 DraggableWidget::DraggableWidget(QWidget *parent)
     : QWidget(parent)
-    , mousePressPos_()
-    , mouseMoveActive_(false)
     , resizeEdge_(ResizeEdge::None)
     , isResizing_(false)
+    , mousePressPos_()
+    , mouseMoveActive_(false)
 {
 }
 
@@ -158,6 +158,8 @@ void DraggableWidget::updateResizing(QMouseEvent *event)
 
 void DraggableWidget::stopResizing(QMouseEvent *event)
 {
+    Q_UNUSED(event);
+
     isResizing_ = false;
     resizeEdge_ = ResizeEdge::None;
 }

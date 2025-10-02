@@ -222,6 +222,8 @@ void ListEditor::UnSelectRows()
 
 void ListEditor::RowSelected(int row, int col)
 {
+    Q_UNUSED(col);
+
     if (row >= 0)
     {
         ui_.Edit_button->setEnabled(true);

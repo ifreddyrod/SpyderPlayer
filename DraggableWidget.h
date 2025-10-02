@@ -33,7 +33,7 @@ protected:
 
 private:
     QPoint mousePressPos_;
-    bool mouseMoveActive_;
+    bool mouseMoveActive_ = false;
 };
 
 #endif // DRAGGABLEWIDGET_H

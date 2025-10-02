@@ -58,9 +58,9 @@ public:
     void OnChangingPosition(bool isPlaying) override;
     void OnChangedPosition(bool isPlaying) override;
     void ChangeUpdateTimerInterval(bool isFullScreen) override;
-    void HandleError(QMediaPlayer::Error error, const QString &errorString); 
-    void SetVideoTitle(const QString& text) override {;}
-    void SetVideoTitleVisible(bool visible) override {;}
+    void HandleError(QMediaPlayer::Error error, const QString &errorString);
+    void SetVideoTitle(const QString& text) override {Q_UNUSED(text);}
+    void SetVideoTitleVisible(bool visible) override {Q_UNUSED(visible);}
     void CheckTimeout();
     void CheckPlaybackHealth();
     void StartWatchdog();

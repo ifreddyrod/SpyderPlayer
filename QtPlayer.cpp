@@ -50,6 +50,7 @@ QtPlayer::~QtPlayer()
 
 void QtPlayer::InitPlayer(void *args)
 {
+    Q_UNUSED(args);
     SetupPlayer();
     videoWidget_ = static_cast<QWidget*>(videoPanel_);
     timeoutTimer_ = new QTimer(this);
@@ -804,6 +805,7 @@ void QtPlayer::OnChangedPosition(bool isPlaying)
 
 void QtPlayer::ChangeUpdateTimerInterval(bool isFullScreen)
 {
+    Q_UNUSED(isFullScreen);
 }
 
 void QtPlayer::CheckTimeout()

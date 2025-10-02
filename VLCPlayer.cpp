@@ -623,6 +623,7 @@ void VLCPlayer::OnChangedPosition(bool isPlaying)
 
 void VLCPlayer::ChangeUpdateTimerInterval(bool isFullScreen)
 {
+    Q_UNUSED(isFullScreen);
     ; //positionTimer_->setInterval(isFullScreen ? 100 : 250);
 }
 
@@ -636,8 +637,9 @@ void VLCPlayer::SetVideoTitle(const QString& text)
         libvlc_video_set_marquee_int(mediaPlayer_, libvlc_marquee_Color, 0xFFFFFF); // White text
         libvlc_video_set_marquee_int(mediaPlayer_, libvlc_marquee_Opacity, 255); // Fully opaque
         libvlc_video_set_marquee_int(mediaPlayer_, libvlc_marquee_Position, 4); // Top-center (5 = top)
-        int fontSize = videoPanel_->height() * 0.05; 
-        fontSize = qBound(12, fontSize, 36);
+        int fontSize = 12; //videoPanel_->height() * 0.03; 
+        //PRINT << ">>>>>>>>Panel Size = " << videoPanel_->height() << " fontSize = " << fontSize;
+        //fontSize = qBound(18, fontSize, 30);
         libvlc_video_set_marquee_int(mediaPlayer_, libvlc_marquee_Size, fontSize); 
         //libvlc_video_set_marquee_int(mediaPlayer_, libvlc_marquee_X, videoPanel_->width()/2); // -1 means auto-center
         libvlc_video_set_marquee_int(mediaPlayer_, libvlc_marquee_Y, 20); // Small offset from top (adjust as needed)
@@ -648,8 +650,17 @@ void VLCPlayer::SetVideoTitleVisible(bool visible)
 {
     if (mediaPlayer_)
     {
-        int fontSize = videoPanel_->height() * 0.05; 
-        fontSize = qBound(12, fontSize, 36);
+        int fontSize = 20;  //videoPanel_->height() * 0.03; 
+        //PRINT << ">>>>>>>>>Panel Size = " << videoPanel_->height() << " fontSize = " << fontSize;
+        //fontSize = qBound(12, fontSize, 36);
+        unsigned width = 0, height = 0;
+        if (libvlc_video_get_size(mediaPlayer_, 0, &width, &height) == 0) 
+        {
+            fontSize = width * 0.05;
+            //fontSize = qBound(18, fontSize, 30);
+            //PRINT << ">>>>>>>>> Res Size = " <<  width << " fontSize = " << fontSize;
+        }
+
         if (titleFontSize_ != fontSize)
         {
             libvlc_video_set_marquee_int(mediaPlayer_, libvlc_marquee_Size, fontSize); 

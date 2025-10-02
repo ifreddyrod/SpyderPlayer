@@ -39,9 +39,6 @@ public:
     bool showOverlay_ = false;
     QLabel *titleLabel_;
     bool titleVisible_ = false;
-
-//protected:
-    //void resizeEvent(QResizeEvent *event) override;
 };
 
 #endif
