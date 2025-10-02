@@ -6,8 +6,8 @@
 #include "Global.h"
 #include "AppData.h"
 
-SpyderPlayerApp* spyderPlayer;
-AppData* appData;
+SpyderPlayerApp *spyderPlayer;
+AppData *appData;
 
 int main(int argc, char *argv[])
 {
@@ -58,5 +58,7 @@ int main(int argc, char *argv[])
     spyderPlayer->show();
     spyderPlayer->OnHSplitterResized(0, 0);
 
-    return app.exec();
+    int appReturn = app.exec();
+
+    return appReturn;
 }

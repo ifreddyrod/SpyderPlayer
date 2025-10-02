@@ -8,6 +8,8 @@
 // Constructor
 SpyderPlayerApp::SpyderPlayerApp(QWidget *parent, AppData *appData): QWidget(parent), appData_(appData)
 {
+    setAttribute(Qt::WA_DeleteOnClose);
+    
     version_ =  APP_VERSION;
     //const string appdataFilename = "appdata.json";
 
@@ -235,10 +237,15 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent, AppData *appData): QWidget(par
 SpyderPlayerApp::~SpyderPlayerApp()
 {
     screensaverInhibitor_->uninhibit();
-    delete appData_;
     delete playlistManager_;
-    delete player_;
     delete screensaverInhibitor_;
+    delete settingsManager_;
+    delete inactivityTimer_;
+    delete playbackStatusTimer_;
+    delete stalledVideoTimer_;
+    delete appData_;
+    delete overlay_;
+    delete player_;
 }
 
 //***********************************************************************************

@@ -56,7 +56,6 @@ VLCPlayer::~VLCPlayer()
     {
         libvlc_release(vlcInstance_);
     }
-    delete videoPanel_;
     delete updateTimer_;
     //delete positionTimer_;
     //delete watchdogTimer_;
@@ -69,19 +68,9 @@ void VLCPlayer::InitPlayer(void *args)
     videoPanel_ = static_cast<QWidget*>(args);
     
     SetupPlayer();
+    videoPanel_->setMouseTracking(true);
+    videoPanel_->installEventFilter(app_);
     videoWidget_ = videoPanel_;
-    //timeoutTimer_ = new QTimer(this);
-    //connect(timeoutTimer_, &QTimer::timeout, this, &VLCPlayer::CheckTimeout);
-
-    //positionTimer_ = new QTimer(this);
-    //connect(positionTimer_, &QTimer::timeout, this, &VLCPlayer::UpdatePositionSlot);
-    //positionTimer_->start(250);  // Update position every 250ms
-
-    //videoPanel_->setAttribute(Qt::WA_OpaquePaintEvent, true);
-    //videoPanel_->setStyleSheet("color: black;");
-    //videoPanel_->setAttribute(Qt::WA_NoSystemBackground, true);
-    //videoPanel_->setUpdatesEnabled(false);
-
 }
 
 void VLCPlayer::SetupPlayer()

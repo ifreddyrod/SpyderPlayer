@@ -59,10 +59,7 @@ VideoOverlay::VideoOverlay(QWidget *parent) : QWidget(parent)
 
 VideoOverlay::~VideoOverlay()
 {
-    delete titleLabel_;
     delete titleBar_;
-    delete videoPanel_;
-    delete blankOverlay_;
     delete overlayStack_;
 }
 

@@ -53,19 +53,7 @@ SettingsManager::SettingsManager(AppData* appData)
 
 SettingsManager::~SettingsManager()
 {
-    delete mainScreen_;
-    delete about_;
-    delete appSettings_;
-    delete hotKeySettings_;
     delete settingsStack_;
-    delete openFile_;
-    delete openPlayList_;
-    delete playlistEditor_;
-    delete libraryEditor_;
-    delete favoritesEditor_;
-    delete playlistEntry_;
-    delete libraryEntry_;
-    delete favoritesEntry_;
 }
 
 void SettingsManager::HideSettingsScreen()
