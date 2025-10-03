@@ -121,32 +121,18 @@ void VLCPlayer::SetupPlayer()
 {
     try {
         // VLC initialization arguments
-    #if defined(Q_OS_LINUX)
         const char* const vlc_args[] = 
         {
             "--verbose=2",  
             //"--no-xlib",    // Disable Xlib for better compatibility
-            "--network-caching=1000",  
-            "--file-caching=1000",
-            "--live-caching=1000",
+            "--network-caching=1500",  
+            "--file-caching=1250",
+            "--live-caching=1250",
             "--drop-late-frames",
             "--skip-frames",
             "--sout-keep",
-            "--aout=pulse"
+            "--clock-jitter=1000",
         };
-    #else
-        const char* const vlc_args[] = 
-        {
-            "--verbose=2",  
-            //"--no-xlib",    // Disable Xlib for better compatibility
-            "--network-caching=1000",  
-            "--file-caching=1000",
-            "--live-caching=1000",
-            "--drop-late-frames",
-            "--skip-frames",
-            "--sout-keep",
-        };
-    #endif
 
         vlcInstance_ = libvlc_new(sizeof(vlc_args) / sizeof(vlc_args[0]), vlc_args);
         if (!vlcInstance_) 

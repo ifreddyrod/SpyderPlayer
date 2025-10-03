@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
     if (GetPlatform() == "Darwin")
     {
         qputenv("VLC_PLUGIN_PATH", "/Applications/VLC.app/Contents/MacOS/plugins");
-        //qputenv("VLC_PLUGIN_PATH", "/Applications/SpyderPlayer.app/Contents/Frameworks");
+        //qputenv("VLC_PLUGIN_PATH", "/Applications/SpyderPlayer.app/Contents/Frameworks/vlc/plugins");
     }
     else if (GetPlatform() == "Linux")
     {

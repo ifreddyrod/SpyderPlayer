@@ -81,6 +81,7 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent, AppData *appData): QWidget(par
     ui_.Vertical_splitter->setSizes({800, 1});
     ui_.Horizontal_splitter->installEventFilter(this);
     ui_.Vertical_splitter->installEventFilter(this);
+    ui_.Vertical_splitter->setHandleWidth(0);
     isPlaylistVisible_ = true;
 
     //-----------------------------
@@ -165,13 +166,6 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent, AppData *appData): QWidget(par
     controlpanel_.ui_.CloseCaption_button->setEnabled(false);
     controlpanelFS_.ui_.CloseCaption_button->setEnabled(false);
 
-    // Connect Player Signals
-    /*connect(player_, &VideoPlayer::SIGNAL_UpdatePosition, this, &SpyderPlayerApp::PlayerPositionChanged);
-    connect(player_, &VideoPlayer::SIGNAL_ErrorOccured, this, &SpyderPlayerApp::PlayerErrorOccured);
-    connect(player_, &VideoPlayer::SIGNAL_PlayerStateChanged, this, &SpyderPlayerApp::PlaybackStateChanged);
-    connect(player_, &VideoPlayer::SIGNAL_EnableSubtitles, this, &SpyderPlayerApp::EnableSubtitles);
-    player_->SetVolume(100);*/
-
     // Connect Settings Signals
     connect(settingsManager_, &SettingsManager::SIGNAL_ReLoadAllPlayLists, this, &SpyderPlayerApp::InitializePlayLists);
     connect(settingsManager_, &SettingsManager::SIGNAL_LoadPlayList, this, &SpyderPlayerApp::LoadSessionPlaylist);
@@ -219,7 +213,7 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent, AppData *appData): QWidget(par
     InitializePlayLists();
 
     //ui_.Status_label->setText("Player: " + QSTR(PlayerTypeToString(appData_->PlayerType_)));
-    ui_.Status_label->setText("Player Ready ... ");
+    //ui_.Status_label->setText("Player Ready ... ");
 
     installEventFilter(this);
 }
@@ -242,6 +236,7 @@ SpyderPlayerApp::~SpyderPlayerApp()
 void SpyderPlayerApp::closeEvent(QCloseEvent *event) 
 {
     PRINT << "SpyderPlayerApp closeEvent received";
+    overlay_->hide();
     player_->Stop(); // Ensure VLC playback is stopped
     event->accept(); // Allow closing
 }
@@ -309,13 +304,12 @@ void SpyderPlayerApp::InitializePlayLists()
 
 void SpyderPlayerApp::InitPlayer()
 {
-    // Only 1 Player Type available at this time
-    //player_ = new QtPlayer(&ui_, this);
-
+    QString playerName = "";
     
     if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::QTMEDIA)
     {
         player_ = new QtPlayer(&ui_, this);
+        playerName = "QtMedia Player";
     }
     /*else if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::FFMPEG)
     {
@@ -334,19 +328,29 @@ void SpyderPlayerApp::InitPlayer()
         overlay_->Resize();        
         player_->InitPlayer(overlay_->videoPanel_);
         overlay_->ShowBlankOverlay();
-
+        playerName = "VLC Player";
     }
 
-    // Connect Playback Signals
-    connect(player_, &VideoPlayer::SIGNAL_UpdatePosition, this, &SpyderPlayerApp::PlayerPositionChanged);
-    connect(player_, &VideoPlayer::SIGNAL_ErrorOccured, this, &SpyderPlayerApp::PlayerErrorOccured);
-    connect(player_, &VideoPlayer::SIGNAL_PlayerStateChanged, this, &SpyderPlayerApp::PlaybackStateChanged);
-    connect(player_, &VideoPlayer::SIGNAL_EnableSubtitles, this, &SpyderPlayerApp::EnableSubtitles);  
+    if(player_ != nullptr)
+    {
+        // Connect Playback Signals
+        connect(player_, &VideoPlayer::SIGNAL_UpdatePosition, this, &SpyderPlayerApp::PlayerPositionChanged);
+        connect(player_, &VideoPlayer::SIGNAL_ErrorOccured, this, &SpyderPlayerApp::PlayerErrorOccured);
+        connect(player_, &VideoPlayer::SIGNAL_PlayerStateChanged, this, &SpyderPlayerApp::PlaybackStateChanged);
+        connect(player_, &VideoPlayer::SIGNAL_EnableSubtitles, this, &SpyderPlayerApp::EnableSubtitles);  
 
-    // Connect Volume Signals
-    controlpanel_.ui_.Volume_slider->setValue(100);
-    controlpanelFS_.ui_.Volume_slider->setValue(100); 
-    player_->SetVolume(100);
+        // Connect Volume Signals
+        controlpanel_.ui_.Volume_slider->setValue(100);
+        controlpanelFS_.ui_.Volume_slider->setValue(100); 
+        player_->SetVolume(100);
+
+        ui_.Status_label->setText(playerName + " Ready ...");
+    }
+    else
+    {
+        PRINT << "Failed to initialize Player";
+        ui_.Status_label->setText("Failed to initialize Player");
+    }
 }
 
 void SpyderPlayerApp::ShowSplashScreenMsg(QString msg)
@@ -648,10 +652,12 @@ void SpyderPlayerApp::resizeEvent(QResizeEvent *event)
 void SpyderPlayerApp::PlayerNormalScreen()
 {
     controlpanelFS_.hide();
+    overlay_->SetTitleVisible(false);
     setWindowState(Qt::WindowState::WindowNoState);
     ui_.Horizontal_splitter->setSizes({450, 1000});  // Restore left side
     ui_.Vertical_splitter->setSizes({800, 1});
     ui_.Horizontal_splitter->setHandleWidth(2);
+    ui_.Vertical_splitter->setHandleWidth(0);
     player_->GetVideoPanel()->showNormal();  
     player_->ChangeUpdateTimerInterval(false);
     isPlaylistVisible_ = true;
@@ -661,7 +667,7 @@ void SpyderPlayerApp::PlayerNormalScreen()
     ShowControlPanel();
     //overlay_->show();
     //##overlay_->hide();
-    overlay_->SetTitleVisible(false);
+
     overlay_->Resize();
     //player_->SetVideoTitleVisible(false);
     //##overlay_->setFocus();
@@ -685,7 +691,7 @@ void SpyderPlayerApp::PlayerFullScreen()
     //ui_.Vertical_splitter->setFocus();
     //##overlay_->show();
     overlay_->Resize();
-    overlay_->SetTitleVisible(true);
+    //overlay_->SetTitleVisible(true);
     //player_->SetVideoTitleVisible(true);
     //##overlay_->setFocus();
     //ShowControlPanel(true);
@@ -693,6 +699,7 @@ void SpyderPlayerApp::PlayerFullScreen()
 
     // Delay showing control panel
     QTimer::singleShot(200, this, [this]() { ShowControlPanel(); });
+    QTimer::singleShot(200, this, [this]() { overlay_->SetTitleVisible(true); });
 
     //if (platform_ == "Linux")
         // Initial postion is off when going to fullscreen in linux, so just hide it initially

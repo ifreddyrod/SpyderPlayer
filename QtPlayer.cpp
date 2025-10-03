@@ -183,39 +183,6 @@ void QtPlayer::Play()
 
 void QtPlayer::PlaySource()
 {
-/*    try 
-    {
-        // Paused then Resume Playback
-        if (currentState_ == ENUM_PLAYER_STATE::PAUSED)
-        {
-            ResetAudioOutput();
-            audioOutput_->setMuted(false);
-            player_->play();
-            timeoutTimer_->start(30000);
-            retryCount_ = 0;
-            stallretryCount_ = 0;
-            audioOutput_->setMuted(isMuted_);
-            return;
-        }
-        else if (retryCount_ <= MAX_RETRIES)
-        {
-            audioOutput_->setMuted(isMuted_);
-            //PRINT << "Play: " << source_ << " Retry: " << retryCount_;
-            player_->setSource(QUrl(QString::fromStdString(source_)));
-            player_->play();
-            return;
-        }
-        else
-            return;
-    }
-    catch (exception& e)
-    {
-        PRINT << "Play error: " << e.what();
-        ErrorOccured(std::string(e.what()));
-        return;
-    }*/
-    
-    ////////
     if (stopAll_)
     {
         inRecovery_ = false;
