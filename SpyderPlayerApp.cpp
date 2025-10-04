@@ -668,7 +668,8 @@ void SpyderPlayerApp::PlayerNormalScreen()
     //overlay_->show();
     //##overlay_->hide();
 
-    overlay_->Resize();
+    //overlay_->Resize();
+    QTimer::singleShot(200, this, [this]() { overlay_->Resize();});
     //player_->SetVideoTitleVisible(false);
     //##overlay_->setFocus();
     //player_->GetVideoPanel()->activateWindow();
@@ -684,13 +685,13 @@ void SpyderPlayerApp::PlayerFullScreen()
     isPlaylistVisible_ = false;
     setWindowState(Qt::WindowState::WindowFullScreen);
     isFullScreen_ = true;
-    player_->GetVideoPanel()->showFullScreen();
     player_->ChangeUpdateTimerInterval(true);
     ui_.Horizontal_splitter->setHandleWidth(0);
     ui_.Vertical_splitter->setHandleWidth(0);
+    player_->GetVideoPanel()->showFullScreen();
     //ui_.Vertical_splitter->setFocus();
     //##overlay_->show();
-    overlay_->Resize();
+    
     //overlay_->SetTitleVisible(true);
     //player_->SetVideoTitleVisible(true);
     //##overlay_->setFocus();
@@ -698,8 +699,9 @@ void SpyderPlayerApp::PlayerFullScreen()
     //player_->GetVideoPanel()->setFocus();
 
     // Delay showing control panel
-    QTimer::singleShot(200, this, [this]() { ShowControlPanel(); });
-    QTimer::singleShot(200, this, [this]() { overlay_->SetTitleVisible(true); });
+    QTimer::singleShot(200, this, [this]() { overlay_->Resize(true);});
+    QTimer::singleShot(210, this, [this]() { ShowControlPanel(); });
+    QTimer::singleShot(220, this, [this]() { overlay_->SetTitleVisible(true); });
 
     //if (platform_ == "Linux")
         // Initial postion is off when going to fullscreen in linux, so just hide it initially
@@ -1101,13 +1103,13 @@ void SpyderPlayerApp::PlaySelectedChannel(string channelName, string source)
 
     // Stop() resets player defaults and retries
     player_->Stop();
-    overlay_->ShowVideoPanel();
     overlay_->SetTitleText(QSTR(channelName));
     overlay_->SetTitleVisible(isFullScreen_);
     //player_->SetVideoTitle(QSTR(channelName));
     //player_->SetVideoTitleVisible(isFullScreen_);    
     player_->SetVideoSource(source);
     setWindowTitle("SPYDER Player - " + QSTR(channelName));
+    overlay_->ShowVideoPanel();
     player_->Play();
     player_->GetVideoPanel()->setFocus();
     //player_->SetVideoTitleVisible(isFullScreen_);  
@@ -1371,7 +1373,7 @@ void SpyderPlayerApp::ShowCursorBlank()
 
 int SpyderPlayerApp::GetVideoPanelWidth()
 {
-    if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::VLC)
+   if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::VLC)
         return ui_.VideoView_widget->width(); 
     else
         return player_->GetVideoPanel()->width();

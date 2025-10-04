@@ -14,7 +14,7 @@ VLCPlayer::VLCPlayer(Ui::PlayerMainWindow* mainWindow, QWidget* parent)
 {
     mainWindow_ = mainWindow;
     app_ = static_cast<SpyderPlayerApp*>(parent);
-    //videoPanel_ = mainWindow->VideoView_widget; //new QWidget(mainWindow->VideoView_widget->parentWidget());
+    videoWidget_ = mainWindow->VideoView_widget; //new QWidget(mainWindow->VideoView_widget->parentWidget());
 
     subtitleCount_ = -1;
     subtitleIndex_ = -1;

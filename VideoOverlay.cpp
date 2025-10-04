@@ -115,13 +115,13 @@ void VideoOverlay::Resize(bool forceFullscreen)
 
     SpyderPlayerApp *spyderPlayerApp = (SpyderPlayerApp *)app_; 
 
-    QScreen *screen = QApplication::primaryScreen();  // Get primary screen
-    QRect screenGeometry = screen->geometry();  // Get screen geometry
-    int screenWidth = screenGeometry.size().width(); 
+    //QScreen *screen = QApplication::primaryScreen();  // Get primary screen
+    //QRect screenGeometry = screen->geometry();  // Get screen geometry
+    //int screenWidth = screenGeometry.size().width(); 
 
     QWidget *panel = spyderPlayerApp->GetVideoPanelWidget();
 
-    int panelWidth = forceFullscreen ? screenWidth: spyderPlayerApp->GetVideoPanelWidth();
+    int panelWidth = spyderPlayerApp->GetVideoPanelWidth();
     int panelHeight = spyderPlayerApp->GetVideoPanelHeight();
     int new_x =  panel->x();
     int new_y =  panel->y();
@@ -130,6 +130,8 @@ void VideoOverlay::Resize(bool forceFullscreen)
     //PRINT << "Width: " << panelWidth << ", Height: " << panelHeight;
 
     setFixedSize(panelWidth, panelHeight);  
+    if (forceFullscreen) videoPanel_->showFullScreen();
+    
     titleBar_->setFixedWidth(panelWidth); 
 
     QPoint global_pos = panel->mapToGlobal(QPoint(new_x, new_y));
