@@ -9,6 +9,7 @@
 #include <QApplication>
 #include <QScreen>
 #include <QStackedWidget>
+#include <QVideoWidget>
 
 class TitleBar: public QWidget
 {
@@ -26,7 +27,9 @@ class VideoOverlay : public QWidget
     Q_OBJECT
 
 public:
-    VideoOverlay(QWidget *parent = nullptr);
+    enum class VideoPanelType { QWidget = 1, QVideoPanel = 2 };
+
+    VideoOverlay(QWidget *parent = nullptr, VideoPanelType panelType = VideoPanelType::QWidget);
     ~VideoOverlay();
 
     void SetOverlayVisible(bool visible) { showOverlay_ = visible; }
@@ -39,13 +42,14 @@ public:
     bool event(QEvent *event) override;
     void ShowVideoPanel();
     void ShowBlankOverlay();
-
-    // New functions
     void SetTitleText(const QString &text);
     void SetTitleVisible(bool visible);
+    QVideoWidget* NewVideoPanel();
 
+    VideoPanelType panelType_;
     QStackedWidget *overlayStack_;
-    QWidget *videoPanel_;
+    QVideoWidget *videoPanel_;
+    QWidget *videoWidget_;
     QLabel *blankOverlay_;
     QObject *app_;
     bool showOverlay_ = false;

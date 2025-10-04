@@ -13,8 +13,9 @@ TitleBar::TitleBar(QWidget *parent) : QWidget(parent)
     //setStyleSheet("background-color: white;");
 }
 
-VideoOverlay::VideoOverlay(QWidget *parent) : QWidget(parent)
+VideoOverlay::VideoOverlay(QWidget *parent, VideoPanelType panelType ) : QWidget(parent)
 {
+    panelType_ = panelType;
     setStyleSheet("background-color: black; border: none;");
 
     // Create a layout for the VideoOverlay widget
@@ -22,18 +23,23 @@ VideoOverlay::VideoOverlay(QWidget *parent) : QWidget(parent)
     layout->setContentsMargins(0, 0, 0, 0); // No margins
     layout->setSpacing(0); // No spacing
 
-    videoPanel_ = new QWidget(this);
+    videoPanel_ = new QVideoWidget(this);
     videoPanel_->setStyleSheet("background-color: black; border: none;"); 
+
+    videoWidget_ = new QWidget(this);
+    videoWidget_->setStyleSheet("background-color: black; border: none;"); 
 
     blankOverlay_ = new QLabel(this);
     blankOverlay_->setStyleSheet("background-color: black; border: none;");
     blankOverlay_->setPixmap(QPixmap(":/icons/icons/BlankScreenLogo.png"));
+    //blankOverlay_->setPixmap(QPixmap(":/icons/icons/BlankScreen.png"));
     blankOverlay_->setAlignment(Qt::AlignCenter); // Center the pixmap
     blankOverlay_->setScaledContents(false); // Prevent stretching
 
     overlayStack_ = new QStackedWidget(this);
-    overlayStack_->addWidget(videoPanel_);
     overlayStack_->addWidget(blankOverlay_);
+    overlayStack_->addWidget(videoWidget_);
+    overlayStack_->addWidget(videoPanel_);
 
     // Add the stacked widget to the layout
     layout->addWidget(overlayStack_);
@@ -44,7 +50,7 @@ VideoOverlay::VideoOverlay(QWidget *parent) : QWidget(parent)
     installEventFilter(this);
     overlayStack_->setMouseTracking(true);
     overlayStack_->installEventFilter(this);
-    overlayStack_->setCurrentIndex(0);
+    overlayStack_->setCurrentIndex(int(panelType_));
 
     titleBar_ = new TitleBar(this);
     //titleBar_->setFixedHeight(60);
@@ -74,7 +80,21 @@ void VideoOverlay::Show()
     if (showOverlay_)
     {
         show();
-        videoPanel_->show();
+        if (overlayStack_->currentIndex() == (int)VideoPanelType::QVideoPanel) 
+        {
+            videoPanel_->show();
+            videoWidget_->hide();
+        }
+        else if (overlayStack_->currentIndex() == (int)VideoPanelType::QWidget) 
+        {
+            videoWidget_->show();
+            videoPanel_->hide();
+        }
+        else
+        {
+            videoWidget_->hide();
+            videoPanel_->hide();
+        }
     }
 }
 
@@ -112,14 +132,24 @@ void VideoOverlay::Resize(bool forceFullscreen)
     {   
         return;
     }
+    int currentIndex = overlayStack_->currentIndex();
 
     SpyderPlayerApp *spyderPlayerApp = (SpyderPlayerApp *)app_; 
 
     //QScreen *screen = QApplication::primaryScreen();  // Get primary screen
     //QRect screenGeometry = screen->geometry();  // Get screen geometry
     //int screenWidth = screenGeometry.size().width(); 
-
+    
     QWidget *panel = spyderPlayerApp->GetVideoPanelWidget();
+
+    if (panel == nullptr)
+    {
+        //PRINT << "Panel is null";
+        return;
+    }
+
+    if (panel->width() == 0 || panel->height() == 0)
+        return;
 
     int panelWidth = spyderPlayerApp->GetVideoPanelWidth();
     int panelHeight = spyderPlayerApp->GetVideoPanelHeight();
@@ -130,8 +160,18 @@ void VideoOverlay::Resize(bool forceFullscreen)
     //PRINT << "Width: " << panelWidth << ", Height: " << panelHeight;
 
     setFixedSize(panelWidth, panelHeight);  
-    if (forceFullscreen) videoPanel_->showFullScreen();
+
+    if (panelType_ == VideoPanelType::QVideoPanel && forceFullscreen) 
+        videoPanel_->showFullScreen();
+    else if (panelType_ == VideoPanelType::QWidget && forceFullscreen) 
+        videoWidget_->showFullScreen();
     
+    if(overlayStack_->currentIndex() == 0)
+    {
+        videoPanel_->hide();
+        videoWidget_->hide();
+    }
+
     titleBar_->setFixedWidth(panelWidth); 
 
     QPoint global_pos = panel->mapToGlobal(QPoint(new_x, new_y));
@@ -142,12 +182,18 @@ void VideoOverlay::Resize(bool forceFullscreen)
 
 void VideoOverlay::ShowVideoPanel()
 {
-    overlayStack_->setCurrentIndex(0);
+    overlayStack_->setCurrentIndex(int(panelType_));
+    if (panelType_ == VideoPanelType::QVideoPanel)
+        videoPanel_->show();
+    else if (panelType_ == VideoPanelType::QWidget)
+        videoWidget_->show();
 }
 
 void VideoOverlay::ShowBlankOverlay()
 {
-    overlayStack_->setCurrentIndex(1);
+    videoPanel_->hide();
+    videoWidget_->hide();
+    overlayStack_->setCurrentIndex(0);
     SetTitleVisible(false);
 }
 
@@ -166,13 +212,49 @@ void VideoOverlay::SetTitleText(const QString &text)
 void VideoOverlay::SetTitleVisible(bool visible)
 {
     titleVisible_ = visible;
+
     if (overlayStack_->currentIndex() == 0) 
+    {
+        titleBar_->setVisible(false);
+    }
+    else
     {
         titleBar_->setVisible(visible);
         if (visible)    titleBar_->raise();
     }
-    else
-    {
-        titleBar_->setVisible(false);
-    }
+}
+
+QVideoWidget* VideoOverlay::NewVideoPanel()
+{
+    if (panelType_ != VideoPanelType::QVideoPanel) 
+        return nullptr;
+
+    // Remove old panel from stack
+    int currentIndex = overlayStack_->currentIndex();
+    overlayStack_->setCurrentIndex(int(panelType_));
+    overlayStack_->removeWidget(videoPanel_);
+
+    // Delete the old plain QWidget
+    videoPanel_->deleteLater(); 
+    videoPanel_ = nullptr;
+
+    // Set the new panel (e.g., QVideoWidget)
+    videoPanel_ = new QVideoWidget(this);
+    videoPanel_->setStyleSheet("background-color: black; border: none;");  // Reuse style
+
+    // Re-add to stack at the video position 
+    overlayStack_->insertWidget(int(panelType_), videoPanel_);
+    //overlayStack_->addWidget(videoPanel_);
+
+    // Forward mouse tracking/event filter to new panel if applicable
+    videoPanel_->setMouseTracking(true);
+    videoPanel_->installEventFilter(this);
+    videoPanel_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+    // Restore current index if it was the video panel
+    overlayStack_->setCurrentIndex(currentIndex);
+
+    Resize();
+
+    return videoPanel_;
 }

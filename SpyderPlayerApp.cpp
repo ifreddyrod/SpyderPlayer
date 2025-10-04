@@ -87,9 +87,10 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent, AppData *appData): QWidget(par
     //-----------------------------
     // Setup Video Overlay
     //-----------------------------
-    overlay_ = new VideoOverlay(this);
+    VideoOverlay::VideoPanelType panelType = appData_->PlayerType_ == ENUM_PLAYER_TYPE::QTMEDIA ? VideoOverlay::VideoPanelType::QVideoPanel : VideoOverlay::VideoPanelType::QWidget;
+    overlay_ = new VideoOverlay(this, panelType);
     overlay_->SetAppObject(this);
-    overlay_->SetOverlayVisible(appData_->PlayerType_ == ENUM_PLAYER_TYPE::VLC);
+    overlay_->SetOverlayVisible(true);
 
     //-----------------------------
     // Init Video Player
@@ -209,7 +210,7 @@ SpyderPlayerApp::SpyderPlayerApp(QWidget *parent, AppData *appData): QWidget(par
     {
         this->setStyleSheet("color: white; font: 11pt;");
     }
-
+    
     InitializePlayLists();
 
     //ui_.Status_label->setText("Player: " + QSTR(PlayerTypeToString(appData_->PlayerType_)));
@@ -287,13 +288,13 @@ void SpyderPlayerApp::InitializePlayLists()
 
     overlay_->Show();
     overlay_->Resize();
-    OnHSplitterResized(0, 0);
+    //OnHSplitterResized(0, 0);
 
     if (player_ == nullptr)
         //InitPlayer();
         QTimer::singleShot(500, this, &SpyderPlayerApp::InitPlayer);
 
-    OnHSplitterResized(0, 0);
+    //OnHSplitterResized(0, 0);
 
     overlay_->Resize();
     //overlay_->activateWindow();
@@ -309,6 +310,12 @@ void SpyderPlayerApp::InitPlayer()
     if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::QTMEDIA)
     {
         player_ = new QtPlayer(&ui_, this);
+        overlay_->Show();
+        //overlay_->videoPanel_->show();     
+        player_->InitPlayer(overlay_);
+        overlay_->ShowBlankOverlay(); 
+        overlay_->Resize();
+        QTimer::singleShot(1000, this, [this]() { overlay_->Resize(); }); 
         playerName = "QtMedia Player";
     }
     /*else if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::FFMPEG)
@@ -319,15 +326,11 @@ void SpyderPlayerApp::InitPlayer()
     else if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::VLC)
     {
         player_ = new VLCPlayer(&ui_, this);
-        while(overlay_->isHidden())
-        {
-            QThread::msleep(50);
-        }
         overlay_->Show();
-        overlay_->videoPanel_->show();
-        overlay_->Resize();        
-        player_->InitPlayer(overlay_->videoPanel_);
+        overlay_->videoPanel_->show();     
+        player_->InitPlayer(overlay_->videoWidget_);
         overlay_->ShowBlankOverlay();
+        QTimer::singleShot(200, this, [this]() { overlay_->Resize(); });
         playerName = "VLC Player";
     }
 
@@ -348,8 +351,8 @@ void SpyderPlayerApp::InitPlayer()
     }
     else
     {
-        PRINT << "Failed to initialize Player";
-        ui_.Status_label->setText("Failed to initialize Player");
+        PRINT << "Failed to initialize " << playerName;
+        ui_.Status_label->setText("Failed to initialize " + playerName);
     }
 }
 
@@ -708,7 +711,7 @@ void SpyderPlayerApp::PlayerFullScreen()
         //controlpanelFS_.hide();
 
     //overlay_->activateWindow();
-    player_->GetVideoPanel()->activateWindow();
+    //player_->GetVideoPanel()->activateWindow();
     inactivityTimer_->start();
     //PRINT << "PlayerFullScreen";
 }
@@ -799,7 +802,6 @@ void SpyderPlayerApp::TogglePlaylistView()
     if (isFullScreen_)
     {
         overlay_->SetTitleVisible(true);
-        //player_->SetVideoTitleVisible(true);
         ShowControlPanel();
     }
 }
@@ -895,6 +897,7 @@ void SpyderPlayerApp::PlaybackStateChanged(ENUM_PLAYER_STATE state)
         retryCount_ = appData_->RetryCount_;
         ui_.Status_label->setText("");
         playbackStatusTimer_->start();
+        overlay_->ShowVideoPanel();
         //stalledVideoTimer_->start();
     }
     else if (state == ENUM_PLAYER_STATE::LOADING)
@@ -914,10 +917,7 @@ void SpyderPlayerApp::PlaybackStateChanged(ENUM_PLAYER_STATE state)
         screensaverInhibitor_->uninhibit();
 
         if (player_->GetPlayerState() == ENUM_PLAYER_STATE::ENDED)
-        {
             ui_.Status_label->setText("Playback Ended");
-            overlay_->ShowBlankOverlay();
-        }
         else if (state == ENUM_PLAYER_STATE::ERROR)
             ui_.Status_label->setText("Error: " + player_->GetPlayerStatus());
         else if (state == ENUM_PLAYER_STATE::NOMEDIA)
@@ -925,14 +925,14 @@ void SpyderPlayerApp::PlaybackStateChanged(ENUM_PLAYER_STATE state)
         else if (state == ENUM_PLAYER_STATE::STALLED)
             ui_.Status_label->setText("Playback Stalled");
         else if (state == ENUM_PLAYER_STATE::STOPPED)
-        {
             ui_.Status_label->setText("Playback Stopped");
-            overlay_->ShowBlankOverlay();
-        }
         else if (state == ENUM_PLAYER_STATE::PAUSED)
             ui_.Status_label->setText("Playback Paused");
         else
             ui_.Status_label->setText("");
+
+        if (state != ENUM_PLAYER_STATE::PAUSED)
+            overlay_->ShowBlankOverlay();
     }
 }
 
@@ -1161,6 +1161,7 @@ void SpyderPlayerApp::StopPlayer()
     controlpanelFS_.ui_.CurrentTime_label->setText("00:00:00");
     controlpanel_.ui_.CurrentTime_label->setText("00:00:00");
     overlay_->ShowBlankOverlay();
+    overlay_->Resize();
 }
 
 void SpyderPlayerApp::SeekForward()
@@ -1373,26 +1374,17 @@ void SpyderPlayerApp::ShowCursorBlank()
 
 int SpyderPlayerApp::GetVideoPanelWidth()
 {
-   if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::VLC)
-        return ui_.VideoView_widget->width(); 
-    else
-        return player_->GetVideoPanel()->width();
+    return ui_.VideoView_widget->width(); 
 }
 
 int SpyderPlayerApp::GetVideoPanelHeight()
 {
-    if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::VLC)
-        return ui_.VideoView_widget->height(); 
-    else
-        return player_->GetVideoPanel()->height();
+    return ui_.VideoView_widget->height(); 
 }
 
 QWidget* SpyderPlayerApp::GetVideoPanelWidget()
 {
-    if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::VLC)
-        return ui_.VideoView_widget;
-    else
-        return player_->GetVideoPanel();
+    return ui_.VideoView_widget;
 }
 
 QString SpyderPlayerApp::GetWindowStateString() 

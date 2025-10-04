@@ -19,6 +19,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QSslConfiguration>
+#include "VideoOverlay.h"
 //#include "StreamBuffer.h"
 
 class SpyderPlayerApp;
@@ -102,6 +103,7 @@ private:
     qint64 stallPosition_ = -1;
     bool stopAll_ = false;
     int skipBackLength_ = 15000;
+    VideoOverlay *overlay_ = nullptr;
 };
 
 #endif // QTMEDIA_H

@@ -114,7 +114,7 @@ void VLCPlayer::InitPlayer(void *args)
     SetupPlayer();
     videoPanel_->setMouseTracking(true);
     videoPanel_->installEventFilter(app_);
-    videoWidget_ = videoPanel_;
+    //videoWidget_ = videoPanel_;
 }
 
 void VLCPlayer::SetupPlayer()

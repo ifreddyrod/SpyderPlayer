@@ -17,17 +17,18 @@ QtPlayer::QtPlayer(Ui::PlayerMainWindow* mainWindow, QWidget* parent)
         
     mainWindow_ = mainWindow;
     app_ = static_cast<SpyderPlayerApp*>(parent);
-    videoPanel_ = new QVideoWidget(mainWindow->VideoView_widget);
+    videoWidget_ = mainWindow->VideoView_widget;
 
     subtitleCount_ = -1;
     subtitleIndex_ = -1;
 
     //mainWindow->gridLayout->removeWidget(mainWindow->VideoView_widget);
     //mainWindow->gridLayout->addWidget(videoPanel_, 1, 1, 1, 1);
-    mainWindow->topverticalLayout->removeWidget(mainWindow->VideoView_widget);
-    mainWindow->topverticalLayout->addWidget(videoPanel_);
+    //mainWindow->topverticalLayout->removeWidget(mainWindow->VideoView_widget);
+    //mainWindow->topverticalLayout->addWidget(baseVideoPanel);
+    //videoWidget_ = static_cast<QWidget*>(baseVideoPanel);
 
-    InitPlayer(nullptr);
+    //InitPlayer(nullptr);
 
     stalledVideoTimer_ = new QTimer(this);
     stalledVideoTimer_->setInterval(3000);
@@ -36,11 +37,7 @@ QtPlayer::QtPlayer(Ui::PlayerMainWindow* mainWindow, QWidget* parent)
 
 QtPlayer::~QtPlayer()
 {
-    /*if (streamBuffer_)
-    {
-        streamBuffer_->Stop();
-        streamBuffer_->deleteLater();
-    }*/
+    player_->stop();
     delete videoPanel_;
     delete player_;
     delete audioOutput_;
@@ -50,9 +47,10 @@ QtPlayer::~QtPlayer()
 
 void QtPlayer::InitPlayer(void *args)
 {
-    Q_UNUSED(args);
+    overlay_ = static_cast<VideoOverlay*>(args);
+
     SetupPlayer();
-    videoWidget_ = static_cast<QWidget*>(videoPanel_);
+
     timeoutTimer_ = new QTimer(this);
     connect(timeoutTimer_, &QTimer::timeout, this, &QtPlayer::CheckTimeout);
     //StartWatchdog();
@@ -75,22 +73,8 @@ void QtPlayer::SetupPlayer()
             audioOutput_ = nullptr;
         }
         // Delete and recreate video widget
-        if (videoPanel_)
-        {
-            mainWindow_->topverticalLayout->removeWidget(videoPanel_);
-            videoPanel_->deleteLater();
-            videoPanel_ = nullptr;
-        }
-        if (videoWidget_)
-        {
-            videoWidget_->deleteLater();
-            videoWidget_ = nullptr;
-        }
-        
-        videoPanel_ = new QVideoWidget(mainWindow_->VideoView_widget->parentWidget());
-        mainWindow_->topverticalLayout->addWidget(videoPanel_);
-        videoWidget_ = static_cast<QWidget*>(videoPanel_);
-        
+        videoPanel_ = overlay_->NewVideoPanel();
+
         MAX_STALL_RETRIES = app_->GetMaxRetryCount();
         player_ = new QMediaPlayer(this);
         audioOutput_ = new QAudioOutput(this);
