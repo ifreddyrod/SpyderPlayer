@@ -66,6 +66,7 @@ public:
     int RetryCount_;
     int RetryDelay_;
     AppHotKeys HotKeys_;
+    QString VLCSetupArgs_;
     QVector<PlayListEntry> Library_;
     QVector<PlayListEntry> Favorites_;
     QVector<PlayListEntry> PlayLists_;

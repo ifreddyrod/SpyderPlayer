@@ -132,7 +132,7 @@ void VideoOverlay::Resize(bool forceFullscreen)
     {   
         return;
     }
-    int currentIndex = overlayStack_->currentIndex();
+    //int currentIndex = overlayStack_->currentIndex();
 
     SpyderPlayerApp *spyderPlayerApp = (SpyderPlayerApp *)app_; 
 

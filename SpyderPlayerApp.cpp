@@ -309,14 +309,17 @@ void SpyderPlayerApp::InitPlayer()
     
     if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::QTMEDIA)
     {
+        TogglePlaylistView();
         player_ = new QtPlayer(&ui_, this);
         overlay_->Show();
         //overlay_->videoPanel_->show();     
         player_->InitPlayer(overlay_);
         overlay_->ShowBlankOverlay(); 
-        overlay_->Resize();
-        QTimer::singleShot(1000, this, [this]() { overlay_->Resize(); }); 
+        //overlay_->Resize();
+        //QTimer::singleShot(1000, this, [this]() { overlay_->Resize(); }); 
         playerName = "QtMedia Player";
+        TogglePlaylistView();
+        //QTimer::singleShot(200, this, [this]() { TogglePlaylistView(); });
     }
     /*else if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::FFMPEG)
     {
@@ -325,6 +328,7 @@ void SpyderPlayerApp::InitPlayer()
     }*/
     else if (appData_->PlayerType_ == ENUM_PLAYER_TYPE::VLC)
     {
+        
         player_ = new VLCPlayer(&ui_, this);
         overlay_->Show();
         overlay_->videoPanel_->show();     
@@ -683,6 +687,11 @@ void SpyderPlayerApp::PlayerNormalScreen()
 
 void SpyderPlayerApp::PlayerFullScreen()
 {
+    // Hide Playlists
+    isPlaylistVisible_ = true;
+    TogglePlaylistView();
+
+    // Configure for fullscreen
     ui_.Horizontal_splitter->setSizes({0, 800});  // Hide left side
     ui_.Vertical_splitter->setSizes({800, 0});
     isPlaylistVisible_ = false;
@@ -692,14 +701,6 @@ void SpyderPlayerApp::PlayerFullScreen()
     ui_.Horizontal_splitter->setHandleWidth(0);
     ui_.Vertical_splitter->setHandleWidth(0);
     player_->GetVideoPanel()->showFullScreen();
-    //ui_.Vertical_splitter->setFocus();
-    //##overlay_->show();
-    
-    //overlay_->SetTitleVisible(true);
-    //player_->SetVideoTitleVisible(true);
-    //##overlay_->setFocus();
-    //ShowControlPanel(true);
-    //player_->GetVideoPanel()->setFocus();
 
     // Delay showing control panel
     QTimer::singleShot(200, this, [this]() { overlay_->Resize(true);});
@@ -787,12 +788,12 @@ void SpyderPlayerApp::TogglePlaylistView()
         isPlaylistVisible_ = false;
 
         // Force relayout
-        overlay_->Resize();
+        overlay_->Resize(isFullScreen_);
     }
     else
     {
         PRINT << "TogglePlaylistView - SHOW";
-        ui_.Horizontal_splitter->setSizes({400, 1000});  // Show left side
+        ui_.Horizontal_splitter->setSizes({450, 1000});  // Show left side
         ui_.Horizontal_splitter->setHandleWidth(2);
 
         isPlaylistVisible_ = true;
@@ -1144,7 +1145,8 @@ void SpyderPlayerApp::PlayPausePlayer()
         }
         else if (state == ENUM_PLAYER_STATE::PAUSED || state == ENUM_PLAYER_STATE::LOADING)
         {
-            player_->Play();
+            PRINT << "Resume Player";
+            player_->Resume();
         }
     }
 }
@@ -1160,6 +1162,8 @@ void SpyderPlayerApp::StopPlayer()
     controlpanel_.ui_.VideoPosition_slider->setValue(0);
     controlpanelFS_.ui_.CurrentTime_label->setText("00:00:00");
     controlpanel_.ui_.CurrentTime_label->setText("00:00:00");
+    controlpanel_.ui_.TotalDuration_label->setText("00:00:00");
+    controlpanelFS_.ui_.TotalDuration_label->setText("00:00:00");
     overlay_->ShowBlankOverlay();
     overlay_->Resize();
 }

@@ -155,6 +155,11 @@ void QtPlayer::RefreshVideoSource()
     }
 }
 
+void QtPlayer::Resume()
+{
+    Play();
+}
+
 void QtPlayer::Play()
 {
     stopAll_ = false;

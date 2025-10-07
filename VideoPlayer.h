@@ -30,6 +30,7 @@ public:
     virtual void InitPlayer(void *args) = 0;
     virtual void Play() = 0;
     virtual void Pause() = 0;
+    virtual void Resume() = 0;
     virtual void Stop() = 0;
     virtual void SetPosition(qint64 position) = 0;
     virtual void SkipPosition(qint64 position) = 0;

@@ -237,6 +237,19 @@ void AppData::Load(const string& filePath)
         PRINT << "Retry Count: " << RetryCount_;
         PRINT << "Retry Delay: " << RetryDelay_;
         
+        if (root.contains("VLCSetupArgs"))
+        {
+            VLCSetupArgs_ = root["VLCSetupArgs"].toString();
+        }
+        else
+        {
+            VLCSetupArgs_ = "--verbose=2 --network-caching=3000 --file-caching=1500 --live-caching=1500 --drop-late-frames --skip-frames --sout-keep --clock-jitter=1000";
+
+            root["VLCSetupArgs"] = VLCSetupArgs_;
+            needsSaving = true;
+            PRINT << "Missing VLC Setup Flags, using default";
+        }
+
         // Parse hotkeys
         QMap<QString, int> hotkeysMap;
         
@@ -441,6 +454,7 @@ void AppData::Save()
         root["PlayListPath"] = QString::fromStdString(PlayListsPath_);
         root["RetryCount"] = RetryCount_;
         root["RetryDelay"] = RetryDelay_;
+        root["VLCSetupArgs"] = VLCSetupArgs_; 
         
         // Add hotkeys - use getAllHotkeys() for consistency
         QJsonObject hotkeysJson;

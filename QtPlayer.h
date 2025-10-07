@@ -37,6 +37,7 @@ public:
     void RefreshVideoSource() override;
     void Play() override;
     void Pause() override;
+    void Resume() override;
     void Stop() override;
     void SetPosition(qint64 position) override;
     void SkipPosition(qint64 position) override;

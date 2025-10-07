@@ -25,7 +25,8 @@ public:
     void RefreshVideoSource() override;
     void Play() override;
     void Pause() override;
-    void Resume();
+    void Resume() override;
+    void ResumePlayback();
     void Stop() override;
     void SetPosition(qint64 position) override;
     void SkipPosition(qint64 position) override;
@@ -62,6 +63,7 @@ private:
     static void HandleVLCEvent(const libvlc_event_t* event, void* data);
     void StopPlayback();
     void UpdatePlayerStatus();
+    std::vector<const char*> GetInitArgs(const QString& VCLSetupParams);
 
     SpyderPlayerApp* app_;
     Ui::PlayerMainWindow* mainWindow_ = nullptr;
@@ -92,6 +94,8 @@ private:
     bool stopAll_ = false;
     int skipBackLength_ = 15000;
     int titleFontSize_ = 18;
+    bool isPlaying_ = false;
+    float bufferSize_ = 0;
 };
 
 #endif // VLCPLAYER_H

@@ -43,7 +43,7 @@ VLCPlayer::VLCPlayer(Ui::PlayerMainWindow* mainWindow, QWidget* parent)
 
 VLCPlayer::~VLCPlayer()
 {
-    qDebug() << "VLCPlayer destructor called";
+    PRINT << "VLCPlayer destructor called";
 
     // Stop timers first to prevent pending events
     if (updateTimer_) 
@@ -117,24 +117,56 @@ void VLCPlayer::InitPlayer(void *args)
     //videoWidget_ = videoPanel_;
 }
 
+
+std::vector<const char*> VLCPlayer::GetInitArgs(const QString& VCLSetupParams)
+{
+    static std::vector<QByteArray> persistentByteArrays;  // Static = stays alive
+    persistentByteArrays.clear();
+    
+    std::vector<const char*> args;
+    
+    if (VCLSetupParams.isEmpty()) 
+    {
+        return args;
+    }
+    
+    QStringList argsList = VCLSetupParams.split(' ', Qt::SkipEmptyParts);
+    
+    for (const QString& arg : argsList) 
+    {
+        persistentByteArrays.push_back(arg.toUtf8());
+        args.push_back(persistentByteArrays.back().constData());
+    }
+    
+    return args;    
+}
+
 void VLCPlayer::SetupPlayer()
 {
     try {
-        // VLC initialization arguments
-        const char* const vlc_args[] = 
-        {
+        //const char* const vlc_args[] =
+        /*{
             "--verbose=2",  
             //"--no-xlib",    // Disable Xlib for better compatibility
-            "--network-caching=1500",  
-            "--file-caching=1250",
-            "--live-caching=1250",
+            "--network-caching=3000",  
+            "--file-caching=1500",
+            "--live-caching=1500",
             "--drop-late-frames",
             "--skip-frames",
             "--sout-keep",
             "--clock-jitter=1000",
         };
+        //vlcInstance_ = libvlc_new(sizeof(vlc_args) / sizeof(vlc_args[0]), vlc_args);
+        */
 
-        vlcInstance_ = libvlc_new(sizeof(vlc_args) / sizeof(vlc_args[0]), vlc_args);
+        auto vlc_args = GetInitArgs(app_->GetAppData()->VLCSetupArgs_);
+
+        PRINT << "VLC Setup Arguments: ";
+        for(auto arg : vlc_args)
+            PRINT << arg;
+
+        vlcInstance_ = libvlc_new(vlc_args.size(), vlc_args.data());
+
         if (!vlcInstance_) 
         {
             throw std::runtime_error("Failed to create VLC instance");
@@ -205,6 +237,8 @@ void VLCPlayer::HandleVLCEvent(const libvlc_event_t* event, void* data)
     case libvlc_MediaPlayerBuffering:
     case libvlc_MediaPlayerOpening:
         self->currentState_ = ENUM_PLAYER_STATE::LOADING;
+        self->bufferSize_ = event->u.media_player_buffering.new_cache;
+        PRINT << "Buffering: " << self->bufferSize_;
         //self->playerStatus_ = "Buffering: " + QString::number(event->u.media_player_buffering.new_cache) + "%";
         break;
     case libvlc_MediaPlayerLengthChanged:
@@ -213,7 +247,7 @@ void VLCPlayer::HandleVLCEvent(const libvlc_event_t* event, void* data)
         //self->currentState_ = ENUM_PLAYER_STATE::PLAYING;
         break;
     case libvlc_MediaPlayerTimeChanged:
-        self->lastPosition_= libvlc_media_player_get_time(self->mediaPlayer_);
+        self->position_ = libvlc_media_player_get_time(self->mediaPlayer_);
         self->currentState_ = ENUM_PLAYER_STATE::PLAYING;
         break;
     default:
@@ -229,15 +263,16 @@ void VLCPlayer::UpdatePlayerStatus()
     int subtitleCount = 0;
     //PRINT << "--->UpdatePlayerStatus: " << QSTR(PlayerStateToString(currentState));
 
-    if (isPositionSeeking_)
-    {
-        lastPosition_ = position_ = libvlc_media_player_get_time(mediaPlayer_);
-        UpdatePosition(position_);
-        return;
-    }
-
     switch (currentState)
     {
+    case ENUM_PLAYER_STATE::LOADING:
+        if (!isPlaying_ && bufferSize_ >= 100)
+        {
+            currentState_ = ENUM_PLAYER_STATE::PAUSED;
+            UpdatePlayerState(ENUM_PLAYER_STATE::PAUSED);
+            return;
+        }
+        break;
     case ENUM_PLAYER_STATE::PLAYING:
         inRecovery_ = false;
         stallretryCount_ = 0;
@@ -250,12 +285,17 @@ void VLCPlayer::UpdatePlayerStatus()
             subtitleCount_ = subtitleCount;
             EnableSubtitles(subtitleCount_ > 0);
         }
+        if (stallPosition_ != 0 && position_ != stallPosition_)
+            // if video resets do not overwrite stallPosition_
+            stallPosition_ = position_ ;
+
         break;
     case ENUM_PLAYER_STATE::PAUSED:
         break;
     //case ENUM_PLAYER_STATE::ENDED:
     case ENUM_PLAYER_STATE::STALLED:
         updateTimer_->stop();
+        isPlaying_ = false;
         break;
     case ENUM_PLAYER_STATE::ERROR:
         //inRecovery_ = true;
@@ -264,7 +304,8 @@ void VLCPlayer::UpdatePlayerStatus()
     case ENUM_PLAYER_STATE::ENDED:
         if (duration_ > 0)
         {
-            updateTimer_->stop();  
+            updateTimer_->stop(); 
+            isPlaying_ = false; 
         }
         else 
         {
@@ -284,6 +325,11 @@ void VLCPlayer::UpdatePlayerStatus()
             {
                 updateTimer_->stop();
                 UpdatePosition(duration_);
+                isPlaying_ = false;
+            }
+            else
+            {
+                RetryStalledPlayer();
             }
         }
         else
@@ -394,6 +440,7 @@ void VLCPlayer::Play()
     duration_ = 0;
     position_ = 0;
     subtitleCount_ = -1;
+    stallPosition_ = 0;
     previousState_ = ENUM_PLAYER_STATE::IDLE;
     currentState_ = ENUM_PLAYER_STATE::LOADING;
     stalledVideoTimer_->stop();
@@ -404,11 +451,27 @@ void VLCPlayer::Play()
     PRINT << "MAX_STALL_RETRIES: " << MAX_STALL_RETRIES;
     PRINT << "retryTimeDelayMs_: " << retryTimeDelayMs_;
 
+    isPlaying_ = true;
     updateTimer_->start();
     PlaySource();
 }
 
 void VLCPlayer::Resume()
+{
+    if(currentState_ == ENUM_PLAYER_STATE::PAUSED)
+    {   
+        PRINT << "Resuming Playback...";
+        stopAll_ = false;
+        inRecovery_ = false;
+        stallretryCount_ = 0;
+        retryCount_ = 0;
+        isPlaying_ = true;
+        updateTimer_->start();
+        PlaySource();   
+    }
+}
+
+void VLCPlayer::ResumePlayback()
 {
     stopAll_ = false;
     inRecovery_ = false;
@@ -421,6 +484,7 @@ void VLCPlayer::Resume()
 
     updateTimer_->start();
     PlaySource();
+    SetPosition(stallPosition_);
 }
 
 void VLCPlayer::PlaySource()
@@ -442,12 +506,14 @@ void VLCPlayer::PlaySource()
             retryCount_ = 0;
             stallretryCount_ = 0;
             Mute(isMuted_);
-            SetPosition(lastPosition_);
+            //PRINT << "Duration = " << duration_ << ", Resume Position = " << stallPosition_;
+            if (duration_ > 0) 
+                SetPosition(stallPosition_);
             //if (duration_ > 0 && position_ > skipBackLength_)
                 //SkipPosition(position_ - skipBackLength_);
 
-            videoPanel_->parentWidget()->layout()->activate(); // Force layout recalculation
-            videoPanel_->updateGeometry();
+            //videoPanel_->parentWidget()->layout()->activate(); // Force layout recalculation
+            //videoPanel_->updateGeometry();
             /*unsigned width, height;
             if (libvlc_video_get_size(mediaPlayer_, 0, &width, &height) == 0) {
                 videoPanel_->resize(width, height);
@@ -461,8 +527,14 @@ void VLCPlayer::PlaySource()
         {
             Mute(isMuted_);
             libvlc_media_player_play(mediaPlayer_);
-            videoPanel_->parentWidget()->layout()->activate(); // Force layout recalculation
-            videoPanel_->updateGeometry();
+
+            if (inRecovery_ && duration_ > 0) 
+                SetPosition(stallPosition_);
+
+            //if (duration_ > 0 && position_ > skipBackLength_)
+                //SkipPosition(position_ - skipBackLength_);
+            //videoPanel_->parentWidget()->layout()->activate(); // Force layout recalculation
+            //videoPanel_->updateGeometry();
             /*unsigned width, height;
             if (libvlc_video_get_size(mediaPlayer_, 0, &width, &height) == 0) {
                 videoPanel_->resize(width, height);
@@ -470,7 +542,7 @@ void VLCPlayer::PlaySource()
                 PRINT << "Video size:" << width << "x" << height;
                 videoPanel_->lower();
             }*/
-            inRecovery_ = false;
+            //inRecovery_ = false;
             return;
         }
         else if (stallretryCount_ > MAX_STALL_RETRIES)
@@ -493,13 +565,15 @@ void VLCPlayer::PlaySource()
 
 void VLCPlayer::Pause()
 {
+    PRINT << "Playback Paused...";
+
+    stallPosition_ = position_;
     stalledVideoTimer_->stop();
     if (libvlc_media_player_is_playing(mediaPlayer_)) 
     {
         libvlc_media_player_pause(mediaPlayer_);
+        isPlaying_ = false;
     }
-    stallPosition_ = position_;
-    lastPosition_ = position_;
     inRecovery_ = false;
     //updateTimer_->stop();
     currentState_ = ENUM_PLAYER_STATE::PAUSED;
@@ -526,7 +600,8 @@ void VLCPlayer::Stop()
     StopPlayback();
     inRecovery_ = false;
     stopAll_ = true;
-    lastPosition_ = position_ = 0;
+    isPlaying_ = false;
+    stallPosition_ = position_ = 0;
     updateTimer_->stop();
     currentState_ = ENUM_PLAYER_STATE::STOPPED;
     UpdatePlayerState(currentState_);
@@ -624,19 +699,24 @@ void VLCPlayer::OnChangingPosition(bool isPlaying)
     if (isPlaying) 
     {
         stalledVideoTimer_->stop();
-        Pause();
+        libvlc_media_player_pause(mediaPlayer_);
     }
-    
 }
 
 void VLCPlayer::OnChangedPosition(bool isPlaying)
 {
     isPositionSeeking_ = false;
+    stallPosition_ = GetPosition();
     if (isPlaying) 
     {
         //timeoutTimer_->start();
         //stalledVideoTimer_->start();
-        Resume();
+        ResumePlayback();
+    }
+    else
+    {
+        currentState_ = ENUM_PLAYER_STATE::PAUSED;
+        UpdatePlayerState(currentState_);
     }
 }
 
