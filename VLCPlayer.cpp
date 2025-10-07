@@ -266,6 +266,9 @@ void VLCPlayer::UpdatePlayerStatus()
     switch (currentState)
     {
     case ENUM_PLAYER_STATE::LOADING:
+        // Remain in loading state until buffer is bellow 100%. 
+        // This is when video is paused and the slider position is moved.
+        // There is a brief period where the new position needs to be buffered.
         if (!isPlaying_ && bufferSize_ >= 100)
         {
             currentState_ = ENUM_PLAYER_STATE::PAUSED;
@@ -313,28 +316,32 @@ void VLCPlayer::UpdatePlayerStatus()
         }
         break;
     case ENUM_PLAYER_STATE::STOPPED:
-        //position_ = libvlc_media_player_get_time(mediaPlayer_);
-        //duration_ = libvlc_media_player_get_length(mediaPlayer_);
+        // Stop all playback
         if (stopAll_)
         {
             updateTimer_->stop();
         }
+        // Handle fized length playback
         else if (duration_ > 0)
         {
+            // Reached the end of the video
             if (position_ >= duration_ - 1000)
             {
                 updateTimer_->stop();
                 UpdatePosition(duration_);
                 isPlaying_ = false;
             }
+            // Stopped state reached without reaching the end, attempt recovery
             else
             {
+                inRecovery_ = false;
                 RetryStalledPlayer();
             }
         }
+        // Handle live streams
         else
         {
-            //inRecovery_ = true;
+            inRecovery_ = false;
             RetryStalledPlayer();
         }
         break;
