@@ -5,7 +5,6 @@
 #include <sstream>
 #include <iomanip>
 #include <QString>
-#include <QDebug>
 #include <map>
 #include <filesystem>
 #include <QFileDialog>
@@ -13,6 +12,15 @@
 #include <QStandardPaths>
 #include <QMessageBox>
 #include <QApplication>
+#include <QDebug>
+#include <QFile>
+#include <QFileInfo>
+#include <QTextStream>
+#include <QDateTime>
+#include <QMessageLogContext>
+#include <QMutex>
+#include <vlc/vlc.h>
+//#include <libavutil/log.h>
 
 using namespace std;
 
@@ -34,6 +42,14 @@ using namespace std;
 #define PRINT qDebug()
 
 /*******************************************************************************************
+ * Global Variables
+ *******************************************************************************************/
+extern string G_AppDataDirectory;
+extern bool G_LogToFile;
+extern bool G_FFmpegLog;
+extern libvlc_log_t *G_VLCctx;
+
+/*******************************************************************************************
  * Utility Functions
  *******************************************************************************************/
 extern QString Format_ms_to_Time(qint64 ms);
@@ -43,6 +59,8 @@ extern string GetUserAppDataDirectory(string appName);
 extern void SetCursorNormal();
 extern void SetCursorBusy();
 extern void SetCursorBlank();
+extern void LogFileOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg);
+//extern void FFmpegLogCallback(void *avcl, int level, const char *fmt, va_list vl);
 
 /******************************************************************************************* 
     Player Type ENUMERATION

@@ -61,6 +61,7 @@ private:
     void PlaySource();
     void AttachEvents();
     static void HandleVLCEvent(const libvlc_event_t* event, void* data);
+    static void VLCLogCallback(void *data, int /*level*/, const libvlc_log_t *ctx, const char *fmt, va_list args);
     void StopPlayback();
     void UpdatePlayerStatus();
     std::vector<const char*> GetInitArgs(const QString& VCLSetupParams);

@@ -32,19 +32,24 @@ int main(int argc, char *argv[])
     //-----------------------------
     // Load AppData from file
     //-----------------------------
-    string data_path = GetUserAppDataDirectory("SpyderPlayer") + "/" + APPDATA_FILENAME; 
+    G_AppDataDirectory = GetUserAppDataDirectory("SpyderPlayer") + "/";
+    string appDataPath = G_AppDataDirectory + APPDATA_FILENAME; 
 
-    PRINT << "AppData Path: " << data_path;
+    PRINT << "AppData Path: " << appDataPath;
 
-    appData = new AppData(data_path);
+    appData = new AppData(appDataPath);
 
     //-----------------------------
     // Set App Specific Settings
     //-----------------------------
-
     // Set Qt Applicatoin Scale factor
     double appScaleFactor = appData->AppScaleFactor_;
     qputenv("QT_SCALE_FACTOR", QString::number(appScaleFactor).toStdString().c_str());
+
+    // Enable degug logging to file 
+    G_LogToFile = appData->EnableFileLogging_;
+    if (G_LogToFile) 
+        qInstallMessageHandler(LogFileOutput);
 
     //-----------------------------
     // Create QApp Instance

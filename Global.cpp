@@ -1,5 +1,15 @@
 #include "Global.h"
 
+/*******************************************************************************************
+ * Global Variables Initialization
+ *******************************************************************************************/
+string G_AppDataDirectory = "";
+bool G_LogToFile = false;
+bool G_FFmpegLog = false;
+libvlc_log_t *G_VLCctx = nullptr;
+static QMutex G_LoggingMutex;
+
+
 QString Format_ms_to_Time(qint64 ms)
 {   
     // Convert milliseconds to seconds
@@ -217,3 +227,91 @@ string PlayerStateToString(ENUM_PLAYER_STATE state)
             return "UNKNOWN";
     };
 }
+
+
+// Redirect qDebug messages to a log file
+void RotateLogIfNeeded(const QString &basePath, qint64 maxSize, int maxBackups) 
+{
+    QFileInfo baseInfo(basePath);
+    if (!baseInfo.exists() || baseInfo.size() < maxSize) 
+        return;
+    
+    for (int i = maxBackups; i >= 2; --i) 
+    {
+        QString oldBackup = basePath + "." + QString::number(i);
+        QString newBackup = basePath + "." + QString::number(i - 1);
+        if (QFile::exists(oldBackup)) 
+        {
+            QFile::remove(newBackup);
+            QFile::rename(oldBackup, newBackup);
+        }
+    }
+    if (maxBackups >= 1) 
+    {
+        QFile::rename(basePath, basePath + ".1");
+    }
+}
+
+void LogFileOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg) 
+{
+    QMutexLocker locker(&G_LoggingMutex);
+
+    // Format the message once for both outputs
+    QString timestamp = QDateTime::currentDateTime().toString("[yyyy-MM-dd hh:mm:ss.zzz]");
+
+    // Output to terminal (console)
+    QTextStream(stderr) << msg << Qt::endl;
+
+    // Handle file logging
+    if (G_LogToFile)
+    {
+        QString baseLogPath = QSTR(G_AppDataDirectory) + "player_messages.log";
+        const qint64 maxSize = 5 * 1024 * 1024;  // 5 MB
+        const int maxBackups = 5;
+        QString formattedMsg;
+
+        // Log VLC messages
+        if (G_VLCctx) 
+        {
+            formattedMsg = QString("%1   [vlc] %2").arg(timestamp, msg);
+            G_VLCctx = nullptr;
+        }
+        // Log FFmpeg messages from QtMultimedia
+        else if (G_FFmpegLog)
+        {
+            formattedMsg = QString("%1   [qt]  %2").arg(timestamp, msg);
+            G_FFmpegLog = false;
+        }
+        // App Messages
+        else
+            formattedMsg = QString("%1         %2").arg(timestamp, msg);
+
+        RotateLogIfNeeded(baseLogPath, maxSize, maxBackups);
+
+        QFile file(baseLogPath);
+        if (file.open(QIODevice::WriteOnly | QIODevice::Append)) 
+        {
+            QTextStream out(&file);
+            out << formattedMsg << Qt::endl;
+            out.flush();
+            file.close();
+        }
+    }
+    Q_UNUSED(type);
+    Q_UNUSED(context);
+}
+
+// FFmpeg log callback
+/*void FFmpegLogCallback(void *avcl, int level, const char *fmt, va_list vl) 
+{
+    // Respect AV_LOG_LEVEL (e.g., warning)
+    if (level > av_log_get_level()) {
+        return;
+    }
+
+    char msgBuffer[4096];
+    vsnprintf(msgBuffer, sizeof(msgBuffer), fmt, vl);
+    QString msg = QString::fromUtf8(msgBuffer).trimmed();  // Trim newlines
+    G_FFmpegLog = true;  // Flag as FFmpeg message
+    LogFileOutput(QtDebugMsg, QMessageLogContext(), msg);
+}*/

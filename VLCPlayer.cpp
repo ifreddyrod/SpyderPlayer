@@ -38,7 +38,6 @@ VLCPlayer::VLCPlayer(Ui::PlayerMainWindow* mainWindow, QWidget* parent)
     stalledVideoTimer_ = new QTimer(this);
     stalledVideoTimer_->setInterval(3000);
     connect(stalledVideoTimer_, &QTimer::timeout, this, &VLCPlayer::StalledVideoDetected);
-
 }
 
 VLCPlayer::~VLCPlayer()
@@ -110,7 +109,7 @@ VLCPlayer::~VLCPlayer()
 void VLCPlayer::InitPlayer(void *args)
 {
     videoPanel_ = static_cast<QWidget*>(args);
-    
+
     SetupPlayer();
     videoPanel_->setMouseTracking(true);
     videoPanel_->installEventFilter(app_);
@@ -167,6 +166,9 @@ void VLCPlayer::SetupPlayer()
 
         vlcInstance_ = libvlc_new(vlc_args.size(), vlc_args.data());
 
+        if(vlcInstance_ && G_LogToFile)
+            libvlc_log_set(vlcInstance_, VLCLogCallback, nullptr);
+
         if (!vlcInstance_) 
         {
             throw std::runtime_error("Failed to create VLC instance");
@@ -177,7 +179,6 @@ void VLCPlayer::SetupPlayer()
         {
             throw std::runtime_error("Failed to create VLC media player");
         }
-
         videoPanel_->show();
 
 #if defined(Q_OS_WIN)
@@ -196,6 +197,17 @@ void VLCPlayer::SetupPlayer()
         PRINT << e.what();
         ErrorOccured(std::string(e.what()));
     }
+}
+
+// libVLC log callback
+void VLCPlayer::VLCLogCallback(void *data, int /*level*/, const libvlc_log_t *ctx, const char *fmt, va_list args) 
+{
+    char msgBuffer[4096];
+    vsnprintf(msgBuffer, sizeof(msgBuffer), fmt, args);
+    QString msg = QString::fromLocal8Bit(msgBuffer);
+    G_VLCctx = const_cast<libvlc_log_t*>(ctx);
+    LogFileOutput(QtDebugMsg, QMessageLogContext(), msg);
+    Q_UNUSED(data);
 }
 
 void VLCPlayer::AttachEvents()
@@ -238,7 +250,7 @@ void VLCPlayer::HandleVLCEvent(const libvlc_event_t* event, void* data)
     case libvlc_MediaPlayerOpening:
         self->currentState_ = ENUM_PLAYER_STATE::LOADING;
         self->bufferSize_ = event->u.media_player_buffering.new_cache;
-        PRINT << "Buffering: " << self->bufferSize_;
+        //PRINT << "Buffering: " << self->bufferSize_;
         //self->playerStatus_ = "Buffering: " + QString::number(event->u.media_player_buffering.new_cache) + "%";
         break;
     case libvlc_MediaPlayerLengthChanged:

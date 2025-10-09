@@ -141,7 +141,8 @@ void AppData::Load(const string& filePath)
 {
     bool needsSaving = false;  // Flag to determine if we need to save after loading
     
-    try {
+    try 
+    {
         // Clear existing data
         Library_.clear();
         Favorites_.clear();
@@ -248,6 +249,18 @@ void AppData::Load(const string& filePath)
             root["VLCSetupArgs"] = VLCSetupArgs_;
             needsSaving = true;
             PRINT << "Missing VLC Setup Flags, using default";
+        }
+
+        if (root.contains("EnableFileLogging"))
+        {
+            EnableFileLogging_ = root["EnableFileLogging"].toBool();
+        }
+        else
+        {
+            EnableFileLogging_ = false;
+            root["EnableFileLogging"] = EnableFileLogging_;
+            needsSaving = true;
+            PRINT << "Missing EnableFileLogging, using default";
         }
 
         // Parse hotkeys
@@ -435,7 +448,8 @@ void AppData::Load(const string& filePath)
 
 void AppData::Save() 
 {
-    try {
+    try 
+    {
         // Ensure directory exists
         QFileInfo fileInfo(QString::fromStdString(dataFilePath_));
         QDir dir = fileInfo.dir();
@@ -455,6 +469,7 @@ void AppData::Save()
         root["RetryCount"] = RetryCount_;
         root["RetryDelay"] = RetryDelay_;
         root["VLCSetupArgs"] = VLCSetupArgs_; 
+        root["EnableFileLogging"] = EnableFileLogging_;
         
         // Add hotkeys - use getAllHotkeys() for consistency
         QJsonObject hotkeysJson;
