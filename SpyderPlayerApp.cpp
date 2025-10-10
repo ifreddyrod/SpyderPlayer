@@ -676,7 +676,8 @@ void SpyderPlayerApp::PlayerNormalScreen()
     //##overlay_->hide();
 
     //overlay_->Resize();
-    QTimer::singleShot(200, this, [this]() { overlay_->Resize();});
+    QTimer::singleShot(100, this, [this]() { overlay_->Resize();});
+    QTimer::singleShot(300, this, [this]() { JogPosition();});
     //player_->SetVideoTitleVisible(false);
     //##overlay_->setFocus();
     //player_->GetVideoPanel()->activateWindow();
@@ -1413,4 +1414,18 @@ int SpyderPlayerApp::GetRetryTimeDelay()
 int SpyderPlayerApp::GetMaxRetryCount()
 {
     return appData_->RetryCount_;
+}
+
+void SpyderPlayerApp::JogPosition()
+{
+    // This moves the window slightly and then back to the original position.
+    // This is to clear out some ocassional anomalies that can occur on the 
+    // overlay boarders in Linux.
+    if(platform_ == "Linux")
+    {
+        int xPos = x();
+        int yPos = y();
+        move(xPos + 10, yPos + 10);
+        move(xPos, yPos);
+    }
 }

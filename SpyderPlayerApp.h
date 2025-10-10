@@ -137,7 +137,8 @@ private:
     void ShowCursorNormal();
     void ShowCursorBusy();
     void ShowCursorBlank();
-
+    void JogPosition();
+    
 protected:
     void closeEvent(QCloseEvent *event) override;
 };
