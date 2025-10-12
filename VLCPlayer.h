@@ -87,7 +87,7 @@ private:
     int stallretryCount_ = 0;
     static constexpr int MAX_RETRIES = 8;
     int MAX_STALL_RETRIES = 5;
-    u_int64_t retryTimeDelayMs_ = 500;
+    qint64 retryTimeDelayMs_ = 500;
     bool inRecovery_ = false;
     QString playerStatus_;
     bool isPositionSeeking_ = false;

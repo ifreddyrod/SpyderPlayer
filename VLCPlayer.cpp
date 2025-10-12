@@ -437,7 +437,7 @@ void VLCPlayer::RefreshVideoSource()
         //std::string source = source_;
         //SetVideoSource("blank.mp4");
         SetVideoSource(source_);
-        u_int64_t timedelay = retryTimeDelayMs_ * stallretryCount_;
+        qint64 timedelay = retryTimeDelayMs_ * stallretryCount_;
         PRINT << "REFRESH: Retry Time Delay: " << timedelay;
         QTimer::singleShot(timedelay, this, &VLCPlayer::PlaySource);
 

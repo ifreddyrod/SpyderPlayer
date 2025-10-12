@@ -23,8 +23,8 @@ unix:!macx {
 
 # Windows specific settings
 win32 {
-    INCLUDEPATH += /usr/local/include
-    LIBS +=
+    INCLUDEPATH += C:/Program Files/VideoLAN/VLC/sdk/include/   
+    LIBS += -LC:C:/Program Files/VideoLAN/VLC/sdk/lib -llibvlc -llibvlccore
 }
 
 # You can make your code fail to compile if it uses deprecated APIs.

@@ -28,6 +28,10 @@ int main(int argc, char *argv[])
     {
         qputenv("VLC_PLUGIN_PATH", "/usr/lib/x86_64-linux-gnu/vlc/plugins");
     }
+    else if (GetPlatform() == "Windows")
+    {
+        qputenv("VLC_PLUGIN_PATH", "C:/Program Files/VideoLAN/VLC/plugins");
+    }
 
     //-----------------------------
     // Load AppData from file
