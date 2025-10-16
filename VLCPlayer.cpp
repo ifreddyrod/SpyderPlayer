@@ -123,6 +123,10 @@ std::vector<const char*> VLCPlayer::GetInitArgs(const QString& VCLSetupParams)
     {
         persistentByteArrays.push_back(arg.toUtf8());
         args.push_back(persistentByteArrays.back().constData());
+        if(arg.contains("--avcodec-hw", Qt::CaseInsensitive))
+        {
+            hwAccelType_ = arg;
+        }
     }
     
     return args;    
@@ -197,8 +201,9 @@ void VLCPlayer::VLCLogCallback(void *data, int /*level*/, const libvlc_log_t *ct
     G_VLCctx = const_cast<libvlc_log_t*>(ctx);
     LogFileOutput(QtDebugMsg, QMessageLogContext(), msg);
     
+    Q_UNUSED(data);
     // Cast data back to VLCPlayer pointer
-    VLCPlayer* self = static_cast<VLCPlayer*>(data);
+    /*VLCPlayer* self = static_cast<VLCPlayer*>(data);
     static constexpr int DECODE_ERROR_THRESHOLD = 20;
 
     // Check for hardware accelerator decode failure
@@ -215,7 +220,7 @@ void VLCPlayer::VLCLogCallback(void *data, int /*level*/, const libvlc_log_t *ct
                 self->DisableHWAccel();
             }
         }
-    }
+    }*/
 }
 
 void VLCPlayer::AttachEvents()
@@ -427,18 +432,15 @@ void VLCPlayer::SetVideoSource(const std::string& videoSource)
             throw std::runtime_error("Failed to create VLC media: " + std::string(libvlc_errmsg() ? libvlc_errmsg() : "Unknown error"));
         }
 
-        // Apply hardware acceleration setting based on previous attempts
-        if (disableHWAccel_)
+        if (app_->GetAppData()->EnableHWAcceleration_)
         {
-            // Failed with HW accel, use software decoding
-            PRINT << "SetVideoSource: Using software decoding fallback";
-            libvlc_media_add_option(media_, "avcodec-hw=none");
+            PRINT << "SetVideoSource: Attempting hardware acceleration";
+            libvlc_media_add_option(media_, STR(hwAccelType_).c_str());
         }
         else
         {
-            // First attempt, try hardware acceleration
-            PRINT << "SetVideoSource: Attempting hardware acceleration";
-            libvlc_media_add_option(media_, "avcodec-hw=any");
+            PRINT << "SetVideoSource: Disabling hardware acceleration";
+            libvlc_media_add_option(media_, "avcodec-hw=none");
         }
   
         libvlc_media_player_set_media(mediaPlayer_, media_);
@@ -471,15 +473,6 @@ void VLCPlayer::RefreshVideoSource()
     }
 }
 
-void VLCPlayer::DisableHWAccel()
-{
-    disableHWAccel_ = true;
-    PRINT << "Error Decoding Video, Attempting Software Decoding";
-
-    StopPlayback();
-    RefreshVideoSource();
-}
-
 void VLCPlayer::Play()
 {
     stopAll_ = false;
@@ -493,8 +486,6 @@ void VLCPlayer::Play()
     previousState_ = ENUM_PLAYER_STATE::IDLE;
     currentState_ = ENUM_PLAYER_STATE::LOADING;
     stalledVideoTimer_->stop();
-    disableHWAccel_ = false;
-    decodeErrorCount_ = 0;
 
     MAX_STALL_RETRIES = app_->GetMaxRetryCount();
     retryTimeDelayMs_ = app_->GetRetryTimeDelay();
@@ -628,8 +619,6 @@ void VLCPlayer::Stop()
     inRecovery_ = false;
     stopAll_ = true;
     isPlaying_ = false;
-    disableHWAccel_ = false;
-    decodeErrorCount_ = 0;
     stallPosition_ = position_ = 0;
     updateTimer_->stop();
     currentState_ = ENUM_PLAYER_STATE::STOPPED;

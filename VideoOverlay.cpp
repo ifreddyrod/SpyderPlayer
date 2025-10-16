@@ -24,13 +24,13 @@ VideoOverlay::VideoOverlay(QWidget *parent, VideoPanelType panelType ) : QWidget
     layout->setSpacing(0); // No spacing
 
     videoPanel_ = new QVideoWidget(this);
-    videoPanel_->setStyleSheet("background-color: black; border: none; padding: 10px;"); 
+    videoPanel_->setStyleSheet("background-color: black; border: none; padding: 4px;"); 
 
     videoWidget_ = new QWidget(this);
-    videoWidget_->setStyleSheet("background-color: black; border: none; padding: 10px;");
+    videoWidget_->setStyleSheet("background-color: black; border: none; padding: 4px;");
 
     blankOverlay_ = new QLabel(this);
-    blankOverlay_->setStyleSheet("background-color: black; border: none; padding: 10px;");
+    blankOverlay_->setStyleSheet("background-color: black; border: none; padding: 4px;");
     blankOverlay_->setPixmap(QPixmap(":/icons/icons/BlankScreenLogo.png"));
     //blankOverlay_->setPixmap(QPixmap(":/icons/icons/BlankScreen.png"));
     blankOverlay_->setAlignment(Qt::AlignCenter); // Center the pixmap

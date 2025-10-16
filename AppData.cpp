@@ -263,6 +263,18 @@ void AppData::Load(const string& filePath)
             PRINT << "Missing EnableFileLogging, using default";
         }
 
+        if (root.contains("EnableHWAcceleration"))
+        {
+            EnableHWAcceleration_ = root["EnableHWAcceleration"].toBool();
+        }
+        else
+        {
+            EnableHWAcceleration_ = true;
+            root["EnableHWAcceleration"] = EnableHWAcceleration_;
+            needsSaving = true;
+            PRINT << "Missing EnableHWAcceleration, using default";
+        }
+
         // Parse hotkeys
         QMap<QString, int> hotkeysMap;
         
@@ -470,6 +482,7 @@ void AppData::Save()
         root["RetryDelay"] = RetryDelay_;
         root["VLCSetupArgs"] = VLCSetupArgs_; 
         root["EnableFileLogging"] = EnableFileLogging_;
+        root["EnableHWAcceleration"] = EnableHWAcceleration_;
         
         // Add hotkeys - use getAllHotkeys() for consistency
         QJsonObject hotkeysJson;

@@ -72,6 +72,7 @@ public:
     QVector<PlayListEntry> Favorites_;
     QVector<PlayListEntry> PlayLists_;
     string dataFilePath_;
+    bool EnableHWAcceleration_;
 
     AppData(const string& filePath);
     void Load(const string& filePath);
