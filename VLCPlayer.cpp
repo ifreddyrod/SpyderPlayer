@@ -420,6 +420,10 @@ void VLCPlayer::SetVideoSource(const std::string& videoSource)
         }
 
         // Set the media to the player
+        //libvlc_media_add_option(media_, "avcodec-hw=none");
+        //libvlc_media_add_option(media_, "avcodec-hw=vdpau_avcodec");
+        //libvlc_media_add_option(media_, "avcodec-hw=any");
+  
         libvlc_media_player_set_media(mediaPlayer_, media_);
     } 
     catch (const std::exception& e) 

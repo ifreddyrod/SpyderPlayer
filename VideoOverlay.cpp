@@ -20,17 +20,17 @@ VideoOverlay::VideoOverlay(QWidget *parent, VideoPanelType panelType ) : QWidget
 
     // Create a layout for the VideoOverlay widget
     QVBoxLayout *layout = new QVBoxLayout(this);
-    layout->setContentsMargins(0, 0, 0, 0); // No margins
+    layout->setContentsMargins(1, 1, 1, 1); // No margins
     layout->setSpacing(0); // No spacing
 
     videoPanel_ = new QVideoWidget(this);
-    videoPanel_->setStyleSheet("background-color: black; border: none;"); 
+    videoPanel_->setStyleSheet("background-color: black; border: none; padding: 10px;"); 
 
     videoWidget_ = new QWidget(this);
-    videoWidget_->setStyleSheet("background-color: black; border: none;"); 
+    videoWidget_->setStyleSheet("background-color: black; border: none; padding: 10px;");
 
     blankOverlay_ = new QLabel(this);
-    blankOverlay_->setStyleSheet("background-color: black; border: none;");
+    blankOverlay_->setStyleSheet("background-color: black; border: none; padding: 10px;");
     blankOverlay_->setPixmap(QPixmap(":/icons/icons/BlankScreenLogo.png"));
     //blankOverlay_->setPixmap(QPixmap(":/icons/icons/BlankScreen.png"));
     blankOverlay_->setAlignment(Qt::AlignCenter); // Center the pixmap
@@ -153,26 +153,38 @@ void VideoOverlay::Resize(bool forceFullscreen)
 
     int panelWidth = spyderPlayerApp->GetVideoPanelWidth();
     int panelHeight = spyderPlayerApp->GetVideoPanelHeight();
-    int new_x =  panel->x();
-    int new_y =  panel->y();
+    int new_x =  panel->x()+2;
+    int new_y =  panel->y()+2;
 
     //PRINT << "Coordinates: " << new_x << ", " << new_y;
     //PRINT << "Width: " << panelWidth << ", Height: " << panelHeight;
 
-    setFixedSize(panelWidth, panelHeight);  
+    setFixedSize(panelWidth-4, panelHeight-4);  
 
-    if (panelType_ == VideoPanelType::QVideoPanel && forceFullscreen) 
+    if (panelType_ == VideoPanelType::QVideoPanel && forceFullscreen)
+    { 
         videoPanel_->showFullScreen();
+        setFixedSize(panelWidth, panelHeight); 
+        new_x -= 2; 
+        new_y -= 2;
+    }
     else if (panelType_ == VideoPanelType::QWidget && forceFullscreen) 
+    {
         videoWidget_->showFullScreen();
-    
+        setFixedSize(panelWidth, panelHeight);  
+        new_x -= 2; 
+        new_y -= 2;
+    }
+    //else
+        //setFixedSize(panelWidth-2, panelHeight-2);  
+
     if(overlayStack_->currentIndex() == 0)
     {
         videoPanel_->hide();
         videoWidget_->hide();
     }
 
-    titleBar_->setFixedWidth(panelWidth); 
+    titleBar_->setFixedWidth(panelWidth-4); 
 
     QPoint global_pos = panel->mapToGlobal(QPoint(new_x, new_y));
     move(global_pos);

@@ -676,8 +676,8 @@ void SpyderPlayerApp::PlayerNormalScreen()
     //##overlay_->hide();
 
     //overlay_->Resize();
-    QTimer::singleShot(100, this, [this]() { overlay_->Resize();});
-    QTimer::singleShot(300, this, [this]() { JogPosition();});
+    QTimer::singleShot(200, this, [this]() { overlay_->Resize();});
+    //QTimer::singleShot(500, this, [this]() { JogPosition();});
     //player_->SetVideoTitleVisible(false);
     //##overlay_->setFocus();
     //player_->GetVideoPanel()->activateWindow();
@@ -689,8 +689,8 @@ void SpyderPlayerApp::PlayerNormalScreen()
 void SpyderPlayerApp::PlayerFullScreen()
 {
     // Hide Playlists
-    isPlaylistVisible_ = true;
-    TogglePlaylistView();
+    //isPlaylistVisible_ = true;
+    //TogglePlaylistView();
 
     // Configure for fullscreen
     ui_.Horizontal_splitter->setSizes({0, 800});  // Hide left side

@@ -1047,7 +1047,7 @@ void PlaylistManager::SearchChannels(QString searchText)
                 if (channel->IsItemPersistent())
                 {
                     newEntry->setFlags(newEntry->flags() | Qt::ItemFlag::ItemIsUserCheckable); 
-                    newEntry->SetItemChecked(false);    
+                    newEntry->SetItemChecked(channel->IsItemChecked());    
                 }
                 AppendChannel(playlistResults, newEntry);
                 searchResultsCount++;

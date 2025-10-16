@@ -228,30 +228,50 @@ string PlayerStateToString(ENUM_PLAYER_STATE state)
     };
 }
 
-
-// Redirect qDebug messages to a log file
-void RotateLogIfNeeded(const QString &basePath, qint64 maxSize, int maxBackups) 
+void RotateLogIfNeeded(const QString &logFile, qint64 maxSize, int maxBackups)
 {
-    QFileInfo baseInfo(basePath);
-    if (!baseInfo.exists() || baseInfo.size() < maxSize) 
-        return;
+    QFileInfo fileInfo(logFile);
     
-    for (int i = maxBackups; i >= 2; --i) 
+    // Check if file exists and is smaller than maxSize
+    if (!fileInfo.exists() || fileInfo.size() < maxSize) 
     {
-        QString oldBackup = basePath + "." + QString::number(i);
-        QString newBackup = basePath + "." + QString::number(i - 1);
-        if (QFile::exists(oldBackup)) 
-        {
+        return;
+    }
+    
+    // Get base name and suffix for creating backup names
+    QString baseName = fileInfo.baseName();      // e.g., "player_messages"
+    QString suffix = fileInfo.suffix();           // e.g., "log"
+    QString dir = fileInfo.dir().path();          // e.g., "/path/to"
+    
+    // Shift existing backups: maxBackups-1 -> maxBackups, maxBackups-2 -> maxBackups-1, etc.
+    for (int i = maxBackups - 1; i >= 1; --i) 
+    {
+        QString oldBackup = QString("%1/%2_%3.%4").arg(dir, baseName, QString::number(i), suffix);
+        QString newBackup = QString("%1/%2_%3.%4").arg(dir, baseName, QString::number(i + 1), suffix);
+        
+        // Delete the oldest file if it would exceed maxBackups
+        if (i + 1 > maxBackups) 
             QFile::remove(newBackup);
-            QFile::rename(oldBackup, newBackup);
+        else 
+        {
+            // Rename backup files
+            QFile oldFile(oldBackup);
+            if (oldFile.exists()) 
+            {
+                QFile::remove(newBackup);  // Remove target if it exists
+                oldFile.rename(newBackup);
+            }
         }
     }
-    if (maxBackups >= 1) 
-    {
-        QFile::rename(basePath, basePath + ".1");
-    }
+    
+    // Rename current log file to _1 backup
+    QString firstBackup = QString("%1/%2_1.%3").arg(dir, baseName, suffix);
+    QFile::remove(firstBackup);  // Remove if it already exists
+    QFile currentLog(logFile);
+    currentLog.rename(firstBackup);
 }
 
+// Redirect qDebug messages to a log file
 void LogFileOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg) 
 {
     QMutexLocker locker(&G_LoggingMutex);
