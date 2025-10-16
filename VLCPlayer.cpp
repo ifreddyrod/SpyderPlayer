@@ -18,18 +18,6 @@ VLCPlayer::VLCPlayer(Ui::PlayerMainWindow* mainWindow, QWidget* parent)
 
     subtitleCount_ = -1;
     subtitleIndex_ = -1;
-    //videoPanel_->setWindowFlags(Qt::FramelessWindowHint);
-    //videoPanel_->setAttribute(Qt::WA_TranslucentBackground);
-
-    //mainWindow->gridLayout->removeWidget(mainWindow->VideoView_widget);
-    //mainWindow->gridLayout->addWidget(videoPanel_, 1, 1, 1, 1);
-    //videoPanel_->setStyleSheet("background-color: transparent;");
-    //mainWindow->topverticalLayout->removeWidget(mainWindow->VideoView_widget);
-    //mainWindow->topverticalLayout->addWidget(videoPanel_);
-    
-    //videoPanel_->setStyleSheet("background-color: rgba(0, 0, 0, 2);");
-
-    //InitPlayer(nullptr);
 
     updateTimer_ = new QTimer(this);
     updateTimer_->setInterval(250);
@@ -167,7 +155,7 @@ void VLCPlayer::SetupPlayer()
         vlcInstance_ = libvlc_new(vlc_args.size(), vlc_args.data());
 
         if(vlcInstance_ && G_LogToFile)
-            libvlc_log_set(vlcInstance_, VLCLogCallback, nullptr);
+            libvlc_log_set(vlcInstance_, VLCLogCallback, this);
 
         if (!vlcInstance_) 
         {
@@ -205,9 +193,29 @@ void VLCPlayer::VLCLogCallback(void *data, int /*level*/, const libvlc_log_t *ct
     char msgBuffer[4096];
     vsnprintf(msgBuffer, sizeof(msgBuffer), fmt, args);
     QString msg = QString::fromLocal8Bit(msgBuffer);
+    
     G_VLCctx = const_cast<libvlc_log_t*>(ctx);
     LogFileOutput(QtDebugMsg, QMessageLogContext(), msg);
-    Q_UNUSED(data);
+    
+    // Cast data back to VLCPlayer pointer
+    VLCPlayer* self = static_cast<VLCPlayer*>(data);
+    static constexpr int DECODE_ERROR_THRESHOLD = 20;
+
+    // Check for hardware accelerator decode failure
+    if (msg.contains("hardware accelerator failed to decode picture", Qt::CaseInsensitive)) // ||
+        //msg.contains("Failed to end picture decode", Qt::CaseInsensitive) ||
+        //msg.contains("hardware accelerator", Qt::CaseInsensitive) && msg.contains("failed", Qt::CaseInsensitive))
+    {
+        if (!self->disableHWAccel_) 
+        {  
+            self->decodeErrorCount_++;
+
+            if (self->decodeErrorCount_ >= DECODE_ERROR_THRESHOLD)
+            {
+                self->DisableHWAccel();
+            }
+        }
+    }
 }
 
 void VLCPlayer::AttachEvents()
@@ -419,10 +427,19 @@ void VLCPlayer::SetVideoSource(const std::string& videoSource)
             throw std::runtime_error("Failed to create VLC media: " + std::string(libvlc_errmsg() ? libvlc_errmsg() : "Unknown error"));
         }
 
-        // Set the media to the player
-        //libvlc_media_add_option(media_, "avcodec-hw=none");
-        //libvlc_media_add_option(media_, "avcodec-hw=vdpau_avcodec");
-        //libvlc_media_add_option(media_, "avcodec-hw=any");
+        // Apply hardware acceleration setting based on previous attempts
+        if (disableHWAccel_)
+        {
+            // Failed with HW accel, use software decoding
+            PRINT << "SetVideoSource: Using software decoding fallback";
+            libvlc_media_add_option(media_, "avcodec-hw=none");
+        }
+        else
+        {
+            // First attempt, try hardware acceleration
+            PRINT << "SetVideoSource: Attempting hardware acceleration";
+            libvlc_media_add_option(media_, "avcodec-hw=any");
+        }
   
         libvlc_media_player_set_media(mediaPlayer_, media_);
     } 
@@ -454,6 +471,15 @@ void VLCPlayer::RefreshVideoSource()
     }
 }
 
+void VLCPlayer::DisableHWAccel()
+{
+    disableHWAccel_ = true;
+    PRINT << "Error Decoding Video, Attempting Software Decoding";
+
+    StopPlayback();
+    RefreshVideoSource();
+}
+
 void VLCPlayer::Play()
 {
     stopAll_ = false;
@@ -467,6 +493,8 @@ void VLCPlayer::Play()
     previousState_ = ENUM_PLAYER_STATE::IDLE;
     currentState_ = ENUM_PLAYER_STATE::LOADING;
     stalledVideoTimer_->stop();
+    disableHWAccel_ = false;
+    decodeErrorCount_ = 0;
 
     MAX_STALL_RETRIES = app_->GetMaxRetryCount();
     retryTimeDelayMs_ = app_->GetRetryTimeDelay();
@@ -532,17 +560,6 @@ void VLCPlayer::PlaySource()
             //PRINT << "Duration = " << duration_ << ", Resume Position = " << stallPosition_;
             if (duration_ > 0) 
                 SetPosition(stallPosition_);
-            //if (duration_ > 0 && position_ > skipBackLength_)
-                //SkipPosition(position_ - skipBackLength_);
-
-            //videoPanel_->parentWidget()->layout()->activate(); // Force layout recalculation
-            //videoPanel_->updateGeometry();
-            /*unsigned width, height;
-            if (libvlc_video_get_size(mediaPlayer_, 0, &width, &height) == 0) {
-                videoPanel_->resize(width, height);
-                videoPanel_->updateGeometry(); // Force layout update
-                PRINT << "Video size:" << width << "x" << height;
-            }*/
             return;
         } 
         //else if (retryCount_ <= MAX_RETRIES) 
@@ -553,19 +570,6 @@ void VLCPlayer::PlaySource()
 
             if (inRecovery_ && duration_ > 0) 
                 SetPosition(stallPosition_);
-
-            //if (duration_ > 0 && position_ > skipBackLength_)
-                //SkipPosition(position_ - skipBackLength_);
-            //videoPanel_->parentWidget()->layout()->activate(); // Force layout recalculation
-            //videoPanel_->updateGeometry();
-            /*unsigned width, height;
-            if (libvlc_video_get_size(mediaPlayer_, 0, &width, &height) == 0) {
-                videoPanel_->resize(width, height);
-                videoPanel_->updateGeometry(); // Force layout update
-                PRINT << "Video size:" << width << "x" << height;
-                videoPanel_->lower();
-            }*/
-            //inRecovery_ = false;
             return;
         }
         else if (stallretryCount_ > MAX_STALL_RETRIES)
@@ -624,6 +628,8 @@ void VLCPlayer::Stop()
     inRecovery_ = false;
     stopAll_ = true;
     isPlaying_ = false;
+    disableHWAccel_ = false;
+    decodeErrorCount_ = 0;
     stallPosition_ = position_ = 0;
     updateTimer_->stop();
     currentState_ = ENUM_PLAYER_STATE::STOPPED;

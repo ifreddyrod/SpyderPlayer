@@ -244,7 +244,7 @@ void AppData::Load(const string& filePath)
         }
         else
         {
-            VLCSetupArgs_ = "--verbose=2 --network-caching=3000 --file-caching=1500 --live-caching=1500 --drop-late-frames --skip-frames --sout-keep --clock-jitter=1000";
+            VLCSetupArgs_ = "--verbose=2 --avcodec-hw=any --network-caching=3000 --file-caching=1500 --live-caching=1500 --drop-late-frames --skip-frames --sout-keep --clock-jitter=1000";
 
             root["VLCSetupArgs"] = VLCSetupArgs_;
             needsSaving = true;

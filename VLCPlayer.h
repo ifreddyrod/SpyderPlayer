@@ -48,6 +48,10 @@ public:
     void OnChangedPosition(bool isPlaying) override;
     void ChangeUpdateTimerInterval(bool isFullScreen) override;
 
+    void DisableHWAccel();
+    bool disableHWAccel_ = false;
+    int decodeErrorCount_ = 0;
+
 private slots:
     //void UpdatePositionSlot();
     //void CheckTimeout();
@@ -74,6 +78,7 @@ private:
     libvlc_media_t* media_ = nullptr;
     libvlc_event_manager_t* eventManager_;
     ENUM_PLAYER_STATE previousState_;
+
     //QTimer* positionTimer_;
     //QTimer* watchdogTimer_;
     QTimer* updateTimer_;
