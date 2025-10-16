@@ -185,10 +185,10 @@ background-color: rgb(0, 0, 0);
   <widget class="QLabel" name="PlayerType_label">
    <property name="geometry">
     <rect>
-     <x>410</x>
+     <x>360</x>
      <y>150</y>
-     <width>131</width>
-     <height>16</height>
+     <width>181</width>
+     <height>20</height>
     </rect>
    </property>
    <property name="text">
@@ -269,10 +269,10 @@ padding-left: 40px;</string>
   <widget class="QLabel" name="Path_label">
    <property name="geometry">
     <rect>
-     <x>60</x>
+     <x>10</x>
      <y>60</y>
-     <width>131</width>
-     <height>16</height>
+     <width>181</width>
+     <height>20</height>
     </rect>
    </property>
    <property name="text">
@@ -363,10 +363,10 @@ background-color: rgb(0, 0, 0);</string>
   <widget class="QLabel" name="Retry_label">
    <property name="geometry">
     <rect>
-     <x>60</x>
+     <x>10</x>
      <y>150</y>
-     <width>131</width>
-     <height>16</height>
+     <width>181</width>
+     <height>20</height>
     </rect>
    </property>
    <property name="text">
@@ -379,9 +379,9 @@ background-color: rgb(0, 0, 0);</string>
   <widget class="QLabel" name="Path_label_2">
    <property name="geometry">
     <rect>
-     <x>50</x>
-     <y>199</y>
-     <width>141</width>
+     <x>10</x>
+     <y>200</y>
+     <width>181</width>
      <height>21</height>
     </rect>
    </property>
@@ -395,9 +395,9 @@ background-color: rgb(0, 0, 0);</string>
   <widget class="QLabel" name="ScaleFactor_label">
    <property name="geometry">
     <rect>
-     <x>30</x>
+     <x>10</x>
      <y>250</y>
-     <width>161</width>
+     <width>181</width>
      <height>20</height>
     </rect>
    </property>
@@ -477,10 +477,10 @@ background-color: rgb(0, 0, 0);
   <widget class="QLabel" name="HWAccel_label">
    <property name="geometry">
     <rect>
-     <x>370</x>
+     <x>350</x>
      <y>200</y>
-     <width>171</width>
-     <height>16</height>
+     <width>191</width>
+     <height>20</height>
     </rect>
    </property>
    <property name="text">
