@@ -21,6 +21,7 @@ public:
 private:
     void BackButtonClicked();
     void PlayerTypeChanged();
+    void HWAccelerationChanged();
     void ScaleFactorChanged();
     void PathChanged();
     void OpenPathButtonClicked();

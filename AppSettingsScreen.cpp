@@ -14,6 +14,7 @@ AppSettings::AppSettings(SettingsManager* settingsManager)
     // Connect Slots
     connect(ui_.Back_button, &QPushButton::clicked, this, &AppSettings::BackButtonClicked);
     connect(ui_.PlayerType_combobox, &QComboBox::currentIndexChanged, this, &AppSettings::PlayerTypeChanged);
+    connect(ui_.EnableHWA_combobox, &QComboBox::currentIndexChanged, this, &AppSettings::HWAccelerationChanged);
     connect(ui_.PlaylistPath_textedit, &QTextEdit::textChanged, this, &AppSettings::PathChanged);
     connect(ui_.OpenPath_button, &QPushButton::clicked, this, &AppSettings::OpenPathButtonClicked);
     connect(ui_.Save_button, &QPushButton::clicked, this, &AppSettings::SaveButtonClicked);
@@ -33,6 +34,7 @@ void AppSettings::ShowAppSettings()
 
     ui_.PlaylistPath_textedit->setText(QSTR(playListsPath));
     ui_.PlayerType_combobox->setCurrentText(QSTR(playerType));
+    ui_.EnableHWA_combobox->setCurrentIndex(settingsManager_->appData_->EnableHWAcceleration_ ? 0 : 1);
     ui_.RetryCount_box->setValue(settingsManager_->appData_->RetryCount_);
     ui_.RetryTimeDelay_box->setValue(settingsManager_->appData_->RetryDelay_);
     ui_.ScaleFactor_box->setValue(settingsManager_->appData_->AppScaleFactor_);
@@ -72,6 +74,11 @@ void AppSettings::PlayerTypeChanged()
     PRINT << "New Player Type: " << ui_.PlayerType_combobox->currentText();
 }
 
+void AppSettings::HWAccelerationChanged()
+{
+    modified_ = true;
+    PRINT << "New HW Acceleration: " << ui_.EnableHWA_combobox->currentText();
+}
 void AppSettings::PathChanged()
 {
     modified_ = true;
@@ -112,6 +119,7 @@ void AppSettings::SaveButtonClicked()
     {
         settingsManager_->appData_->PlayListsPath_ = ui_.PlaylistPath_textedit->toPlainText().toStdString();
         settingsManager_->appData_->PlayerType_ = StringToPlayerTypeEnum(ui_.PlayerType_combobox->currentText().toStdString());
+        settingsManager_->appData_->EnableHWAcceleration_ = ui_.EnableHWA_combobox->currentIndex() == 0;
         settingsManager_->appData_->RetryCount_ = ui_.RetryCount_box->value();
         settingsManager_->appData_->RetryDelay_ = ui_.RetryTimeDelay_box->value();
         settingsManager_->appData_->AppScaleFactor_ = ui_.ScaleFactor_box->value();
