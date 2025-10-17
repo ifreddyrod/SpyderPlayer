@@ -77,6 +77,7 @@ private:
     void SetupPlayer();
     void ResetAudioOutput();
     void PlaySource();
+    void CheckHWAcceleration();
 
     SpyderPlayerApp* app_;
     Ui::PlayerMainWindow* mainWindow_;
@@ -105,6 +106,7 @@ private:
     bool stopAll_ = false;
     int skipBackLength_ = 15000;
     VideoOverlay *overlay_ = nullptr;
+    bool enableHWAccel_ = true;
 };
 
 #endif // QTMEDIA_H

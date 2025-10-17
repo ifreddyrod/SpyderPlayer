@@ -1037,6 +1037,7 @@ void SpyderPlayerApp::UserActivityDetected()
         controlpanelFS_.raise();
         inactivityTimer_->start();
     }
+    activateWindow();
 }
 void SpyderPlayerApp::InactivityDetected()
 {

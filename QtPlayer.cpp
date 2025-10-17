@@ -10,10 +10,11 @@ QtPlayer::QtPlayer(Ui::PlayerMainWindow* mainWindow, QWidget* parent)
     : VideoPlayer(parent)
 {
     qputenv("AV_LOG_LEVEL", "warning");
+    qputenv("FFMPEG_LOGLEVEL", "debug");
     qputenv("QT_MULTIMEDIA_PREFERRED_DECODERS", "software");
-    qputenv("FFMPEG_OPTS", "probesize=20000000 analyzeduration=20000000 reconnect=1 reconnect_streamed=1 reconnect_delay_max=60 max_delay=10000000 buffer_size=20971520 err_detect=ignore_err+crccheck format_opts=scan_all_pmts=1 -hwaccel none");
+    qputenv("FFMPEG_OPTS", "probesize=20000000 analyzeduration=20000000 reconnect=1 reconnect_streamed=1 reconnect_delay_max=60 max_delay=10000000 buffer_size=20971520 err_detect=ignore_err+crccheck format_opts=scan_all_pmts=1"); // -hwaccel none");
     qputenv("AVFORMAT_FLAGS", "+genpts+igndts");
-    qputenv("QT_LOGGING_RULES", "qt6.multimedia=true");
+    qputenv("QT_LOGGING_RULES", "qt.multimedia.ffmpeg*=true;qt6.multimedia=true");
         
     mainWindow_ = mainWindow;
     app_ = static_cast<SpyderPlayerApp*>(parent);
@@ -22,13 +23,16 @@ QtPlayer::QtPlayer(Ui::PlayerMainWindow* mainWindow, QWidget* parent)
     subtitleCount_ = -1;
     subtitleIndex_ = -1;
 
-    //mainWindow->gridLayout->removeWidget(mainWindow->VideoView_widget);
-    //mainWindow->gridLayout->addWidget(videoPanel_, 1, 1, 1, 1);
-    //mainWindow->topverticalLayout->removeWidget(mainWindow->VideoView_widget);
-    //mainWindow->topverticalLayout->addWidget(baseVideoPanel);
-    //videoWidget_ = static_cast<QWidget*>(baseVideoPanel);
-
-    //InitPlayer(nullptr);
+    if (app_->GetAppData()->EnableHWAcceleration_)
+    {
+        qunsetenv("QT_FFMPEG_DECODING_HW_DEVICE_TYPES");
+        enableHWAccel_ = true;
+    } 
+    else 
+    {
+        qputenv("QT_FFMPEG_DECODING_HW_DEVICE_TYPES", "");
+        enableHWAccel_ = false;
+    }
 
     stalledVideoTimer_ = new QTimer(this);
     stalledVideoTimer_->setInterval(3000);
@@ -91,6 +95,26 @@ void QtPlayer::SetupPlayer()
     {
         PRINT << e.what() << '\n';
         ErrorOccured(std::string(e.what()));
+    }
+}
+
+void QtPlayer::CheckHWAcceleration()
+{
+    bool globalHWAccel = app_->GetAppData()->EnableHWAcceleration_;
+    if (enableHWAccel_ != globalHWAccel)
+    {
+        if (globalHWAccel)
+        {
+            qunsetenv("QT_FFMPEG_DECODING_HW_DEVICE_TYPES");
+            PRINT << "Enabling hardware acceleration";
+        }
+        else
+        {
+            qunsetenv("QT_FFMPEG_DECODING_HW_DEVICE_TYPES");
+            qputenv("QT_FFMPEG_DECODING_HW_DEVICE_TYPES", "");
+            PRINT << "Disabling hardware acceleration";
+        }
+        enableHWAccel_ = globalHWAccel;
     }
 }
 
@@ -166,6 +190,7 @@ void QtPlayer::Play()
     inRecovery_ = false;
     stallretryCount_ = 0;
     retryCount_ = 0;
+    CheckHWAcceleration();
 
     PlaySource();
 }
