@@ -610,7 +610,8 @@ void SpyderPlayerApp::mouseMoveEvent(QMouseEvent *event)
         // Update the press position for the next movement calculation
         mousePressPos_ = event->globalPosition().toPoint();
 
-        //if(!isFullScreen_)
+        if(!isFullScreen_)
+            activateWindow();
             //controlpanel_.activateWindow();
     }
 
@@ -628,6 +629,7 @@ void SpyderPlayerApp::mouseReleaseEvent(QMouseEvent *event)
         mouseMoveActive_ = false;
         //overlay_->show();
         overlay_->Resize();
+        activateWindow();
         //overlay_->activateWindow();
     }
     if (isFullScreen_)
@@ -677,6 +679,7 @@ void SpyderPlayerApp::PlayerNormalScreen()
 
     //overlay_->Resize();
     QTimer::singleShot(200, this, [this]() { overlay_->Resize();});
+    QTimer::singleShot(300, this, [this]() { activateWindow();});
     //QTimer::singleShot(500, this, [this]() { JogPosition();});
     //player_->SetVideoTitleVisible(false);
     //##overlay_->setFocus();
@@ -1037,8 +1040,8 @@ void SpyderPlayerApp::UserActivityDetected()
         controlpanelFS_.raise();
         inactivityTimer_->start();
     }
-    activateWindow();
 }
+
 void SpyderPlayerApp::InactivityDetected()
 {
     if (isFullScreen_ && !controlpanelFS_.hasFocus() && !subtitlesMenu_->isVisible())
