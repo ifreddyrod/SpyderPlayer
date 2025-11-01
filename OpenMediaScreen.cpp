@@ -14,6 +14,8 @@ OpenMedia::OpenMedia(SettingsManager* settingsManager, ENUM_SETTINGS_VIEWS viewT
     connect(ui_.OpenFiles_button, &QPushButton::clicked, this, &OpenMedia::OpenFileButtonClicked);
     connect(ui_.Source_textedit, &QTextEdit::textChanged, this, &OpenMedia::EntryChanged);
     connect(ui_.SourceType_combobox, &QComboBox::currentIndexChanged, this, &OpenMedia::SourceTypeChanged);
+
+    installEventFilter(this);
 }
 
 OpenMedia::~OpenMedia()
@@ -83,6 +85,9 @@ void OpenMedia::EntryChanged()
     //blockSignals(true);
     QString sourcePath = ui_.Source_textedit->toPlainText();
 
+    if (sourcePath.endsWith('\n'))
+        sourcePath = sourcePath.trimmed();
+
     if (sourcePath.startsWith("http://") || sourcePath.startsWith("https://"))
     {
         ui_.Open_button->setEnabled(true);
@@ -93,7 +98,10 @@ void OpenMedia::EntryChanged()
         ui_.Open_button->setEnabled(true);
         ui_.SourceType_combobox->setCurrentIndex(0);
     }
-    modified_ = true;
+
+    if (sourcePath.length() > 0)
+        modified_ = true;
+
     //blockSignals(false);
 }
 
@@ -180,4 +188,27 @@ void OpenMedia::OpenButtonClicked()
     PRINT << "NewEntry SourceType: " << newEntry.sourceType;
 
     modified_ = false;
+}
+
+bool OpenMedia::eventFilter(QObject *object, QEvent *event) 
+{
+    Q_UNUSED(object);
+
+    if (event->type() == QEvent::KeyRelease)
+    {
+        QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
+
+        if (ui_.Source_textedit->hasFocus() && keyEvent->key() == Qt::Key_Return)
+        {
+            if (ui_.Source_textedit->toPlainText().endsWith('\n'))
+                ui_.Source_textedit->setPlainText(ui_.Source_textedit->toPlainText().trimmed());
+
+            if(ui_.Source_textedit->toPlainText().isEmpty() == false)
+            {
+                OpenButtonClicked();
+                return true;
+            }
+        }
+    }
+    return false;
 }

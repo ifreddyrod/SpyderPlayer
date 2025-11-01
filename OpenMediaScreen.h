@@ -23,7 +23,7 @@ private:
     void OpenFileButtonClicked();
     void SourceTypeChanged();
     void EntryChanged();
-
+    bool eventFilter(QObject *object, QEvent *event) override;
 
     Ui::OpenFileSelection ui_;
     SettingsManager* settingsManager_;
