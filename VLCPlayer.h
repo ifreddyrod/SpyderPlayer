@@ -98,6 +98,7 @@ private:
     int skipBackLength_ = 15000;
     int titleFontSize_ = 18;
     bool isPlaying_ = false;
+    bool isPaused_ = false;
     float bufferSize_ = 0;
 };
 

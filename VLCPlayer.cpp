@@ -250,7 +250,7 @@ void VLCPlayer::HandleVLCEvent(const libvlc_event_t* event, void* data)
         self->currentState_ = ENUM_PLAYER_STATE::PAUSED;
         break;
     case libvlc_MediaPlayerStopped:
-        self->currentState_ = ENUM_PLAYER_STATE::STOPPED;
+        self->currentState_ = self->isPaused_ ? ENUM_PLAYER_STATE::PAUSED : ENUM_PLAYER_STATE::STOPPED;
         break;
     case libvlc_MediaPlayerEndReached:
         self->currentState_ = ENUM_PLAYER_STATE::ENDED;
@@ -508,6 +508,7 @@ void VLCPlayer::Resume()
         stallretryCount_ = 0;
         retryCount_ = 0;
         isPlaying_ = true;
+        isPaused_ = false;
         updateTimer_->start();
         PlaySource();   
     }
@@ -593,6 +594,7 @@ void VLCPlayer::Pause()
         isPlaying_ = false;
     }
     inRecovery_ = false;
+    isPaused_ = true;
     //updateTimer_->stop();
     currentState_ = ENUM_PLAYER_STATE::PAUSED;
     UpdatePlayerState(currentState_);
@@ -619,6 +621,7 @@ void VLCPlayer::Stop()
     inRecovery_ = false;
     stopAll_ = true;
     isPlaying_ = false;
+    isPaused_ = false;
     stallPosition_ = position_ = 0;
     updateTimer_->stop();
     currentState_ = ENUM_PLAYER_STATE::STOPPED;

@@ -475,6 +475,12 @@ QPair<string, string> PlaylistManager::GetAdjacentChannel(bool forward)
 
     int nextItemIndex = (currentIndex + (forward ? 1 : -1)) % currentListCount;
 
+    // Check next channel is should be the last item
+    if (nextItemIndex < 0)
+    {
+        nextItemIndex = currentListCount - 1;
+    }
+
     currentSelectedItem_ = currentList->Child(nextItemIndex);
 
     // Retrieve the channel name (displayed)
