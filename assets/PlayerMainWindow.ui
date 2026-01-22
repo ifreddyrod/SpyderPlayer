@@ -329,7 +329,7 @@ QLabel
 }</string>
                 </property>
                 <property name="text">
-                 <string>TextLabel</string>
+                 <string/>
                 </property>
                 <property name="indent">
                  <number>30</number>
