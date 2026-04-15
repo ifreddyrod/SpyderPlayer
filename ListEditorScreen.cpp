@@ -331,6 +331,7 @@ void ListEditor::DeleteButtonClicked()
         if(ShowSaveWarningDialog("Delete Entry", "Are you sure you want to delete " + QSTR(editList_[row].name) + "?", false) == QMessageBox::Yes)
         {
             editList_.removeAt(row);
+            settingsManager_->appData_->PlayLists_ = editList_;
             settingsManager_->SaveSettings(true);
             UpdateTable();
         }
