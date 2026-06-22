@@ -155,7 +155,7 @@ background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgb
     <rect>
      <x>50</x>
      <y>240</y>
-     <width>251</width>
+     <width>401</width>
      <height>16</height>
     </rect>
    </property>
@@ -239,9 +239,9 @@ background-color: qlineargradient(spread:pad, x1:0.506931, y1:0.295636, x2:1, y2
    <property name="geometry">
     <rect>
      <x>50</x>
-     <y>290</y>
+     <y>300</y>
      <width>311</width>
-     <height>16</height>
+     <height>20</height>
     </rect>
    </property>
    <property name="text">
@@ -277,9 +277,9 @@ background-color: qlineargradient(spread:pad, x1:0.506931, y1:0.295636, x2:1, y2
    <property name="geometry">
     <rect>
      <x>50</x>
-     <y>260</y>
+     <y>270</y>
      <width>311</width>
-     <height>16</height>
+     <height>20</height>
     </rect>
    </property>
    <property name="text">
@@ -296,7 +296,7 @@ background-color: qlineargradient(spread:pad, x1:0.506931, y1:0.295636, x2:1, y2
    <property name="geometry">
     <rect>
      <x>50</x>
-     <y>330</y>
+     <y>340</y>
      <width>561</width>
      <height>16</height>
     </rect>
