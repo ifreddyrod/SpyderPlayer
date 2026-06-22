@@ -674,11 +674,68 @@ bool VLCPlayer::IsMuted()
 
 QString VLCPlayer::GetVideoResolution()
 {
-    unsigned width = 0, height = 0;
-    if (libvlc_video_get_size(mediaPlayer_, 0, &width, &height) == 0) 
+    if (!mediaPlayer_) 
     {
-        return QString("%1x%2").arg(width).arg(height);
+        return "Unknown";
     }
+
+    libvlc_media_t* media = libvlc_media_player_get_media(mediaPlayer_);
+    if (!media) 
+    {
+        return "Unknown";
+    }
+
+    libvlc_media_track_t** tracks = nullptr;
+    unsigned int track_count = libvlc_media_tracks_get(media, &tracks);
+
+    // Use rendered size if no video track
+    if (track_count == 0 || !tracks) 
+    {
+        libvlc_media_tracks_release(tracks, track_count); // safe even if null
+        // Fallback to rendered size
+        unsigned w = 0, h = 0;
+        if (libvlc_video_get_size(mediaPlayer_, 0, &w, &h) == 0 && w > 0 && h > 0) 
+        {
+            return QString("%1x%2").arg(w).arg(h);
+        }
+        return "Unknown";
+    }
+
+    unsigned best_width = 0;
+    unsigned best_height = 0;
+
+    // Find the best resolution since VLC will default to it
+    for (unsigned i = 0; i < track_count; i++) 
+    {
+        libvlc_media_track_t* track = tracks[i];
+        if (track && track->i_type == libvlc_track_video) 
+        {
+            unsigned w = track->video->i_width;
+            unsigned h = track->video->i_height;
+
+            // Prefer higher resolution (area-based comparison is robust)
+            if (w * h > best_width * best_height) 
+            {
+                best_width = w;
+                best_height = h;
+            }
+        }
+    }
+
+    libvlc_media_tracks_release(tracks, track_count);
+
+    if (best_width > 0 && best_height > 0) 
+    {
+        return QString("%1x%2").arg(best_width).arg(best_height);
+    }
+
+    // Final fallback
+    unsigned w = 0, h = 0;
+    if (libvlc_video_get_size(mediaPlayer_, 0, &w, &h) == 0 && w > 0 && h > 0) 
+    {
+        return QString("%1x%2").arg(w).arg(h);
+    }
+
     return "Unknown";
 }
 
