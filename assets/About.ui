@@ -154,9 +154,9 @@ background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgb
    <property name="geometry">
     <rect>
      <x>50</x>
-     <y>240</y>
+     <y>190</y>
      <width>401</width>
-     <height>16</height>
+     <height>20</height>
     </rect>
    </property>
    <property name="text">
@@ -223,9 +223,9 @@ background-color: qlineargradient(spread:pad, x1:0.506931, y1:0.295636, x2:1, y2
    <property name="geometry">
     <rect>
      <x>50</x>
-     <y>200</y>
+     <y>300</y>
      <width>561</width>
-     <height>16</height>
+     <height>20</height>
     </rect>
    </property>
    <property name="text">
@@ -239,7 +239,7 @@ background-color: qlineargradient(spread:pad, x1:0.506931, y1:0.295636, x2:1, y2
    <property name="geometry">
     <rect>
      <x>50</x>
-     <y>300</y>
+     <y>250</y>
      <width>311</width>
      <height>20</height>
     </rect>
@@ -277,7 +277,7 @@ background-color: qlineargradient(spread:pad, x1:0.506931, y1:0.295636, x2:1, y2
    <property name="geometry">
     <rect>
      <x>50</x>
-     <y>270</y>
+     <y>220</y>
      <width>311</width>
      <height>20</height>
     </rect>
@@ -296,13 +296,13 @@ background-color: qlineargradient(spread:pad, x1:0.506931, y1:0.295636, x2:1, y2
    <property name="geometry">
     <rect>
      <x>50</x>
-     <y>340</y>
+     <y>330</y>
      <width>561</width>
-     <height>16</height>
+     <height>20</height>
     </rect>
    </property>
    <property name="text">
-    <string>Copyright © 2025, All Rights Reserved.</string>
+    <string>Copyright © 2026, All Rights Reserved.</string>
    </property>
    <property name="alignment">
     <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>

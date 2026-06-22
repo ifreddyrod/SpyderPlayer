@@ -20,6 +20,7 @@
 #define SEARCH_COLOR   QColor(20, 6, 36) 
 #define SESSION_COLOR   QColor(39, 0, 42) 
 #define ITEM_SELECTED_COLOR QColor(0, 5, 60)
+#define ITEM_DISABLED_COLOR QColor("#808080")
 
 
 //************************************************************************************************
@@ -38,6 +39,8 @@ TreeItem::TreeItem(QString nameText, QColor bgColor, bool isPlayList, bool isPer
         bgColor_ = bgColor;
         setBackground(0, bgColor);
     }
+
+    isEnabled_ = true;
 }
 
 void TreeItem::SetPlayListName(QString name) 
@@ -109,6 +112,29 @@ TreeItem* TreeItem::Parent()
 void TreeItem::SetItemSelected(bool isSelected)
 {
     setBackground(0, isSelected ? ITEM_SELECTED_COLOR : bgColor_);
+}
+
+void TreeItem::SetItemEnabled(bool enabled)
+{
+    isEnabled_ = enabled;
+
+    // If false, set the text color to gray
+    if (!enabled)
+    {
+        // Set the text color to gray if the item is orphaned
+        setForeground(0, ITEM_DISABLED_COLOR);
+        //setToolTip(0, "Orphaned");
+    }
+    else
+    {
+        // Set the text color to white 
+        setForeground(0, QColor("#FFFFFF"));
+    }
+}
+
+bool TreeItem::IsItemEnabled()
+{
+    return isEnabled_;
 }
 
 //************************************************************************************************
@@ -964,17 +990,29 @@ void PlaylistManager::LoadFavorites()
         {
             favoriteItem->SetItemChecked(true);
         }
-        else
+        /*else
         {
             continue;
-        }
+        }*/
 
         //PRINT << "Loaded favorite: " << item->name << " from " << item->parentName << " playlist" << " from " << item->source;
 
         // Add the item to the favorites list
-        TreeItem* newEntry = new TreeItem(favoriteItem->GetItemName());
-        newEntry->SetPlayListName(favoriteItem->GetPlayListName());  
-        newEntry->SetSource(favoriteItem->GetSource());
+        // If item is found, fill with found data
+        TreeItem* newEntry = nullptr;
+        if (favoriteItem)
+        {
+            newEntry = new TreeItem(favoriteItem->GetItemName());
+            newEntry->SetPlayListName(favoriteItem->GetPlayListName());  
+            newEntry->SetSource(favoriteItem->GetSource());
+        }
+        else
+        {
+            newEntry = new TreeItem(QSTR(item.name));
+            newEntry->SetPlayListName(QSTR(item.parentName));
+            newEntry->SetSource(QSTR(item.source));
+            newEntry->SetItemEnabled(false);
+        }
 
         newEntry->setFlags(newEntry->flags() | Qt::ItemFlag::ItemIsUserCheckable); 
         newEntry->SetItemChecked(true);
