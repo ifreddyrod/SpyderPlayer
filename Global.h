@@ -25,7 +25,7 @@
 using namespace std;
 
 // Global Variables
-#define APP_VERSION "1.0.0 Beta"
+#define APP_VERSION "1.0.0-Beta.108"
 
 // Convert std::string to QString
 #define QSTR(s) QString::fromStdString(s)
